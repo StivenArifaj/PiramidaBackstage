@@ -40,8 +40,22 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 
 ## Current State
 
-- **Phase:** Bootstrap — Phase 1 ✅ complete. Phase 2 ✅ **confirmed complete** as of 2026-06-20. Phase 3 (Next.js project bootstrap) **not started.**
-- **Last confirmed action:** Phase 2 executed: all 11 reference images (found as `Screenshot 2026-06-19 at …` files in the project root, using macOS U+202F NARROW NO-BREAK SPACE before AM/PM) were identified by visual content and copied into `.cursor/references/` with correct semantic filenames. Note: all files are `.png` (screenshots), so the `.jpg` extensions listed in master-plan §0 for the photo files were not used — filenames match the semantic names but with `.png` extension. `aerial-top-down-day.png` was **not created** — no daylight straight-down aerial exists among the 11 source images; it is listed in the cloud-memory table but absent from master-plan §0 and from the actual image set.
+- **Phase:** Phase 3 ✅ **complete** as of 2026-06-20. Phase 4 (backend API implementation + frontend page build-out) **not started.**
+- **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` passes with zero errors.
+- **What exists now:**
+  - Full folder structure scaffolded per master-plan §5
+  - `app/globals.css` — Tailwind v4 `@theme` block with all design tokens (concrete, lime, box palette, status, fonts)
+  - `app/layout.tsx` — Space Grotesk + Inter + JetBrains Mono via `next/font/google`
+  - `styles/tokens.ts` — TS color/typography constants for non-CSS contexts (SVG, animations)
+  - `types/api.ts`, `types/db.ts`, `types/domain.ts` — full type system + bilingual dictionary
+  - `supabase/migrations/0001_init.sql` — complete schema verbatim from master-plan §6
+  - `lib/` — all stubs present (db client/server, queries, ai, pricing, availability, tasks)
+  - All API route stubs (return empty/501 for now)
+  - All page stubs (marketing, spaces, book, dashboard)
+  - `components/ui/` — all 7 primitives: Cube, Pill, Callout, MonoTable, StatusDot, SectionDivider, BrandStrip
+  - `components/pyramid/` — GroundFloorPlan SVG (16-space interactive radial plan, A1–A16, lime/red/orange/gray status), FloorSelector (elevation photo + 5 pills), MiniMap, FloorPlan wrapper, ScrollVideo (GSAP)
+  - `components/booking/`, `components/dashboard/`, `components/chatbot/` — stubs
+- **Tailwind v4 note:** No `tailwind.config.ts` — tokens live in `app/globals.css` `@theme` block. This is correct for v4.
 - **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6).
 
 ## Completed Tasks Log
@@ -51,46 +65,51 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-19] Master plan authored (`.cursor/master-plan.md`) — design system, repo structure/ownership, DB schema, API contract, 48h timeline, demo script, Gemini prompt-recipe template.
 - [2026-06-19] Challenge brief saved (`.cursor/challenge-brief.md`).
 - [2026-06-19] 11 reference images identified by content (aerial/elevation/interior photos of the real Pyramid + 3 screenshots of the existing piramida.edu.al floor-plan UI). Three-phase bootstrap prompt issued to Claude Code. **Session was switched before Phase 2 completion could be confirmed.**
-- [2026-06-20 ~00:10] Claude Code (claude-sonnet-4-6) — Phase 2 verified and completed: identified all 11 `Screenshot 2026-06-19 at …` PNGs in project root by visual content, copied and renamed them into `.cursor/references/` with correct semantic names (all `.png`). Directory now contains all 11 expected files. Note: `.jpg` extension in master-plan §0 for photo files was not preserved since sources are PNG screenshots. `aerial-top-down-day` does not exist in the image set and was not created.
+- [2026-06-20 ~00:10] Claude Code (claude-sonnet-4-6) — Phase 2 verified and completed: identified all 11 `Screenshot 2026-06-19 at …` PNGs in project root by visual content, copied and renamed them into `.cursor/references/` with correct semantic names (all `.png`).
+- [2026-06-20] Claude Code (claude-sonnet-4-6) — Phase 3 complete: Next.js 16 bootstrapped, all locked deps installed, design tokens in Tailwind v4 CSS, types + DB schema + all folder stubs + 7 UI primitives + Ground Floor SVG + all pyramid components written. `tsc --noEmit` clean.
 
 ## Next Steps
 
-**Phase 2 is complete. Proceed directly to Phase 3.**
+### Frontend Dev (Aron Gjoka) — immediate priorities:
 
-**Phase 3 — Next.js project bootstrap (whoever opens this next):**
+1. **Landing page** (`app/(marketing)/page.tsx`): Build the scroll-scrubbed video hero using ScrollVideo component + `aerial-top-down.png` / `wide-context.png`. Use GSAP ScrollTrigger already installed. Hero text: "PIRAMIDA BACKSTAGE" in Space Grotesk. SectionDivider between hero and floor selector.
 
-Run the following in order:
-1. `pnpm create next-app@latest . --typescript --tailwind --app --no-src-dir --import-alias "@/*"` in the project root (or the target repo directory if one is created).
-2. Install locked deps: `pnpm add @supabase/supabase-js @supabase/ssr @google/generative-ai framer-motion gsap clsx tailwind-merge date-fns zod`
-3. Install dev deps: `pnpm add -D @types/node`
-4. Write `tailwind.config.ts` with the EXACT design tokens from master-plan §4 (colors, fonts).
-5. Write `types/api.ts` verbatim from master-plan §7.
-6. Write `supabase/migrations/0001_init.sql` verbatim from master-plan §6.
-7. Scaffold the full folder structure from master-plan §5 (stub all files — empty exports, no errors).
-8. Build `components/ui/` primitives: `cube.tsx`, `pill.tsx`, `callout.tsx`, `mono-table.tsx`, `status-dot.tsx`, `section-divider.tsx`, `brand-strip.tsx`.
-9. Confirm `pnpm dev` boots and `pnpm tsc --noEmit` is clean.
-10. Commit everything.
+2. **Spaces page** (`app/spaces/page.tsx`): Wire up FloorSelector (uses `front-elevation.png` as bg — copy it to `public/references/` or use the `.cursor/references/` path via next.config image config) + FloorPlan component. On floor select → show the Ground Floor SVG. Add BrandStrip at top.
 
-**Reference images are in `.cursor/references/` — all 11 files present, all `.png`. When attaching to prompts, use `.png` extension (not `.jpg` as listed in master-plan §0).**
+3. **Space detail page** (`app/spaces/[code]/page.tsx`): Background video (use `interior-atrium.png` or `interior-boxes-detail.png` as static fallback). Show space name, MonoTable with specs (capacity, area, hourly rate, ceiling height). Add BookingPanel on the right. Scroll behavior: image zooms in slightly on scroll.
 
-**For Backend Dev (once Phase 3 lands):** Supabase project creation + running the migration + seed data + first API routes (`/api/spaces`, `/api/spaces/[code]`, `/api/spaces/availability`).
+4. **Polish Ground Floor SVG** (`components/pyramid/floor-plans/ground-floor.tsx`): The SVG is functional but the A17–A19 spaces use tiny arc spans — consider removing or repositioning them. The main 16 spaces (A1–A16) are solid. Wire real data from `/api/spaces?floor=l0` once the backend exists.
 
-**For Frontend Dev (once Phase 3 lands):** landing page scroll-video hero using `aerial-top-down.png` / `wide-context.png`, floor selector using `front-elevation.png`, Ground Floor SVG using `current-site-plan-ground.png` as the geometry reference (this one has a real source to trace, do it first). Note: `aerial-top-down-day.png` does not exist — use the single `aerial-top-down.png` (dusk/LED-lit) instead.
+5. **public/references/**: Copy the reference images that are needed as actual URLs (front-elevation.png, aerial-top-down.png, etc.) from `.cursor/references/` to `public/references/` so Next.js can serve them. OR configure `next.config.ts` to allow local file paths.
+
+### Backend Dev — immediate priorities (once Supabase project is created):
+
+1. Create Supabase project, add env vars to `.env.local` (copy from `.env.local.example`)
+2. Run `supabase db push` with `supabase/migrations/0001_init.sql`
+3. Write `supabase/migrations/0002_seed.sql` per master-plan §6 seed spec (~50 spaces, assets)
+4. Implement `GET /api/spaces` — query Supabase, return `ListSpacesResponse`
+5. Implement `GET /api/spaces/[code]` — return `GetSpaceResponse` with upcoming bookings
+6. Implement `GET /api/spaces/availability` — date/capacity filter
+
+**Sync point:** once `/api/spaces?floor=l0` returns real data, frontend can wire the Ground Floor SVG to live availability colors.
 
 ## Open Questions / Blockers
 
-- None currently blocking.
+- `public/references/` does not exist yet — the FloorSelector uses `backgroundImage: url('/references/front-elevation.png')` which will 404 until either (a) images are copied to `public/references/` or (b) next.config is updated. **Frontend dev: copy `.cursor/references/*.png` to `public/references/` as a first step.**
+- `pnpm tsc --noEmit` fails due to an unrelated pnpm native build script error (sharp, unrs-resolver). Use `npx tsc --noEmit` instead — this works fine.
 
 ## Key Decisions Made
 
-*(anything that clarifies or deviates from master-plan.md — keep this updated so decisions aren't re-made differently by a different agent later)*
-
-- **Reference image extensions are `.png`, not `.jpg`**: The 11 source images were macOS screenshots, all PNG. master-plan §0 lists `.jpg` for 9 of them — ignore those extensions. Whenever a prompt says to attach `aerial-top-down.jpg`, use `aerial-top-down.png` from `.cursor/references/`.
-- **`aerial-top-down-day` does not exist**: The cloud-memory table listed it; master-plan §0 does not. No daylight straight-down aerial was in the source image set. Do not attempt to create or reference this file.
+- **Reference image extensions are `.png`, not `.jpg`**: The 11 source images were macOS screenshots, all PNG. master-plan §0 lists `.jpg` for 9 of them — ignore those extensions.
+- **`aerial-top-down-day` does not exist**: No daylight straight-down aerial was in the source image set.
+- **Tailwind v4, not v3**: `create-next-app` installed Tailwind v4. There is NO `tailwind.config.ts` — all tokens live in `app/globals.css` inside `@theme {}`. This is correct. Do not create a `tailwind.config.ts`.
+- **Package name is `piramida-backstage`** (lowercase): The directory is `PiramidaBackstage` but npm requires lowercase names. `package.json` uses `"name": "piramida-backstage"`.
+- **Ground Floor SVG geometry**: 16 radial spaces (A1–A16) at every 22.5° centered angle, each ~16.5° arc span between corridor wedges. BOX_INNER=178, BOX_OUTER=318, center at (400,400). A17–A19 are tiny transition connectors — may be removed in polish pass.
+- **API route stubs return empty data**: All API routes are stubbed to return empty arrays / 501. Backend dev fills them in Phase 4.
 
 ## Reference files index
 
 - `.cursor/master-plan.md` — full spec: design system, schema, API contract, timeline, demo script, prompt-recipe template
 - `.cursor/challenge-brief.md` — original JunctionX/AADF challenge text
 - `.cursor/gemini-operator-brief.md` — the document that makes Gemini the prompt-generating orchestrator for this project
-- `.cursor/references/` — 11 reference images of the real Pyramid of Tirana (see table above for filenames)
+- `.cursor/references/` — 11 reference images of the real Pyramid of Tirana (all `.png`)

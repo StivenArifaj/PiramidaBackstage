@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Concrete palette (70% of surfaces) ── */
+  --color-concrete-bone: #f5f5f0;
+  --color-concrete-light: #fafaf5;
+  --color-concrete-mid: #e8e6dd;
+  --color-concrete-gray: #6b7280;
+  --color-concrete-char: #1a1a1a;
+  --color-concrete-black: #0a0a0a;
+
+  /* ── Pyramid lime — activation, availability only (20%) ── */
+  --color-lime: #c8da2b;
+  --color-lime-ink: #5a6612;
+
+  /* ── MVRDV box palette — space identity (10%) ── */
+  --color-box-blue: #378ADD;
+  --color-box-blue-ink: #042C53;
+  --color-box-blue-light: #85B7EB;
+  --color-box-orange: #f4a261;
+  --color-box-orange-ink: #4a1b0c;
+  --color-box-orange-light: #FAC775;
+  --color-box-green: #97C459;
+  --color-box-green-ink: #173404;
+  --color-box-green-light: #C0DD97;
+  --color-box-yellow: #f9c74f;
+  --color-box-yellow-ink: #412402;
+  --color-box-yellow-light: #FAC775;
+  --color-box-red: #e63946;
+  --color-box-red-ink: #501313;
+  --color-box-red-light: #F09595;
+  --color-box-pink: #ec4899;
+  --color-box-pink-ink: #4B1528;
+  --color-box-pink-light: #F4C0D1;
+  --color-box-purple: #5a4fcf;
+  --color-box-purple-ink: #26215C;
+  --color-box-purple-light: #AFA9EC;
+  --color-box-teal: #2a9d8f;
+  --color-box-teal-ink: #04342C;
+  --color-box-teal-light: #5DCAA5;
+  --color-box-coral: #e76f51;
+  --color-box-coral-ink: #4A1B0C;
+  --color-box-coral-light: #F0997B;
+
+  /* ── Status colors ── */
+  --color-status-available: #c8da2b;
+  --color-status-reserved: #e63946;
+  --color-status-blocked: #6b7280;
+  --color-status-pending: #f4a261;
+
+  /* ── Fonts ── */
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ── Base reset ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--color-concrete-bone);
+  color: var(--color-concrete-char);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+.font-display { font-family: var(--font-display); }
+.font-body    { font-family: var(--font-body); }
+
+/* Mono: ALL numbers, IDs, dimensions, prices, capacities, times */
+.font-mono,
+[data-mono] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}
+
+.border-arch      { border: 2px solid var(--color-concrete-char); }
+.border-arch-lime { border: 2px solid var(--color-lime); }
+
+/* Only inputs get 2px radius */
+input, textarea, select { border-radius: 2px; }
+
+/* Thin architectural scrollbar */
+::-webkit-scrollbar        { width: 4px; height: 4px; }
+::-webkit-scrollbar-track  { background: var(--color-concrete-mid); }
+::-webkit-scrollbar-thumb  { background: var(--color-concrete-gray); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-concrete-char); }
+
+/* Lime selection */
+::selection {
+  background: var(--color-lime);
+  color: var(--color-lime-ink);
+}
