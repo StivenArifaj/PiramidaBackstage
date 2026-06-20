@@ -82,9 +82,17 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/backend] — Groq migration: installed openai SDK, rewrote lib/ai/tools.ts in OpenAI function-calling format, rewrote /api/chatbot to use Groq baseURL with llama-3.3-70b-versatile, agentic tool loop (up to 3 rounds), updated .env.example with GROQ_API_KEY. `npx tsc --noEmit` clean.
 - [2026-06-20 20:00] OpenCode [Aron/Frontend] — Topographical Calibration: Locked Floor Selector to architectural section (section-bb.jpeg), calibrated pill positions (roof 35%, l3 42%, l0 50%, b1 66%, exterior 50%/12%), set plan backgrounds behind SVG floor plans (plan-groundfloor.jpeg etc.), wrapped SVGs in absolute overlay containers with preserveAspectRatio alignment. `npx tsc --noEmit` — pre-existing errors only.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/backend] — Booking Pipeline: POST /api/events now auto-generates quote + 8 tasks (setup, AV, reception, security, teardown, cleaning) immediately on creation. acceptQuote fixed FK bug (depends_on_task_id null on insert), no longer duplicates tasks. `npx tsc --noEmit` clean.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/QA] — Automated QA: Set up Playwright (@playwright/test 1.61.0 + chromium), wrote exhaustive E2E space data audit script (`tests/spaces-audit.spec.ts`). Fetches all spaces from live API (all 5 floors), visits every detail page, checks h1 name, capacity in DOM, and primary image naturalWidth. Writes `spaces-audit-report.md`. `npx tsc --noEmit` clean.
 - [2026-06-20 20:30] OpenCode [Aron/Frontend] — Live Map Integration: Wired interactive floor plans to real API data (`/api/spaces?floor=…`) and tuned SVG polygon radii (viewBox 0 0 1000 1000, center 500,500, radii ×1.25) to match blueprint sketches.
 
 ## Next Steps
+
+### RUN THE SPACES AUDIT (QA step before demo):
+```bash
+npm run dev          # terminal 1 — keep running
+npx playwright test tests/spaces-audit.spec.ts   # terminal 2
+# Report written to: spaces-audit-report.md
+```
 
 ### READY FOR END-TO-END DEMO — run this checklist:
 1. Start dev server: `npm run dev`
