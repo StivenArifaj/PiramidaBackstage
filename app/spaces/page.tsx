@@ -66,7 +66,7 @@ export default function SpacesPage() {
           </div>
 
           {/* Elevation photo + pills */}
-          <div style={{ padding: '32px', flex: 1 }}>
+          <div style={{ padding: '16px', flex: 1 }}>
             <FloorSelector
               activeFloor={activeFloor}
               onFloorSelect={handleFloorSelect}

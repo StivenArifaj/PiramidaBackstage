@@ -80,9 +80,8 @@ export function FloorSelector({
 }: FloorSelectorProps) {
   return (
     <div
-      className="relative w-full overflow-hidden"
+      className="relative w-full h-full overflow-hidden"
       style={{
-        aspectRatio: '1600/910',
         border: '2px solid var(--color-concrete-char)',
         backgroundImage: "url('/sketches/section-bb.jpeg')",
         backgroundSize: 'contain',
