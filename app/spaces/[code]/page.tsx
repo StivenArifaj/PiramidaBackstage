@@ -42,8 +42,8 @@ export default async function SpaceDetailPage({
       <BrandStrip />
 
       {/* ── Breadcrumb header ──────────────────────────────────────────────── */}
-      <div style={{ paddingTop: '48px', backgroundColor: 'var(--color-concrete-char)', borderBottom: '2px solid rgba(245,245,240,0.06)' }}>
-        <div style={{ padding: '18px 64px 0' }}>
+      <div className="pt-12" style={{ backgroundColor: 'var(--color-concrete-char)', borderBottom: '2px solid rgba(245,245,240,0.06)' }}>
+        <div className="px-4 pt-[18px] md:px-16">
           <nav aria-label="breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Link
               href="/spaces"
@@ -56,19 +56,19 @@ export default async function SpaceDetailPage({
               {floorLabel}
             </span>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(245,245,240,0.2)' }}>/</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(245,245,240,0.7)' }}>
+            <span className="truncate" style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(245,245,240,0.7)' }}>
               {space.name}
             </span>
           </nav>
         </div>
-        <div style={{ padding: '12px 64px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="px-4 pb-6 pt-3 md:px-16" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <StatusDot status={space.availability} />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: accentColor }}>
               {space.availability}
             </span>
             <span style={{ color: 'rgba(245,245,240,0.18)', fontFamily: 'var(--font-mono)', fontSize: '9px' }}>·</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,245,240,0.3)' }}>
+            <span className="hidden sm:inline" style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,245,240,0.3)' }}>
               {space.category.replace(/_/g, ' ')}
             </span>
           </div>
@@ -130,11 +130,17 @@ export default async function SpaceDetailPage({
         </div>
       </div>
 
-      {/* ── Two-column content grid ───────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', alignItems: 'start', borderTop: '2px solid var(--color-concrete-char)' }}>
+      {/* ── Two-column content grid — collapses to single column on mobile ── */}
+      <div
+        className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_380px] items-start"
+        style={{ borderTop: '2px solid var(--color-concrete-char)' }}
+      >
 
         {/* ── Left column: all space data ─────────────────────────────────── */}
-        <div style={{ padding: '56px 64px', borderRight: '2px solid var(--color-concrete-char)' }}>
+        <div
+          className="p-6 md:py-14 md:px-16 border-b-2 md:border-b-0 md:border-r-2"
+          style={{ borderColor: 'var(--color-concrete-char)' }}
+        >
 
           {/* Title */}
           <h1
@@ -157,11 +163,10 @@ export default async function SpaceDetailPage({
           )}
           {!space.name_sq && <div style={{ marginBottom: '40px' }} />}
 
-          {/* Key metrics — capacity first, per spec */}
+          {/* Key metrics — 2 cols on mobile, 4 on desktop */}
           <div
+            className="grid grid-cols-2 md:grid-cols-4"
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
               border: '2px solid var(--color-concrete-char)',
               marginBottom: '40px',
             }}
@@ -330,15 +335,10 @@ export default async function SpaceDetailPage({
           )}
         </div>
 
-        {/* ── Right column: sticky booking panel ──────────────────────────── */}
+        {/* ── Right column: sticky on desktop, flows naturally on mobile ───── */}
         <div
-          style={{
-            padding: '40px 32px',
-            backgroundColor: 'var(--color-concrete-light)',
-            position: 'sticky',
-            top: '48px',
-            alignSelf: 'start',
-          }}
+          className="p-6 md:p-8 md:sticky md:top-12 self-start"
+          style={{ backgroundColor: 'var(--color-concrete-light)' }}
         >
           <BookingPanel space={space} />
         </div>

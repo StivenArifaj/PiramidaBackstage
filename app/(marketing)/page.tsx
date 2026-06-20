@@ -74,8 +74,9 @@ export default function LandingPage() {
           scrollHeight="300vh"
           reversed
         >
-          {/* Stats panel — top right */}
+          {/* Stats panel — top right, hidden on small screens */}
           <div
+            className="hidden sm:block"
             style={{
               position: 'absolute',
               top: '72px',
@@ -113,13 +114,14 @@ export default function LandingPage() {
             borderBottom: '2px solid rgba(245,245,240,0.08)',
           }}
         >
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3">
             {INTERLUDE_LINES.map(({ n, label, detail }, i) => (
               <div
                 key={n}
+                className="border-b md:border-b-0 md:border-r last:border-b-0 last:border-r-0"
                 style={{
-                  padding: '40px 48px',
-                  borderRight: i < 2 ? '1px solid rgba(245,245,240,0.06)' : 'none',
+                  padding: '32px 32px',
+                  borderColor: 'rgba(245,245,240,0.06)',
                 }}
               >
                 <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.14em', color: 'var(--color-lime)', margin: '0 0 14px' }}>
@@ -187,21 +189,42 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        {/* Main grid — left: floor selector, right: floor plan */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: '100vh' }}>
+        {/* Main grid — stacks on mobile */}
+        <div className="grid grid-cols-1 md:grid-cols-2 min-h-screen">
 
-          {/* ── Left panel ───────────────────────────────────── */}
-          <div style={{ borderRight: '2px solid var(--color-concrete-char)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '32px 32px 24px', borderBottom: '2px solid var(--color-concrete-char)' }}>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)', marginBottom: '8px' }}>
-                pyramid of tirana
-              </p>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 500, letterSpacing: '0.01em', color: 'var(--color-concrete-char)', margin: 0 }}>
+          {/* ── Left panel — asymmetric editorial ────────────── */}
+          <div
+            className="flex flex-col border-b-2 md:border-b-0 md:border-r-2"
+            style={{ borderColor: 'var(--color-concrete-char)' }}
+          >
+            {/* Asymmetric editorial header */}
+            <div style={{ padding: '28px 32px 0', position: 'relative' }}>
+              {/* Lime left-accent bar — inset from corners */}
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute', left: 0, top: '16px', bottom: '16px',
+                  width: '3px', backgroundColor: 'var(--color-lime)',
+                }}
+              />
+              {/* Row 1: label left, section ref pushed right */}
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '14px', paddingLeft: '12px' }}>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)', margin: 0 }}>
+                  pyramid of tirana
+                </p>
+                <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)', opacity: 0.45 }}>
+                  section B-B
+                </span>
+              </div>
+              {/* Row 2: main heading, slightly indented */}
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 500, letterSpacing: '0.01em', color: 'var(--color-concrete-char)', margin: '0 0 24px', paddingLeft: '12px' }}>
                 select a floor
               </h2>
+              {/* Bottom border — starts 3px from left (skipping lime bar) */}
+              <div style={{ position: 'absolute', bottom: 0, left: '3px', right: 0, height: '2px', backgroundColor: 'var(--color-concrete-char)' }} />
             </div>
 
-            <div style={{ padding: '32px', flex: 1 }}>
+            <div className="p-8 flex-1 min-h-[360px] md:min-h-0">
               <FloorSelector
                 activeFloor={activeFloor}
                 onFloorSelect={handleFloorSelect}
@@ -209,13 +232,23 @@ export default function LandingPage() {
               />
             </div>
 
-            <div style={{ padding: '20px 32px', borderTop: '2px solid var(--color-concrete-char)', display: 'flex', gap: '32px' }}>
+            {/* Stats bar — last stat pushed right */}
+            <div
+              style={{
+                padding: '20px 32px',
+                borderTop: '2px solid var(--color-concrete-char)',
+                display: 'flex',
+                alignItems: 'flex-end',
+                position: 'relative',
+              }}
+            >
+              <div aria-hidden="true" style={{ position: 'absolute', top: -2, right: '32px', width: '40px', height: '2px', backgroundColor: 'var(--color-lime)' }} />
               {[
                 { label: 'total spaces', value: '80+' },
                 { label: 'floors',        value: '5'   },
                 { label: 'max capacity',  value: '300' },
-              ].map(({ label, value }) => (
-                <div key={label}>
+              ].map(({ label, value }, i) => (
+                <div key={label} style={{ marginLeft: i === 0 ? 0 : i === 1 ? '28px' : 'auto' }}>
                   <p style={{ fontFamily: 'var(--font-mono)', fontSize: '22px', fontWeight: 500, color: 'var(--color-concrete-char)', margin: 0, letterSpacing: '0.02em' }}>
                     {value}
                   </p>
@@ -228,7 +261,7 @@ export default function LandingPage() {
           </div>
 
           {/* ── Right panel ──────────────────────────────────── */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="flex flex-col">
             <div style={{ padding: '32px 32px 24px', borderBottom: '2px solid var(--color-concrete-char)', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
               <div>
                 <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)', marginBottom: '8px' }}>
@@ -252,7 +285,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div style={{ flex: 1, padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="flex flex-1 min-h-[360px] md:min-h-0 p-6">
               <FloorPlan
                 floor={activeFloor}
                 spaces={DEMO_SPACES}
