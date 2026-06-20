@@ -51,9 +51,9 @@ const FLOORS = [
  * tooltip boxes, and structural stroke-only lines are intentionally unaffected.
  */
 const HIGHLIGHT_CSS = `
-  svg g[role="button"] polygon,
-  svg g[role="button"] path,
-  svg g[role="button"] rect {
+  svg[aria-label] g[role="button"] polygon,
+  svg[aria-label] g[role="button"] path,
+  svg[aria-label] g[role="button"] rect {
     fill: rgba(255, 90, 0, 0.62) !important;
     stroke: #ffff00 !important;
     stroke-width: 3px !important;
@@ -94,7 +94,7 @@ async function switchFloor(
   await page.waitForLoadState('networkidle', { timeout: 12_000 }).catch(() => {})
   // Confirm at least one interactive SVG element is visible on the new floor
   await page
-    .locator('svg g[role="button"]')
+    .locator('svg[aria-label] g[role="button"]')
     .first()
     .waitFor({ state: 'visible', timeout: 10_000 })
     .catch(() => {})
@@ -110,7 +110,7 @@ test.describe('SVG Overlay & Routing Audit', () => {
 
     // Ground floor is the default — wait for its SVG elements to mount
     await page
-      .locator('svg g[role="button"]')
+      .locator('svg[aria-label] g[role="button"]')
       .first()
       .waitFor({ state: 'visible', timeout: 15_000 })
 
@@ -151,12 +151,12 @@ test.describe('SVG Overlay & Routing Audit', () => {
       } else {
         // Ground floor — wait for initial render
         await page
-          .locator('svg g[role="button"]')
+          .locator('svg[aria-label] g[role="button"]')
           .first()
           .waitFor({ state: 'visible', timeout: 15_000 })
       }
 
-      const buttons = page.locator('svg g[role="button"]')
+      const buttons = page.locator('svg[aria-label] g[role="button"]')
       const count = await buttons.count()
 
       for (let i = 0; i < count; i++) {
@@ -195,12 +195,12 @@ test.describe('SVG Overlay & Routing Audit', () => {
 
     // Wait for ground floor SVG (default floor)
     await page
-      .locator('svg g[role="button"]')
+      .locator('svg[aria-label] g[role="button"]')
       .first()
       .waitFor({ state: 'visible', timeout: 15_000 })
 
     // Identify the first clickable space
-    const firstBtn = page.locator('svg g[role="button"]').first()
+    const firstBtn = page.locator('svg[aria-label] g[role="button"]').first()
     const ariaLabel = (await firstBtn.getAttribute('aria-label')) ?? ''
     const code = parseCode(ariaLabel, 'l0')
     const expectedPath = `/spaces/${code.toLowerCase()}`
