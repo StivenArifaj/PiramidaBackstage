@@ -73,7 +73,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
   - `lib/db/mock-data.ts` — in-memory mock store (events, spaces, assets, conflicts) used by all other API routes
   - All other API routes (events, conflicts, inventory, dashboard overview, quotes, tasks) wired to mock data
 - **Tailwind v4 note:** No `tailwind.config.ts` — tokens live in `app/globals.css` `@theme` block. This is correct for v4.
-- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) [Aron/frontend] — Final sweep: Ezgif mask silenced, interlude copy replaced with brief facts.
+- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) [Aron/frontend] — Full system Playwright audit complete. `docs/audit-report.md` generated (2 Critical, 5 High, 6 Medium, 5 Low Polish).
 
 ## Completed Tasks Log
 
@@ -98,18 +98,32 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Emergency fix: resized and repositioned glass watermark mask to actually cover the BSM text. Replaced the tiny `whiteSpace: nowrap` pill at `top:58%` with a wide glass block: `bottom:15% width:80% maxWidth:900px height:10rem`, `blur(24px) rgba(0,0,0,0.20) border rgba(255,255,255,0.10)`, label centered vertically+horizontally inside. `npx tsc --noEmit` clean.
 - [2026-06-20 ~session-handoff] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Repo sync, watermark label fix, octagonal floor plan, tiered mini-map: (1) `git pull` — synced 586 files from remote (previous session had pushed); (2) fixed watermark HUD label in `scroll-video.tsx`: added `[ ]` brackets → `[ PIRAMIDA BACKSTAGE // FEED ACTIVE ]`; (3) rewrote `components/pyramid/floor-plans/ground-floor.tsx` — deleted ALL circular arcs, replaced with strict octagonal geometry using `octPt()` (ray-to-octagon intersection) and `octSector()` (straight-sided trapezoids, zero `A` arc commands) — outer/inner/atrium all `<polygon>` elements, corridor spokes are `<line>` elements, A1–A19 all represented; (4) redesigned `components/pyramid/mini-map.tsx` — replaced flat triangle silhouette with a 5-tier stepped pyramid elevation (Roof→L3→L0→B1→EX, each tier steps outward, active tier lime-filled with left accent bar + right indicator dot); `app/(marketing)/page.tsx` unchanged (continuous scroll already in place from previous session). `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Final sweep: (1) silenced Ezgif corner mask in `scroll-video.tsx` — removed border, borderRight, and `[ MASK // WM ]` text label; now a pure `var(--color-concrete-black)` 224×40px block (invisible to users); (2) replaced INTERLUDE_LINES in `app/(marketing)/page.tsx` with factual challenge-brief data — 80+ spaces / Auto-generated quotes / Conflict detection. `npx tsc --noEmit` clean.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Executed system-wide Playwright audit across all 11 routes and generated exhaustive structural fix list at `docs/audit-report.md`. 2 Critical, 5 High, 6 Medium, 5 Low Polish issues identified. All APIs return 200. No JS runtime errors.
 
 ## Next Steps
 
-### Frontend Dev (Aron) — immediate priorities:
+> Full audit report at `docs/audit-report.md` — fix in priority order:
 
-1. **Booking flow** (`app/book/page.tsx`, `app/book/confirmation/page.tsx`): Date/time/attendees form + inline quote display. Wire to `POST /api/events` + `POST /api/quotes`. Confirmation shows event ref code, task list, asset reservation summary. This is the most critical missing piece for the demo.
+### CRITICAL (blocks demo):
+1. **[C1] Implement `app/book/page.tsx`** — currently a blank stub. Needs space picker, date/time/attendees form, live quote, wire to `POST /api/events`, redirect to `/book/confirmation?ref=...`.
+2. **[C2] Implement chatbot** (`components/chatbot/chatbot-cube.tsx` + `chatbot-panel.tsx`) — floating dark cube bottom-right → expandable chat panel → wire to `POST /api/chatbot` (GEMINI_API_KEY required). Mount in root `app/layout.tsx`.
 
-2. **Chatbot UI** (`components/chatbot/chatbot-cube.tsx`, `components/chatbot/chatbot-panel.tsx`): Floating dark cube (bottom-right) → expandable panel. Wire to `/api/chatbot` once GEMINI_API_KEY is in `.env.local`. Demo script requires this.
+### HIGH (design-system violations):
+3. **[H1] Remove `rounded-full` from `components/ui/pill.tsx:17`** — floor selector pills violate no-rounded-corners rule. Replace with hard rectangular border.
+4. **[H2] Fix dashboard KPI font** — `app/dashboard/page.tsx:241` uses `fontFamily: D` (Space Grotesk) for large KPI numbers. Change to `fontFamily: M` (JetBrains Mono).
+5. **[H3] Fix inventory KPI font** — `app/dashboard/inventory/page.tsx` KPI strip (11, 1082, 139, 0) uses Space Grotesk. Change to JetBrains Mono.
+6. **[H4] Add `aria-label` to ImageGallery nav buttons** — `components/ui/image-gallery.tsx` ← → buttons have no accessible label.
+7. **[H5] Interlude "80+ spaces" stat label in Space Grotesk** — `app/(marketing)/page.tsx:148`. Numeric portions of interlude stats should use mono.
 
-3. **Space detail page** (`app/spaces/[code]/page.tsx`): Populate `photo_urls` in `lib/db/mock-data.ts` for at least Blue/Orange/Green/Yellow so ImageGallery shows real imagery. The 4 hero spaces are the demo's centrepiece.
+### MEDIUM:
+8. **[M4] Add photo URLs to A-ring mock spaces** — `lib/db/mock-data.ts` A1–A16 have `photo_urls: []`. Add 3–4 real image URLs so gallery doesn't show hatch placeholder during demo.
+9. **[M5] Replace hardcoded `UPCOMING` array in dashboard** — `app/dashboard/page.tsx` has static attendee counts that don't match the API. Drive from `/api/dashboard/overview` response.
+10. **[M2] Add H1 headings to `/dashboard`, `/dashboard/inventory`, `/dashboard/conflicts`**.
 
-4. **Live floor data**: Replace `DEMO_SPACES` in `app/(marketing)/page.tsx` + `app/spaces/page.tsx` with `fetch('/api/spaces?floor=${activeFloor}')` once Supabase is live.
+### Backend priorities (Stiven):
+- Create Supabase project, add env vars to `.env.local`
+- Run migrations: `supabase db push`
+- Implement `POST /api/events`, `POST /api/quotes`, `POST /api/chatbot`
 
 ### Backend Dev (Stiven) — immediate priorities:
 
