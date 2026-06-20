@@ -342,28 +342,10 @@ export function ScrollVideo({
             width: '224px',
             height: '40px',
             backgroundColor: 'var(--color-concrete-black)',
-            border: '2px solid rgba(245,245,240,0.06)',
-            borderRight: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             zIndex: 4,
             pointerEvents: 'none',
           }}
-        >
-          <p
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '7px',
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              color: 'rgba(245,245,240,0.1)',
-              margin: 0,
-            }}
-          >
-            [ MASK // WM ]
-          </p>
-        </div>
+        />
 
         {/* Progress bar — lime on translucent track */}
         <div

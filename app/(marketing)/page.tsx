@@ -19,9 +19,9 @@ const HERO_STATS = [
 
 // ─── Interlude: structural bridge between the two flythroughs ─────────────
 const INTERLUDE_LINES = [
-  { n: '01', label: 'Five floors', detail: 'Roof · L+3 · Ground · B1 · Exterior' },
-  { n: '02', label: '80+ spaces', detail: 'Every room, box, and terrace' },
-  { n: '03', label: 'Real-time', detail: 'Live availability · instant quote' },
+  { n: '01', label: '80+ spaces', detail: 'Four hero spaces, 16 exterior boxes, and radial A-ring extensions across 5 floors.' },
+  { n: '02', label: 'Auto-generated quotes', detail: 'Event requests become operational plans with live pricing and asset reservation.' },
+  { n: '03', label: 'Conflict detection', detail: 'Real-time tracking of scheduling conflicts across 200+ shared operational assets.' },
 ]
 
 // ─── Demo spaces — mirrors /spaces page (live data once Supabase is wired) ─

@@ -73,7 +73,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
   - `lib/db/mock-data.ts` — in-memory mock store (events, spaces, assets, conflicts) used by all other API routes
   - All other API routes (events, conflicts, inventory, dashboard overview, quotes, tasks) wired to mock data
 - **Tailwind v4 note:** No `tailwind.config.ts` — tokens live in `app/globals.css` `@theme` block. This is correct for v4.
-- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) [Aron/frontend] — Glass Hero Plate integration (typography merged into glass).
+- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) [Aron/frontend] — Final sweep: Ezgif mask silenced, interlude copy replaced with brief facts.
 
 ## Completed Tasks Log
 
@@ -97,6 +97,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Refactored watermark mask to premium liquid glass, added rounded corners, and fixed z-index overlapping: mask moved before text in DOM, zIndex:10; text block + children wrapper raised to zIndex:20; mask restyled to `borderRadius:24px blur(40px) rgba(255,255,255,0.05) border rgba(255,255,255,0.10) boxShadow shadow-2xl`; repositioned to `bottom:8% width:90% maxWidth:800px height:180px`; label opacity dimmed to 0.38 so H1 dominates visually.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Emergency fix: resized and repositioned glass watermark mask to actually cover the BSM text. Replaced the tiny `whiteSpace: nowrap` pill at `top:58%` with a wide glass block: `bottom:15% width:80% maxWidth:900px height:10rem`, `blur(24px) rgba(0,0,0,0.20) border rgba(255,255,255,0.10)`, label centered vertically+horizontally inside. `npx tsc --noEmit` clean.
 - [2026-06-20 ~session-handoff] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Repo sync, watermark label fix, octagonal floor plan, tiered mini-map: (1) `git pull` — synced 586 files from remote (previous session had pushed); (2) fixed watermark HUD label in `scroll-video.tsx`: added `[ ]` brackets → `[ PIRAMIDA BACKSTAGE // FEED ACTIVE ]`; (3) rewrote `components/pyramid/floor-plans/ground-floor.tsx` — deleted ALL circular arcs, replaced with strict octagonal geometry using `octPt()` (ray-to-octagon intersection) and `octSector()` (straight-sided trapezoids, zero `A` arc commands) — outer/inner/atrium all `<polygon>` elements, corridor spokes are `<line>` elements, A1–A19 all represented; (4) redesigned `components/pyramid/mini-map.tsx` — replaced flat triangle silhouette with a 5-tier stepped pyramid elevation (Roof→L3→L0→B1→EX, each tier steps outward, active tier lime-filled with left accent bar + right indicator dot); `app/(marketing)/page.tsx` unchanged (continuous scroll already in place from previous session). `npx tsc --noEmit` clean.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Final sweep: (1) silenced Ezgif corner mask in `scroll-video.tsx` — removed border, borderRight, and `[ MASK // WM ]` text label; now a pure `var(--color-concrete-black)` 224×40px block (invisible to users); (2) replaced INTERLUDE_LINES in `app/(marketing)/page.tsx` with factual challenge-brief data — 80+ spaces / Auto-generated quotes / Conflict detection. `npx tsc --noEmit` clean.
 
 ## Next Steps
 
