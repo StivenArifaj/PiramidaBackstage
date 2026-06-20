@@ -269,9 +269,10 @@ export function ScrollVideo({
         {/* Slot for absolutely-positioned overlays (stats panel, CTAs, badges) */}
         {children}
 
-        {/* Center watermark blur — authorized exception to design system (no hard block possible
-            without obscuring main content). Covers "BLEC!STRAKOSHA MEDIA 4K" baked into all frames.
-            Position derived from cover-fit math: source ~960×660 → screen ~50%L, 58%T at 1440×900. */}
+        {/* Centre watermark — premium glassmorphic HUD panel (authorised design-system exception).
+            Covers "BLEC!STRAKOSHA MEDIA 4K" baked into all frames. Styled as a deliberate
+            production feed indicator so it reads as intentional HUD, not a censor smudge.
+            Position: cover-fit math → source ~960×660 → screen 50%L / 58%T at 1440×900. */}
         <div
           aria-hidden="true"
           style={{
@@ -279,15 +280,31 @@ export function ScrollVideo({
             left: '50%',
             top: '58%',
             transform: 'translate(-50%, -50%)',
-            width: '420px',
-            height: '88px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '9px',
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
-            backgroundColor: 'rgba(255,255,255,0.07)',
+            backgroundColor: 'rgba(255,255,255,0.10)',
+            border: '1px solid rgba(255,255,255,0.20)',
+            padding: '10px 18px',
             zIndex: 3,
             pointerEvents: 'none',
+            whiteSpace: 'nowrap',
           }}
-        />
+        >
+          <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'var(--color-lime)', flexShrink: 0 }} />
+          <p style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '8px',
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: 'rgba(245,245,240,0.88)',
+            margin: 0,
+          }}>
+            PIRAMIDA BACKSTAGE // FEED ACTIVE
+          </p>
+        </div>
 
         {/* Watermark mask — Option A: hard geometric block (bottom-right)
             Covers the Ezgif.com attribution that appears in all 565 frames
