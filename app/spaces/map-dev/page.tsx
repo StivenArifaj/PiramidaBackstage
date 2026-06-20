@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { Mapper } from '@/components/pyramid/floor-plans/mapper'
 
+// Mirrors the exact floors and images used in /spaces (floor-plan.tsx + floor-selector.tsx)
 const FLOORS = [
-  { label: 'Ground Floor (L0)',  image: '/sketches/plan-groundfloor.jpeg' },
-  { label: 'Basement (L-1)',     image: '/sketches/plan-level-01-basement.jpeg' },
-  { label: 'Level 2',           image: '/sketches/plan-level-02.jpeg' },
-  { label: 'Level 3',           image: '/sketches/plan-level-03.jpeg' },
-  { label: 'Roof (L4)',         image: '/sketches/plan-level-04.jpeg' },
+  { label: 'Roof',         image: '/sketches/plan-level-04.jpeg' },
+  { label: '3rd Floor',    image: '/sketches/plan-level-03.jpeg' },
+  { label: 'Ground Floor', image: '/sketches/plan-groundfloor.jpeg' },
+  { label: 'B1 Floor',     image: '/sketches/plan-level-01-basement.jpeg' },
+  { label: 'Ext. Boxes',   image: '/sketches/plan-topview.jpeg' },
 ]
 
 export default function MapDevPage() {
