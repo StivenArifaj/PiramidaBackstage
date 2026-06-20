@@ -1,113 +1,70 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import type { SpaceWithAvailability, AvailabilityState } from '@/types/api'
 
-// ─── Geometry constants ───────────────────────────────────────────────────────
-// viewBox 0 0 1000 1000, center at 500,500 — scaled 1.25× from 800×800 viewBox
-const CX = 500
-const CY = 500
-const SITE_R    = 431   // outer octagon circumradius (site boundary)
-const BOX_OUTER = 381   // circumradius of outer edge of space boxes
-const BOX_INNER = 223   // circumradius of inner edge of space boxes
-const RING_R    = 203   // circumradius of inner circulation ring (octagonal)
-const ATRIUM_R  = 85    // circumradius of central atrium octagon
-
-// ─── Geometry: strict octagon, no arcs ────────────────────────────────────────
-// Octagon orientation: faces (flat sides) at 0°, 45°, 90°, … 315°
-//                     vertices at 22.5°, 67.5°, … 337.5°
-
-/**
- * Compute the intersection of a radial ray at `angleDeg` (0 = top, clockwise)
- * with a regular octagon of given circumradius. Returns SVG screen coordinates.
- */
-function octPt(angleDeg: number, circumR: number): { x: number; y: number } {
-  const apothem = circumR * Math.cos(Math.PI / 8)
-  const a = ((angleDeg % 360) + 360) % 360
-  // Face 0 spans -22.5° to +22.5° (midpoint at 0°). Face k spans k*45°±22.5°.
-  const faceIdx = Math.floor(((a + 22.5) % 360) / 45) % 8
-  const faceMidDeg = faceIdx * 45
-  let delta = a - faceMidDeg
-  if (delta > 180) delta -= 360
-  if (delta < -180) delta += 360
-  const dist = apothem / Math.cos(delta * Math.PI / 180)
-  const rad = (a - 90) * Math.PI / 180
-  return { x: CX + dist * Math.cos(rad), y: CY + dist * Math.sin(rad) }
-}
-
-/**
- * Compute all 8 vertex coordinates of the octagon as an SVG `points` string.
- */
-function octagonPoints(circumR: number): string {
-  return Array.from({ length: 8 }, (_, i) => {
-    const deg = 22.5 + i * 45
-    const rad = (deg - 90) * Math.PI / 180
-    const x = CX + circumR * Math.cos(rad)
-    const y = CY + circumR * Math.sin(rad)
-    return `${x.toFixed(1)},${y.toFixed(1)}`
+// ── Coordinate conversion ─────────────────────────────────────────────────────
+// Mapper records percentages (0-100) relative to the JPEG (1600×1131 px).
+// SVG viewBox matches the JPEG exactly, so: x_svg = x_pct * 16, y_svg = y_pct * 11.31
+function pts(pctStr: string): string {
+  return pctStr.split(' ').map(pair => {
+    const [x, y] = pair.split(',').map(Number)
+    return `${(x * 16).toFixed(1)},${(y * 11.31).toFixed(1)}`
   }).join(' ')
 }
 
-/**
- * Straight-sided trapezoidal sector points — NO arcs whatsoever.
- * All four corners are computed via octPt(), producing a quadrilateral that
- * lies entirely within the octagon boundary when the sector doesn't cross a vertex.
- * Returns space-separated "x,y" pairs for use in <polygon points="...">.
- */
-function octSectorPoints(startDeg: number, endDeg: number, innerR: number, outerR: number): string {
-  const p1 = octPt(startDeg, innerR)
-  const p2 = octPt(startDeg, outerR)
-  const p3 = octPt(endDeg, outerR)
-  const p4 = octPt(endDeg, innerR)
-  const f = (n: number) => n.toFixed(2)
-  return `${f(p1.x)},${f(p1.y)} ${f(p2.x)},${f(p2.y)} ${f(p3.x)},${f(p3.y)} ${f(p4.x)},${f(p4.y)}`
+function centroid(svgPts: string): { x: number; y: number } {
+  const coords = svgPts.split(' ').map(p => p.split(',').map(Number))
+  return {
+    x: coords.reduce((a, p) => a + p[0], 0) / coords.length,
+    y: coords.reduce((a, p) => a + p[1], 0) / coords.length,
+  }
 }
 
-// ─── Space definitions ────────────────────────────────────────────────────────
-// The Pyramid of Tirana (MVRDV) is an octagon. The ground floor has 16 main
-// radial bays (every 22.5°) plus 3 additional smaller spaces: A17, A18, A19.
-// Corridors sit at every 22.5° mark (alternately on face-midpoints and vertices).
-
-const WEDGE_DEG  = 22.5   // one full radial segment
-const WEDGE_GAP  = 3      // corridor half-width in degrees
-const BOX_SPAN   = WEDGE_DEG - WEDGE_GAP * 2  // ≈ 16.5° per standard space
-
-interface GroundSpaceDef {
-  code:       string
-  centerDeg:  number
-  spanDeg:    number
-  area:       number
-  capacity:   number
-  rate:       number
+// ── Space definitions ─────────────────────────────────────────────────────────
+// pctPoints: raw mapper output — percentages of the 1600×1131 blueprint JPEG
+interface SpaceDef {
+  code:      string
+  pctPoints: string
+  area:      number
+  capacity:  number
+  rate:      number
 }
 
-// A1–A16 evenly distributed; A17–A19 are narrower transition nodes placed
-// in three of the corridors that fall on face midpoints (0°, 90°, 180°).
-const GROUND_SPACES: GroundSpaceDef[] = [
-  { code: 'A1',  centerDeg: 11.25,  spanDeg: BOX_SPAN, area: 85,  capacity: 90,  rate: 120 },
-  { code: 'A2',  centerDeg: 33.75,  spanDeg: BOX_SPAN, area: 92,  capacity: 100, rate: 130 },
-  { code: 'A3',  centerDeg: 56.25,  spanDeg: BOX_SPAN, area: 88,  capacity: 95,  rate: 125 },
-  { code: 'A4',  centerDeg: 78.75,  spanDeg: BOX_SPAN, area: 95,  capacity: 110, rate: 135 },
-  { code: 'A5',  centerDeg: 101.25, spanDeg: BOX_SPAN, area: 105, capacity: 120, rate: 145 },
-  { code: 'A6',  centerDeg: 123.75, spanDeg: BOX_SPAN, area: 98,  capacity: 108, rate: 138 },
-  { code: 'A7',  centerDeg: 146.25, spanDeg: BOX_SPAN, area: 90,  capacity: 98,  rate: 128 },
-  { code: 'A8',  centerDeg: 168.75, spanDeg: BOX_SPAN, area: 87,  capacity: 94,  rate: 122 },
-  { code: 'A9',  centerDeg: 191.25, spanDeg: BOX_SPAN, area: 88,  capacity: 96,  rate: 124 },
-  { code: 'A10', centerDeg: 213.75, spanDeg: BOX_SPAN, area: 92,  capacity: 100, rate: 130 },
-  { code: 'A11', centerDeg: 236.25, spanDeg: BOX_SPAN, area: 95,  capacity: 105, rate: 135 },
-  { code: 'A12', centerDeg: 258.75, spanDeg: BOX_SPAN, area: 100, capacity: 112, rate: 140 },
-  { code: 'A13', centerDeg: 281.25, spanDeg: BOX_SPAN, area: 96,  capacity: 106, rate: 136 },
-  { code: 'A14', centerDeg: 303.75, spanDeg: BOX_SPAN, area: 90,  capacity: 98,  rate: 128 },
-  { code: 'A15', centerDeg: 326.25, spanDeg: BOX_SPAN, area: 87,  capacity: 93,  rate: 122 },
-  { code: 'A16', centerDeg: 348.75, spanDeg: BOX_SPAN, area: 84,  capacity: 90,  rate: 120 },
-  // Transition nodes — narrower, in 3 of the 8 face-midpoint corridors
-  { code: 'A17', centerDeg: 0,    spanDeg: WEDGE_GAP * 1.4, area: 42, capacity: 38, rate: 75 },
-  { code: 'A18', centerDeg: 180,  spanDeg: WEDGE_GAP * 1.4, area: 42, capacity: 38, rate: 75 },
-  { code: 'A19', centerDeg: 270,  spanDeg: WEDGE_GAP * 1.4, area: 40, capacity: 35, rate: 70 },
+const SPACES: SpaceDef[] = [
+  // ── Perimeter ring ───────────────────────────────────────────────────────
+  { code: 'A1',  pctPoints: '30.12,15.25 27.97,20.12 29.69,21.34 31.84,16.47', area: 85,  capacity: 90,  rate: 120 },
+  { code: 'A2',  pctPoints: '35.06,17.08 37.43,21.04 39.15,18.91 36.79,14.65', area: 92,  capacity: 100, rate: 130 },
+  { code: 'A3',  pctPoints: '45.18,13.12 45.61,7.95 49.26,9.47 48.62,14.34',   area: 88,  capacity: 95,  rate: 125 },
+  { code: 'A4',  pctPoints: '51.2,7.65 54.43,6.73 55.07,11.3 52.06,12.52',     area: 95,  capacity: 110, rate: 135 },
+  { code: 'A5',  pctPoints: '60.45,10.08 59.59,13.12 63.25,15.25 64.11,11.91', area: 105, capacity: 120, rate: 145 },
+  { code: 'A6',  pctPoints: '69.27,16.47 67.55,20.43 70.56,23.17 72.07,19.52', area: 98,  capacity: 108, rate: 138 },
+  { code: 'A7',  pctPoints: '63.03,19.52 61.96,24.08 64.97,25.3 66.04,21.04',  area: 90,  capacity: 98,  rate: 128 },
+  { code: 'A8',  pctPoints: '71.21,24.69 71.21,28.34 75.08,28.34 75.08,24.99', area: 87,  capacity: 94,  rate: 122 },
+  { code: 'A9',  pctPoints: '69.48,48.73 68.41,53.6 71.85,55.12 72.93,50.56',  area: 88,  capacity: 96,  rate: 124 },
+  { code: 'A10', pctPoints: '70.99,58.77 71.21,64.56 73.57,64.56 73.36,59.08', area: 92,  capacity: 100, rate: 130 },
+  { code: 'A11', pctPoints: '60.02,70.8 56.58,71.71 56.15,67.14 59.59,66.23',  area: 95,  capacity: 105, rate: 135 },
+  { code: 'A13', pctPoints: '40.23,68.97 38.29,70.8 36.36,67.45 38.08,65.32',  area: 96,  capacity: 106, rate: 136 },
+  { code: 'A14', pctPoints: '37.86,72.93 35.06,76.27 32.91,72.32 35.71,69.27', area: 90,  capacity: 98,  rate: 128 },
+  { code: 'A15', pctPoints: '29.9,56.49 27.97,52.23 30.76,50.1 32.91,53.75',   area: 87,  capacity: 93,  rate: 122 },
+  { code: 'A16', pctPoints: '33.77,38.54 29.69,38.23 29.69,35.49 33.77,35.19', area: 84,  capacity: 90,  rate: 120 },
+  { code: 'A17', pctPoints: '40.23,54.67 38.72,59.54 42.16,61.06 43.67,56.49', area: 42,  capacity: 38,  rate: 75  },
+  // ── Interior cluster ─────────────────────────────────────────────────────
+  { code: 'A18', pctPoints: '56.58,47.36 57.65,45.54 55.72,43.41 54.86,45.54', area: 42,  capacity: 38,  rate: 75  },
+  { code: 'A19', pctPoints: '58.3,44.01 56.36,43.1 56.58,40.67 58.94,42.49',   area: 40,  capacity: 35,  rate: 70  },
+  { code: 'A20', pctPoints: '57.44,34.58 58.73,34.58 59.37,39.75 57.65,40.06', area: 38,  capacity: 32,  rate: 68  },
+  { code: 'A21', pctPoints: '43.02,46.45 45.18,44.62 43.24,40.97 41.52,43.1',  area: 35,  capacity: 28,  rate: 65  },
+  { code: 'A22', pctPoints: '42.16,40.36 40.44,40.06 40.87,35.49 42.59,36.1',  area: 33,  capacity: 26,  rate: 62  },
+  { code: 'A23', pctPoints: '43.45,34.88 41.09,33.36 43.24,28.49 45.39,30.32', area: 36,  capacity: 30,  rate: 65  },
+  { code: 'A24', pctPoints: '46.9,25.45 46.9,28.8 52.49,29.1 52.49,25.45',     area: 44,  capacity: 40,  rate: 72  },
+  { code: 'A25', pctPoints: '47.33,33.97 47.76,38.23 52.27,37.32 51.41,32.75', area: 40,  capacity: 35,  rate: 68  },
+  { code: 'A26', pctPoints: '47.11,33.06 49.26,35.8 48.19,39.45 45.61,38.23',  area: 32,  capacity: 25,  rate: 60  },
+  { code: 'A27', pctPoints: '52.49,40.06 54.21,39.75 52.92,33.06 50.55,34.58', area: 34,  capacity: 28,  rate: 63  },
+  { code: 'A28', pctPoints: '55.72,33.06 57.87,31.54 56.15,29.1 54.43,30.93',  area: 36,  capacity: 30,  rate: 65  },
+  { code: 'A29', pctPoints: '49.05,42.04 48.19,45.08 46.04,43.86 47.11,41.12', area: 30,  capacity: 24,  rate: 58  },
 ]
 
-// ─── Availability colours ─────────────────────────────────────────────────────
+// ── Availability colours ──────────────────────────────────────────────────────
 const FILL: Record<AvailabilityState, string> = {
   available: '#c8da2b',
   reserved:  '#e63946',
@@ -115,42 +72,38 @@ const FILL: Record<AvailabilityState, string> = {
   pending:   '#f4a261',
 }
 const FILL_OPACITY: Record<AvailabilityState, number> = {
-  available: 0.90,
-  reserved:  0.82,
-  blocked:   0.52,
-  pending:   0.78,
+  available: 0.82,
+  reserved:  0.78,
+  blocked:   0.48,
+  pending:   0.72,
 }
 
-// ─── Tooltip state ────────────────────────────────────────────────────────────
 interface TooltipState {
-  x: number
-  y: number
-  space: GroundSpaceDef
+  x: number; y: number
+  space: SpaceDef
   availability: AvailabilityState
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
 interface GroundFloorPlanProps {
   spaces?: SpaceWithAvailability[]
   onSpaceClick?: (code: string) => void
 }
 
 export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanProps) {
-  const router = useRouter()
-  const [hovered, setHovered]   = useState<string | null>(null)
-  const [tooltip, setTooltip]   = useState<TooltipState | null>(null)
+  const [hovered, setHovered] = useState<string | null>(null)
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null)
 
   const spaceMap = new Map(spaces.map(s => [s.code, s]))
-
-  function handleClick(code: string) {
-    onSpaceClick ? onSpaceClick(code) : router.push(`/spaces/${code.toLowerCase()}`)
-  }
 
   function getAvailability(code: string): AvailabilityState {
     return spaceMap.get(code)?.availability ?? 'available'
   }
 
-  function handleMouseEnter(e: React.MouseEvent<SVGGElement>, def: GroundSpaceDef) {
+  function handleClick(code: string) {
+    onSpaceClick ? onSpaceClick(code) : undefined
+  }
+
+  function handleMouseEnter(e: React.MouseEvent<SVGGElement>, def: SpaceDef) {
     const svg = e.currentTarget.closest('svg') as SVGElement | null
     if (!svg) return
     const svgRect   = svg.getBoundingClientRect()
@@ -158,22 +111,16 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
     setHovered(def.code)
     setTooltip({
       x: groupRect.left + groupRect.width / 2 - svgRect.left,
-      y: groupRect.top - svgRect.top,
+      y: groupRect.top  - svgRect.top,
       space: def,
       availability: getAvailability(def.code),
     })
   }
 
-  // Pre-compute octagon outline polygons
-  const outerOctPts  = octagonPoints(SITE_R)
-  const ringOctPts   = octagonPoints(RING_R)
-  const atriumOctPts = octagonPoints(ATRIUM_R)
-  const atriumInner  = octagonPoints(ATRIUM_R * 0.55)
-
   return (
     <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
       <svg
-        viewBox="0 0 1000 1000"
+        viewBox="0 0 1600 1131"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
         preserveAspectRatio="xMidYMid meet"
@@ -181,46 +128,13 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
         aria-label="Ground Floor — Pyramid of Tirana"
         role="img"
       >
-        {/* ── Outer site octagon — stroke-only, MVRDV JPEG is the background ── */}
-        <polygon
-          points={outerOctPts}
-          fill="none"
-          stroke="#1a1a1a"
-          strokeWidth="2.5"
-        />
-
-        {/* ── 16 radial corridor lines (straight spokes, no arcs) ──
-            Each line runs from the atrium edge to the site boundary,
-            passing through the gaps between space boxes.              */}
-        {Array.from({ length: 16 }, (_, i) => {
-          const deg = i * WEDGE_DEG
-          const inner = octPt(deg, RING_R + 4)
-          const outer = octPt(deg, SITE_R - 2)
-          return (
-            <line
-              key={`spoke-${i}`}
-              x1={inner.x} y1={inner.y}
-              x2={outer.x} y2={outer.y}
-              stroke="#1a1a1a"
-              strokeWidth="1"
-            />
-          )
-        })}
-
-        {/* ── Space boxes A1–A16 (main clickable sectors) ── */}
-        {GROUND_SPACES.slice(0, 16).map((def) => {
+        {SPACES.map((def) => {
           const availability = getAvailability(def.code)
           const fill         = FILL[availability]
           const fillOpacity  = FILL_OPACITY[availability]
           const isHov        = hovered === def.code
-          const half         = def.spanDeg / 2
-          const startDeg     = def.centerDeg - half
-          const endDeg       = def.centerDeg + half
-
-          // Label position: midpoint of the octagon sector radius
-          const labelR   = (BOX_INNER + BOX_OUTER) / 2
-          const labelPt  = octPt(def.centerDeg, labelR)
-          const rotAngle = def.centerDeg - 90
+          const svgPoints    = pts(def.pctPoints)
+          const c            = centroid(svgPoints)
 
           return (
             <g
@@ -234,189 +148,72 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
               onMouseLeave={() => { setHovered(null); setTooltip(null) }}
               onKeyDown={(e) => e.key === 'Enter' && handleClick(def.code)}
             >
-              {/* Main fill — octagonal trapezoid, zero arcs */}
               <polygon
-                points={octSectorPoints(startDeg, endDeg, BOX_INNER, BOX_OUTER)}
+                points={svgPoints}
                 fill={fill}
                 fillOpacity={fillOpacity}
                 stroke="#1a1a1a"
-                strokeWidth={isHov ? 2.5 : 1.5}
-                strokeLinejoin="miter"
+                strokeWidth={isHov ? 3 : 1.5}
+                strokeLinejoin="round"
               />
-              {/* Lime selection ring — inset by 3px */}
               {isHov && (
                 <polygon
-                  points={octSectorPoints(startDeg - 0.4, endDeg + 0.4, BOX_INNER - 4, BOX_OUTER + 4)}
+                  points={svgPoints}
                   fill="none"
                   stroke="#c8da2b"
-                  strokeWidth="3"
+                  strokeWidth="4"
+                  strokeLinejoin="round"
                 />
               )}
-              {/* Code label — rotated to read radially */}
               <text
-                x={labelPt.x}
-                y={labelPt.y}
+                x={c.x}
+                y={c.y}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fontSize="9"
-                fontWeight="500"
-                letterSpacing="0.08em"
+                fontSize="10"
+                fontWeight="600"
+                letterSpacing="0.06em"
                 fill={
-                  availability === 'available' ? '#5a6612' :
-                  availability === 'reserved'  ? '#501313' : '#1a1a1a'
+                  availability === 'available' ? '#3a4a08' :
+                  availability === 'reserved'  ? '#4a0808' : '#1a1a1a'
                 }
-                transform={`rotate(${rotAngle > 90 || rotAngle < -90 ? rotAngle + 180 : rotAngle}, ${labelPt.x.toFixed(2)}, ${labelPt.y.toFixed(2)})`}
-                style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                style={{ fontFamily: 'JetBrains Mono, monospace', pointerEvents: 'none' }}
               >
                 {def.code}
               </text>
             </g>
           )
         })}
-
-        {/* ── Transition nodes A17–A19 (narrow, in 3 face-midpoint corridors) ── */}
-        {GROUND_SPACES.slice(16).map((def) => {
-          const availability = getAvailability(def.code)
-          const fill         = FILL[availability]
-          const fillOpacity  = FILL_OPACITY[availability] * 0.85
-          const isHov        = hovered === def.code
-          const half         = def.spanDeg / 2
-          const startDeg     = def.centerDeg - half
-          const endDeg       = def.centerDeg + half
-          const labelR       = (BOX_INNER + BOX_OUTER) / 2
-          const labelPt      = octPt(def.centerDeg, labelR)
-          const rotAngle     = def.centerDeg - 90
-
-          return (
-            <g
-              key={def.code}
-              role="button"
-              tabIndex={0}
-              aria-label={`${def.code} — ${availability} — ${def.capacity} pax`}
-              style={{ cursor: 'pointer' }}
-              onClick={() => handleClick(def.code)}
-              onMouseEnter={(e) => handleMouseEnter(e, def)}
-              onMouseLeave={() => { setHovered(null); setTooltip(null) }}
-              onKeyDown={(e) => e.key === 'Enter' && handleClick(def.code)}
-            >
-              <polygon
-                points={octSectorPoints(startDeg, endDeg, BOX_INNER, BOX_OUTER)}
-                fill={fill}
-                fillOpacity={fillOpacity}
-                stroke="#1a1a1a"
-                strokeWidth={isHov ? 2 : 1}
-                strokeLinejoin="miter"
-                strokeDasharray="3 2"
-              />
-              <text
-                x={labelPt.x}
-                y={labelPt.y}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="7"
-                fontWeight="400"
-                fill="#1a1a1a"
-                transform={`rotate(${rotAngle > 90 || rotAngle < -90 ? rotAngle + 180 : rotAngle}, ${labelPt.x.toFixed(2)}, ${labelPt.y.toFixed(2)})`}
-                style={{ fontFamily: 'JetBrains Mono, monospace' }}
-              >
-                {def.code}
-              </text>
-            </g>
-          )
-        })}
-
-        {/* ── Inner circulation ring — stroke-only overlay ── */}
-        <polygon
-          points={ringOctPts}
-          fill="none"
-          stroke="#1a1a1a"
-          strokeWidth="1.5"
-        />
-
-        {/* ── 16 short radial lines inside the circulation ring (structural detail) ── */}
-        {Array.from({ length: 16 }, (_, i) => {
-          const deg   = i * WEDGE_DEG
-          const inner = octPt(deg, ATRIUM_R + 2)
-          const outer = octPt(deg, RING_R - 2)
-          return (
-            <line
-              key={`inner-spoke-${i}`}
-              x1={inner.x} y1={inner.y}
-              x2={outer.x} y2={outer.y}
-              stroke="#1a1a1a"
-              strokeWidth="0.75"
-            />
-          )
-        })}
-
-        {/* ── Central atrium — stroke-only overlay ── */}
-        <polygon
-          points={atriumOctPts}
-          fill="none"
-          stroke="#1a1a1a"
-          strokeWidth="2"
-        />
-        <polygon
-          points={atriumInner}
-          fill="none"
-          stroke="#1a1a1a"
-          strokeWidth="0.75"
-        />
-
-        {/* Atrium cross lines (structural pattern) */}
-        {[0, 45, 90, 135].map((angle) => {
-          const a = octPt(angle,       ATRIUM_R * 0.52)
-          const b = octPt(angle + 180, ATRIUM_R * 0.52)
-          return <line key={`atrium-${angle}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#1a1a1a" strokeWidth="0.75" />
-        })}
-
-        {/* Center datum */}
-        <circle cx={CX} cy={CY} r="5" fill="#1a1a1a" />
-        <circle cx={CX} cy={CY} r="2" fill="#fafaf5" />
-
-        {/* ── Floor label ── */}
-        <text
-          x="500" y="962"
-          textAnchor="middle"
-          fontSize="11"
-          letterSpacing="0.22em"
-          fill="#6b7280"
-          style={{ fontFamily: 'JetBrains Mono, monospace' }}
-        >
-          GROUND FLOOR — KATI PËRDHES
-        </text>
-
-        {/* ── North indicator ── */}
-        <g transform="translate(935, 68)">
-          <line x1="0" y1="18" x2="0" y2="-2" stroke="#1a1a1a" strokeWidth="1.5" />
-          <polygon points="0,-7 -4,5 4,5" fill="#1a1a1a" />
-          <text x="0" y="28" textAnchor="middle" fontSize="9" fill="#6b7280" style={{ fontFamily: 'JetBrains Mono, monospace' }}>N</text>
-        </g>
-
-        {/* ── Scale bar ── */}
-        <g transform="translate(45, 943)">
-          <line x1="0" y1="0" x2="75" y2="0" stroke="#6b7280" strokeWidth="1.5" />
-          <line x1="0" y1="-4" x2="0" y2="4" stroke="#6b7280" strokeWidth="1.5" />
-          <line x1="75" y1="-4" x2="75" y2="4" stroke="#6b7280" strokeWidth="1.5" />
-          <text x="37.5" y="-8" textAnchor="middle" fontSize="8" fill="#6b7280" style={{ fontFamily: 'JetBrains Mono, monospace' }}>10 m</text>
-        </g>
 
         {/* ── Legend ── */}
-        <g transform="translate(45, 898)">
+        <g transform="translate(20, 1088)">
           {([
             { label: 'available', color: '#c8da2b' },
             { label: 'reserved',  color: '#e63946' },
             { label: 'pending',   color: '#f4a261' },
             { label: 'blocked',   color: '#6b7280' },
           ] as const).map(({ label, color }, i) => (
-            <g key={label} transform={`translate(${i * 94}, 0)`}>
+            <g key={label} transform={`translate(${i * 110}, 0)`}>
               <rect width="10" height="10" fill={color} stroke="#1a1a1a" strokeWidth="1.5" />
-              <text x="14" y="9" fontSize="9" fill="#6b7280" letterSpacing="0.06em" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+              <text x="14" y="9" fontSize="9" fill="#6b7280" letterSpacing="0.06em"
+                style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                 {label}
               </text>
             </g>
           ))}
         </g>
+
+        {/* ── Floor label ── */}
+        <text
+          x="1580" y="1118"
+          textAnchor="end"
+          fontSize="10"
+          letterSpacing="0.18em"
+          fill="#6b7280"
+          style={{ fontFamily: 'JetBrains Mono, monospace' }}
+        >
+          GROUND FLOOR — KATI PËRDHES
+        </text>
 
         {/* ── Tooltip (always on top) ── */}
         {tooltip && (() => {
@@ -425,14 +222,17 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
           return (
             <g transform={`translate(${tx}, ${ty})`} style={{ pointerEvents: 'none' }}>
               <rect x="-58" y="0" width="116" height="50" fill="#fafaf5" stroke="#1a1a1a" strokeWidth="2" />
-              <rect x="-58" y="0" width="116" height="6" fill={FILL[tooltip.availability]} fillOpacity="0.9" />
-              <text x="0" y="22" textAnchor="middle" fontSize="10" fontWeight="500" fill="#1a1a1a" letterSpacing="0.1em" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+              <rect x="-58" y="0" width="116" height="6"  fill={FILL[tooltip.availability]} fillOpacity="0.9" />
+              <text x="0" y="22" textAnchor="middle" fontSize="10" fontWeight="500" fill="#1a1a1a"
+                letterSpacing="0.1em" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                 {tooltip.space.code}
               </text>
-              <text x="0" y="34" textAnchor="middle" fontSize="8" fill="#6b7280" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+              <text x="0" y="34" textAnchor="middle" fontSize="8" fill="#6b7280"
+                style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                 {tooltip.space.capacity} pax · {tooltip.space.area} m²
               </text>
-              <text x="0" y="44" textAnchor="middle" fontSize="8" fill="#5a6612" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+              <text x="0" y="44" textAnchor="middle" fontSize="8" fill="#5a6612"
+                style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                 €{tooltip.space.rate}/hr
               </text>
             </g>
