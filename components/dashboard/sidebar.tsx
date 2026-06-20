@@ -71,6 +71,28 @@ const NAV = [
       </svg>
     ),
   },
+  {
+    href: '/dashboard/maintenance', label: 'Maintenance',
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="1" width="12" height="12" stroke="currentColor" strokeWidth="1.4" />
+        <line x1="4" y1="1" x2="4" y2="13" stroke="currentColor" strokeWidth="1" />
+        <line x1="8" y1="1" x2="8" y2="13" stroke="currentColor" strokeWidth="1" />
+        <line x1="1" y1="5" x2="13" y2="5" stroke="currentColor" strokeWidth="1" />
+        <line x1="1" y1="9" x2="13" y2="9" stroke="currentColor" strokeWidth="1" />
+      </svg>
+    ),
+  },
+  {
+    href: '/dashboard/reports', label: 'Reports',
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="7" width="3" height="6" stroke="currentColor" strokeWidth="1.3" />
+        <rect x="5.5" y="4" width="3" height="9" stroke="currentColor" strokeWidth="1.3" />
+        <rect x="10" y="1" width="3" height="12" stroke="currentColor" strokeWidth="1.3" />
+      </svg>
+    ),
+  },
 ]
 
 export function DashboardSidebar() {
