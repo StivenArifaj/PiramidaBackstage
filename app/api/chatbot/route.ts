@@ -29,7 +29,7 @@ function getGroqClient(): OpenAI {
 }
 
 const MODEL = 'llama-3.3-70b-versatile'
-const MAX_TOOL_ROUNDS = 3
+const MAX_TOOL_ROUNDS = 5
 
 // Client gets read-only/advisory tools only; admin gets the full dual-brain toolset
 const CLIENT_TOOLS = clientTools
@@ -135,10 +135,30 @@ export async function POST(req: Request) {
       messages.push(...toolResultMessages)
     }
 
-    // Safety: if we exhausted rounds, return what we have
+    // Rounds exhausted but tool data is in the message history.
+    // Force one final call with tool_choice:'none' so the LLM synthesizes all
+    // accumulated tool results into a plain-text response instead of calling more tools.
+    const synthesis = await client.chat.completions.create({
+      model: MODEL,
+      messages,
+      tool_choice: 'none',
+      temperature: isAdmin ? 0.3 : 0.5,
+      max_tokens: 1024,
+    })
+
+    const synthesisReply = synthesis.choices[0].message.content ?? ''
+    const createCall = toolCalls.find(tc => tc.name === 'create_event_request')
+
     const response: ChatResponse = {
-      reply: "I've gathered the information — here's what I found. How can I help you proceed?",
-      tool_calls: toolCalls,
+      reply: synthesisReply,
+      ...(toolCalls.length > 0 && { tool_calls: toolCalls }),
+      ...(createCall && {
+        proposed_action: {
+          type: 'create_event' as const,
+          payload: createCall.args,
+          requires_confirmation: false,
+        },
+      }),
     }
     return NextResponse.json(response)
   } catch (err) {
