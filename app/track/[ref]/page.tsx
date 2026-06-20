@@ -10,7 +10,6 @@ const M = 'var(--font-mono)'
 const D = 'var(--font-display)'
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number]
 
-// ── Floor directions ──────────────────────────────────────────────────────────
 const FLOOR_DIRECTIONS: Record<string, { label: string; directions: string }> = {
   l0:        { label: 'Ground Floor · L0',    directions: 'Enter via the main public entrance on Rruga e Elbasanit. The space is on the ground level — no stairs required.' },
   l3:        { label: 'Level L+3',            directions: 'Enter via the main entrance and take the internal ramps upward. Follow Pyramid signage to Level L+3.' },
@@ -19,7 +18,6 @@ const FLOOR_DIRECTIONS: Record<string, { label: string; directions: string }> = 
   roof:      { label: 'Rooftop',              directions: 'Take the external climbing route on the Pyramid\'s concrete surface, or use internal ramps to reach the rooftop.' },
 }
 
-// ── Status pipeline config ────────────────────────────────────────────────────
 const STATUS_STEPS = ['requested', 'quoted', 'confirmed'] as const
 type KnownStatus = typeof STATUS_STEPS[number]
 
@@ -28,7 +26,6 @@ function stepIndex(status: string): number {
   return i === -1 ? 0 : i
 }
 
-// ── Types ─────────────────────────────────────────────────────────────────────
 interface PublicEvent {
   id: string
   reference_code: string
@@ -48,7 +45,6 @@ interface PublicQuote {
   valid_until?: string
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
 export default function TrackPage() {
   const { ref } = useParams<{ ref: string }>()
 
@@ -56,8 +52,6 @@ export default function TrackPage() {
   const [quote, setQuote] = useState<PublicQuote | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
-  const [accepting, setAccepting] = useState(false)
-  const [accepted, setAccepted] = useState(false)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -72,21 +66,6 @@ export default function TrackPage() {
       .finally(() => setLoading(false))
   }, [ref])
 
-  const handleAcceptQuote = useCallback(async () => {
-    if (!quote || accepting || accepted) return
-    setAccepting(true)
-    try {
-      const res = await fetch(`/api/quotes/${quote.id}`, { method: 'PATCH' })
-      if (res.ok) {
-        setAccepted(true)
-        setEvent(prev => prev ? { ...prev, status: 'confirmed' } : prev)
-        setQuote(null)
-      }
-    } finally {
-      setAccepting(false)
-    }
-  }, [quote, accepting, accepted])
-
   const handleCopyLink = useCallback(() => {
     navigator.clipboard.writeText(window.location.origin + '/invite/' + ref).then(() => {
       setCopied(true)
@@ -94,7 +73,6 @@ export default function TrackPage() {
     })
   }, [ref])
 
-  // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--color-concrete-char)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -106,7 +84,6 @@ export default function TrackPage() {
     )
   }
 
-  // ── Not found ──────────────────────────────────────────────────────────────
   if (notFound || !event) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--color-concrete-char)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, padding: '80px 32px' }}>
@@ -123,9 +100,8 @@ export default function TrackPage() {
 
   const status = event.status
   const activeStep = stepIndex(status)
-  const isConfirmed = status === 'confirmed' || accepted
-  const isQuoted = status === 'quoted' && !accepted
-  const isPending = status === 'requested'
+  const isConfirmed = status === 'confirmed'
+  const isUnderReview = status === 'requested' || status === 'quoted'
   const floor = event.space?.floor ?? ''
   const directions = FLOOR_DIRECTIONS[floor]
 
@@ -140,7 +116,7 @@ export default function TrackPage() {
 
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '64px 32px 120px' }}>
 
-        {/* ── Header ── */}
+        {/* Header */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}>
           <p style={{ fontFamily: M, fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--color-lime)', margin: '0 0 8px' }}>
             booking tracker
@@ -154,7 +130,7 @@ export default function TrackPage() {
           </p>
         </motion.div>
 
-        {/* ── Status pipeline ── */}
+        {/* Status pipeline */}
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15, duration: 0.4 }}
           style={{ margin: '40px 0', display: 'flex', alignItems: 'center', gap: 0 }}
@@ -194,7 +170,7 @@ export default function TrackPage() {
           })}
         </motion.div>
 
-        {/* ── Event summary card ── */}
+        {/* Event summary card */}
         <motion.div
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.45, ease: EASE }}
           style={{ border: '1px solid rgba(245,245,240,0.1)', padding: '28px', marginBottom: 24 }}
@@ -217,60 +193,30 @@ export default function TrackPage() {
           </div>
         </motion.div>
 
-        {/* ── Status-specific panels ── */}
-
-        {/* Pending: under review */}
-        {isPending && (
+        {/* Under review (pending + quoted) — read-only */}
+        {isUnderReview && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
             style={{ border: '1px solid rgba(245,245,240,0.08)', padding: '24px', background: 'rgba(245,245,240,0.02)', marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
               <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 2, repeat: Infinity }}
-                style={{ width: 8, height: 8, borderRadius: '50%', background: '#f4a261' }} />
-              <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#f4a261', margin: 0 }}>request received</p>
+                style={{ width: 8, height: 8, borderRadius: '50%', background: '#f4a261', flexShrink: 0 }} />
+              <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#f4a261', margin: 0 }}>under review</p>
             </div>
-            <p style={{ fontFamily: M, fontSize: '13px', color: 'rgba(245,245,240,0.55)', margin: 0, lineHeight: 1.65 }}>
-              The Piramida Ops Team is reviewing your request. Check back here to see your official quote.
+            <p style={{ fontFamily: M, fontSize: '13px', color: 'rgba(245,245,240,0.6)', margin: '0 0 8px', lineHeight: 1.65 }}>
+              Status: Under Review. The Piramida Ops Team is reviewing your booking request. No further action is required from you at this time.
             </p>
-          </motion.div>
-        )}
-
-        {/* Quoted: show price + accept button */}
-        {isQuoted && quote && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, ease: EASE }}
-            style={{ border: '2px solid var(--color-lime)', padding: '28px', marginBottom: 24 }}>
-            <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--color-lime)', margin: '0 0 8px' }}>
-              quote ready
-            </p>
-            <p style={{ fontFamily: M, fontSize: '12px', color: 'rgba(245,245,240,0.5)', margin: '0 0 20px', lineHeight: 1.65 }}>
-              The Piramida Ops Team has approved your request and issued a quote. Click &ldquo;Accept Invoice&rdquo; below to sign the agreement and lock in your reservation.
-            </p>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-              <div>
-                <p style={{ fontFamily: D, fontSize: '42px', fontWeight: 500, color: 'var(--color-concrete-bone)', margin: 0, lineHeight: 1, letterSpacing: '-0.02em' }}>
+            {/* Read-only quote amount when available */}
+            {quote && (
+              <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(245,245,240,0.07)' }}>
+                <p style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,245,240,0.28)', margin: '0 0 6px' }}>quoted amount</p>
+                <p style={{ fontFamily: D, fontSize: '32px', fontWeight: 500, color: 'var(--color-concrete-bone)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1 }}>
                   €{quote.total.toFixed(2)}
                 </p>
-                <p style={{ fontFamily: M, fontSize: '9px', color: 'rgba(245,245,240,0.35)', margin: '6px 0 0', letterSpacing: '0.08em' }}>
+                <p style={{ fontFamily: M, fontSize: '9px', color: 'rgba(245,245,240,0.3)', margin: '6px 0 0', letterSpacing: '0.06em' }}>
                   {quote.currency}{quote.valid_until ? ` · valid until ${new Date(quote.valid_until).toLocaleDateString('en-GB')}` : ''}
                 </p>
               </div>
-              <button
-                onClick={handleAcceptQuote}
-                disabled={accepting}
-                style={{
-                  fontFamily: M, fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase',
-                  background: accepting ? 'rgba(200,218,43,0.5)' : 'var(--color-lime)',
-                  color: 'var(--color-lime-ink)',
-                  border: 'none', padding: '14px 32px',
-                  cursor: accepting ? 'wait' : 'pointer',
-                  fontWeight: 600,
-                }}
-              >
-                {accepting ? 'confirming…' : 'Accept Invoice'}
-              </button>
-            </div>
-            <p style={{ fontFamily: M, fontSize: '10px', color: 'rgba(245,245,240,0.3)', margin: '16px 0 0', lineHeight: 1.6 }}>
-              By accepting you confirm all booking details above. Our operations team will be notified immediately.
-            </p>
+            )}
           </motion.div>
         )}
 
@@ -330,7 +276,7 @@ export default function TrackPage() {
           </motion.div>
         )}
 
-        {/* ── Footer links ── */}
+        {/* Footer links */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
           style={{ marginTop: 48, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
           <Link href="/spaces" style={{ fontFamily: M, fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', color: 'rgba(245,245,240,0.3)', borderBottom: '1px solid rgba(245,245,240,0.12)', paddingBottom: 2 }}>
