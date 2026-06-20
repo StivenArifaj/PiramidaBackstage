@@ -71,7 +71,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
   - `lib/db/mock-data.ts` — in-memory mock store (events, spaces, assets, conflicts) used by all other API routes
   - All other API routes (events, conflicts, inventory, dashboard overview, quotes, tasks) wired to mock data
 - **Tailwind v4 note:** No `tailwind.config.ts` — tokens live in `app/globals.css` `@theme` block. This is correct for v4.
-- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) — merged frontend + backend state.
+- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) — emergency save / session handoff.
 
 ## Completed Tasks Log
 
