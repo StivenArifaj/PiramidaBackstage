@@ -89,44 +89,33 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20 22:00] OpenCode [Aron/Frontend] — Bugfix: Wired dynamic space data to DOM (H1, Capacity, Images) and patched missing A-ring photo URLs + renamed `public/Sketches/` → `public/sketches/` for case-sensitive URL consistency.
 - [2026-06-20 23:30] Claude Code (claude-sonnet-4-6) [Stiven/Backend] — Bugfix: Resolved `ReferenceError: require is not defined` crash in `app/spaces/[code]/page.tsx`.
 - [2026-06-20 23:55] Claude Code (claude-sonnet-4-6) [Stiven] — UI/Data: Locked unified space template and injected premium isometric renders and estimated data for all 53 spaces. Replaced flat blueprints with iso renders (iso-6-final, iso-4-programme, iso-1-existing), wired real MVRDV photography for exterior/L3/roof/hero spaces, updated Supabase directly via SQL for all 53 rows (0 spaces without photos). page.tsx now has rigid Breadcrumb→Hero(aspect-video)→TwoColumn(70/30 sticky) template. `npx tsc --noEmit` clean. Root cause: `framer-motion` (CJS shim) being SSR-evaluated via the old `'use client'` + client-fetch pattern in Turbopack. Fix: converted page to a pure async Server Component (no `'use client'`), fetches data directly via `getSpaceByCode()`, extracted interactive `BookingPanel` to `components/spaces/booking-panel.tsx` (`'use client'`). `/spaces/BLUE` now returns HTTP 200 with `<h1>Blue Space</h1>`, capacity 300, and primary image in DOM. `npx tsc --noEmit` clean.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/Backend] — Dashboard: Completed ops loop with quote approval, task completion API, and AI task generation sync. Added PATCH /api/quotes/[id] (accepts quote → confirmed event), GET /api/quotes (list all with event join), full PATCH /api/tasks/[id] replacing the 501 stub, new /dashboard/quotes page with Accept button and revenue totals, task completion checkboxes wired to PATCH endpoint with optimistic UI in /dashboard/events, chatbot handleCreateEvent() now calls generateTasks()+insertTasks() for full run-sheet parity with the form path, Quotes added to sidebar nav. `npx tsc --noEmit` clean.
 
 ## Current State
 
-- **Phase:** Phase 7 complete — Full end-to-end booking pipeline live + Live Map Integration + space detail page crash resolved.
-- `app/spaces/[code]/page.tsx` is now a pure async Server Component. No `'use client'`. Fetches data server-side via `getSpaceByCode()`. Renders `<h1>` space name, capacity, and primary image with no client-side loading state needed.
-- `components/spaces/booking-panel.tsx` — new `'use client'` component extracted from the page. Contains all `useState`/`useRouter` booking form logic.
-- `framer-motion` import removed from the page (was the root cause of the `require is not defined` SSR crash via Turbopack). No animation regression — `motion.div` wrappers replaced with plain `div`s in the static layout.
-- Mock data (`lib/db/mock-data.ts`) A1–A19 photo_urls point to `/sketches/` (lowercase). `public/sketches/` is correct path.
-- `npx tsc --noEmit` passes clean. `/spaces/BLUE` returns HTTP 200.
+- **Phase:** Phase 8 complete — Dashboard ops loop fully closed. All three critical operational gaps resolved.
+- **Quotes workflow:** `GET /api/quotes` lists all quotes with event join (Supabase + mock fallback). `PATCH /api/quotes/[id]` accepts a quote → marks `accepted_at`, promotes event to `confirmed`. `app/dashboard/quotes/page.tsx` new page: filter tabs (all/pending/accepted), revenue totals in footer, per-row Accept button with optimistic update. Quotes added to sidebar nav.
+- **Task completion:** `PATCH /api/tasks/[id]` fully implemented (replaces 501 stub) — updates `status` in Supabase or mock store. `/dashboard/events` expanded rows now show interactive checkboxes — click to toggle `pending ↔ done` with optimistic UI + rollback on error.
+- **Chatbot booking parity:** `handleCreateEvent()` in `lib/ai/tool-handlers.ts` now calls `generateQuote()` + `insertQuote()` + `generateTasks()` + `insertTasks()` after `createEvent()`, matching the API form path exactly. Chatbot-created bookings now produce a full run-sheet (8 tasks) and a quote in Supabase.
+- `npx tsc --noEmit` clean (zero errors). `/spaces/BLUE` returns HTTP 200.
 
 ## Next Steps
 
-### RE-RUN THE SPACES AUDIT (QA Lead):
-The `require is not defined` crash is fixed. QA Lead should re-run the E2E audit to confirm all space pages now pass:
-```bash
-git pull
-npm run dev          # terminal 1 — keep running
-npx playwright test tests/spaces-audit.spec.ts   # terminal 2
-# Check spaces-audit-report.md — expect all h1/capacity/img checks to pass for all 53 spaces
-```
-
 ### READY FOR END-TO-END DEMO — run this checklist:
 1. Start dev server: `npm run dev`
-2. Submit booking via `/book` → verify `/dashboard/events` shows the new event with status `quoted` and 8 tasks already populated.
-3. Open chatbot → type: "Book the Yellow Roof Box for 50 people on Friday 8pm–11pm, name Ardi Hoxha, email ardi@test.al" → verify tool calls fire (search_spaces → create_event_request → generate_quote) and chatbot returns confirmation text.
-4. Hit `POST /api/quotes/{id}` (or Supabase Dashboard) → confirm event status advances to `confirmed`, tasks remain (no duplicates).
-5. Rehearse demo script (master-plan §10) × 3.
+2. Submit booking via `/book` → verify `/dashboard/events` shows event with status `quoted`, 8 tasks populated.
+3. Go to `/dashboard/quotes` → confirm the new quote appears in the Pending tab with correct EUR total.
+4. Click **Accept** on the quote → confirm event status flips to `confirmed` in `/dashboard/events`.
+5. In `/dashboard/events`, expand the confirmed event → click task checkboxes → verify they toggle and persist on refresh (Supabase write confirmed).
+6. Open chatbot → "Book the Yellow Roof Box for 50 people on Friday 8pm–11pm, name Ardi Hoxha, email ardi@test.al" → verify tool calls fire and chatbot response includes "8 ops tasks generated automatically."
+7. Check `/dashboard/quotes` — chatbot booking should also appear with a pending quote.
+8. Rehearse demo script (master-plan §10) × 3.
 
-### End-to-end test — booking flow ready:
-6. Verify floor plan shows real availability colors by switching floors — each floor fetches `/api/spaces?floor=…`.
-7. Click a space → detail page loads with ImageGallery populated from `photo_urls`.
-8. Submit event via `/book` → check `/dashboard/events` shows it (live DB row).
-9. Open chatbot → "Book Yellow Roof Box for 50 people Friday 8pm–11pm, name Ardi, email ardi@test.al" → tools fire, event appears in dashboard.
-10. Accept quote via `POST /api/quotes/{id}` → tasks auto-generated and inserted.
+### Deploy:
+9. Push to GitHub → deploy to Vercel → add all env vars (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, GROQ_API_KEY) in Vercel dashboard → Environment Variables.
 
-### Demo prep:
-11. Rehearse demo script (master-plan §10) at least 3 times.
-12. Deploy to Vercel — add all env vars in Vercel dashboard → Environment Variables.
+### Remaining gap (post-hackathon):
+- Authentication middleware (`middleware.ts`) — dashboard is open for demo, add Supabase auth gate before production.
 
 ## Open Questions / Blockers
 

@@ -97,6 +97,30 @@ export default function EventsPage() {
       .then(d => setTasksByEvent(prev => ({ ...prev, [expanded]: d.tasks ?? [] })))
   }, [expanded, tasksByEvent])
 
+  function toggleTask(eventId: string, taskId: string, currentStatus: string) {
+    const newStatus = currentStatus === 'done' ? 'pending' : 'done'
+    // Optimistic update
+    setTasksByEvent(prev => ({
+      ...prev,
+      [eventId]: (prev[eventId] ?? []).map(t =>
+        t.id === taskId ? { ...t, status: newStatus } : t
+      ),
+    }))
+    fetch(`/api/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    }).catch(() => {
+      // Rollback on failure
+      setTasksByEvent(prev => ({
+        ...prev,
+        [eventId]: (prev[eventId] ?? []).map(t =>
+          t.id === taskId ? { ...t, status: currentStatus } : t
+        ),
+      }))
+    })
+  }
+
   const counts = ALL_STATUSES.reduce(
     (acc, s) => ({ ...acc, [s]: events.filter(e => e.status === s).length }),
     {} as Record<string, number>
@@ -407,21 +431,32 @@ export default function EventsPage() {
                                 pre-event tasks · {(tasksByEvent[evt.id] ?? []).length}
                               </p>
                             </div>
-                            {(tasksByEvent[evt.id] ?? []).map((t, ti) => (
-                              <motion.div
-                                key={t.id}
-                                initial={{ opacity: 0, x: -8 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.2, delay: ti * 0.04 }}
-                                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: ti < (tasksByEvent[evt.id] ?? []).length - 1 ? '1px solid #f0ede4' : 'none' }}
-                              >
-                                <span style={{ display: 'block', width: 5, height: 5, borderRadius: '50%', background: TEAM_COLOR[t.team] ?? '#9a9890', flexShrink: 0 }} />
-                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#1a1a1a', flex: 1 }}>{t.title}</span>
-                                <span style={{ fontFamily: M, fontSize: '8px', color: '#fff', background: TEAM_COLOR[t.team] ?? '#9a9890', padding: '1px 7px', textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>
-                                  {t.team}
-                                </span>
-                              </motion.div>
-                            ))}
+                            {(tasksByEvent[evt.id] ?? []).map((t, ti) => {
+                              const done = t.status === 'done'
+                              return (
+                                <motion.div
+                                  key={t.id}
+                                  initial={{ opacity: 0, x: -8 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ duration: 0.2, delay: ti * 0.04 }}
+                                  onClick={() => toggleTask(evt.id, t.id, t.status)}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: ti < (tasksByEvent[evt.id] ?? []).length - 1 ? '1px solid #f0ede4' : 'none', cursor: 'pointer' }}
+                                >
+                                  {/* Completion checkbox */}
+                                  <div style={{ width: 13, height: 13, border: `1.5px solid ${done ? '#c8da2b' : '#d8d5cc'}`, background: done ? '#c8da2b' : 'transparent', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
+                                    {done && (
+                                      <svg width="7" height="7" viewBox="0 0 7 7" fill="none">
+                                        <path d="M1 3.5l2 2 3-3" stroke="#5a6612" strokeWidth="1.3" />
+                                      </svg>
+                                    )}
+                                  </div>
+                                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: done ? '#9a9890' : '#1a1a1a', flex: 1, textDecoration: done ? 'line-through' : 'none', transition: 'color 0.15s' }}>{t.title}</span>
+                                  <span style={{ fontFamily: M, fontSize: '8px', color: '#fff', background: done ? '#c0bdb4' : (TEAM_COLOR[t.team] ?? '#9a9890'), padding: '1px 7px', textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0, transition: 'background 0.15s' }}>
+                                    {t.team}
+                                  </span>
+                                </motion.div>
+                              )
+                            })}
                             {(tasksByEvent[evt.id] ?? []).length === 0 && (
                               <p style={{ fontFamily: M, fontSize: '9px', color: '#c0bdb4', letterSpacing: '0.06em' }}>No tasks assigned yet</p>
                             )}

@@ -3,8 +3,10 @@ import {
   createEvent,
   getEventById,
   insertQuote,
+  insertTasks,
 } from '@/lib/db/queries/events'
 import { generateQuote } from '@/lib/pricing/quote'
+import { generateTasks } from '@/lib/tasks/generate'
 import type { CreateEventRequest } from '@/types/api'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,6 +99,13 @@ async function handleCreateEvent(args: ToolArgs): Promise<string> {
 
   const { event, matchedSpaceId } = await createEvent(body)
 
+  // Mirror the same post-creation pipeline as POST /api/events
+  const quoteData = generateQuote(event)
+  await insertQuote(event.id, quoteData)
+
+  const rawTasks = generateTasks(event)
+  await insertTasks(rawTasks)
+
   const spaceName = event.spaces[0]?.name ?? 'TBC'
   return [
     `Event created successfully!`,
@@ -105,7 +114,8 @@ async function handleCreateEvent(args: ToolArgs): Promise<string> {
     `Space: ${spaceName}`,
     `Date: ${event.start_at} → ${event.end_at}`,
     `Attendees: ${event.attendees_count}`,
-    `Status: ${event.status}`,
+    `Status: quoted`,
+    `Quote & ${rawTasks.length} ops tasks generated automatically.`,
     matchedSpaceId ? '' : 'Note: No matching space was found automatically — an organizer will assign one.',
   ]
     .filter(s => s !== '')

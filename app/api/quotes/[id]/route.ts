@@ -42,3 +42,11 @@ export async function POST(
     return NextResponse.json({ error: 'Failed to accept quote' }, { status: 500 })
   }
 }
+
+// PATCH /api/quotes/[id] — semantic alias for accepting a quote
+export async function PATCH(
+  req: Request,
+  ctx: { params: Promise<{ id: string }> }
+) {
+  return POST(req, ctx)
+}
