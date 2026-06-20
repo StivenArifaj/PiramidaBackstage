@@ -50,6 +50,13 @@ export function BrandStrip({ className }: BrandStripProps) {
           >
             spaces
           </Link>
+          <Link
+            href="/lookup"
+            style={{ fontFamily: 'var(--font-display)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)' }}
+            className="hover:text-[var(--color-concrete-char)] transition-colors"
+          >
+            track booking
+          </Link>
         </nav>
 
         {/* Hamburger — mobile only */}
@@ -87,6 +94,14 @@ export function BrandStrip({ className }: BrandStripProps) {
             style={{ fontFamily: 'var(--font-display)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)', borderBottom: '1px solid var(--color-concrete-mid)' }}
           >
             spaces
+          </Link>
+          <Link
+            href="/lookup"
+            onClick={() => setMenuOpen(false)}
+            className="block px-6 py-4"
+            style={{ fontFamily: 'var(--font-display)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)', borderBottom: '1px solid var(--color-concrete-mid)' }}
+          >
+            track booking
           </Link>
         </nav>
       )}

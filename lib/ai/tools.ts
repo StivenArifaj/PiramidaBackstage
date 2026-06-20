@@ -145,6 +145,28 @@ export const clientTools: ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'find_my_booking',
+      description:
+        'Look up a client\'s booking status by their email address and reference code. Returns the booking status and the direct tracking URL they can share.',
+      parameters: {
+        type: 'object',
+        properties: {
+          email: {
+            type: 'string',
+            description: 'The organizer email address used when booking',
+          },
+          reference_code: {
+            type: 'string',
+            description: 'The booking reference code, e.g. PB-2026-001',
+          },
+        },
+        required: ['email', 'reference_code'],
+      },
+    },
+  },
 ]
 
 // Backward-compat alias — old imports still work

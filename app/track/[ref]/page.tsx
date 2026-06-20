@@ -88,11 +88,11 @@ export default function TrackPage() {
   }, [quote, accepting, accepted])
 
   const handleCopyLink = useCallback(() => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
+    navigator.clipboard.writeText(window.location.origin + '/track/' + ref).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
-  }, [])
+  }, [ref])
 
   // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) {

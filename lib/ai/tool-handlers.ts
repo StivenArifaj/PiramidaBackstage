@@ -2,6 +2,8 @@ import { searchAvailableSpaces, getSpaceByCode, listSpaces } from '@/lib/db/quer
 import {
   createEvent,
   getEventById,
+  getEventByRef,
+  getQuoteForEvent,
   insertQuote,
   insertTasks,
 } from '@/lib/db/queries/events'
@@ -39,6 +41,8 @@ export async function handleToolCall(
         return handleSubmitSpecialRequest(args)
       case 'get_space_booking_url':
         return handleGetSpaceBookingUrl(args)
+      case 'find_my_booking':
+        return await handleFindMyBooking(args)
       // ── Admin tools ───────────────────────────────────────────────────────────
       case 'create_event_request':
         return await handleCreateEvent(args)
@@ -228,6 +232,43 @@ function handleGetSpaceBookingUrl(args: ToolArgs): string {
   const code = (args.space_code ?? '').toUpperCase()
   if (!code) return 'No space code provided.'
   return `Booking URL: /spaces/${code}\n[REDIRECT_TO_SPACE:${code}]`
+}
+
+async function handleFindMyBooking(args: ToolArgs): Promise<string> {
+  const { email, reference_code } = args
+  if (!email || !reference_code) return 'Please provide both your email address and reference code.'
+
+  const event = await getEventByRef(reference_code)
+
+  if (!event) {
+    return `No booking found with reference code "${reference_code}". Please check the code from your confirmation email.`
+  }
+
+  if (event.organizer_email.toLowerCase() !== String(email).toLowerCase()) {
+    return `The email address provided does not match the booking for "${reference_code}". Please use the email you registered with.`
+  }
+
+  const quote = await getQuoteForEvent(event.id)
+  const trackUrl = `/track/${event.reference_code}`
+  const spaceName = event.spaces[0]?.name ?? 'TBC'
+  const startDate = new Date(event.start_at).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+
+  const lines = [
+    `Booking found: ${event.reference_code}`,
+    `Title: ${event.title}`,
+    `Date: ${startDate}`,
+    `Space: ${spaceName}`,
+    `Status: ${event.status}`,
+  ]
+
+  if (quote && !quote.accepted_at) {
+    lines.push(`Quote: €${quote.total.toFixed(2)} EUR — pending acceptance`)
+  }
+
+  lines.push(`Your booking tracker: ${trackUrl}`)
+  lines.push(`Share this link with guests or use it to accept your quote and get directions.`)
+
+  return lines.join('\n')
 }
 
 // ── Admin tool handlers ───────────────────────────────────────────────────────
