@@ -69,8 +69,8 @@ export function LMinusOneFloorPlan({ spaces = [], onSpaceClick }: LMinusOneFloor
   const octPts = Array.from({ length: 8 }, (_, i) => { const p = pt(348, i * 45 + 22.5); return `${p.x.toFixed(1)},${p.y.toFixed(1)}` }).join(' ')
 
   return (
-    <div className="relative w-full select-none" style={{ maxWidth: 720 }}>
-      <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" className="w-full" style={{ background: '#1e1c18' }} aria-label="Level L-1 (Basement) — Pyramid of Tirana">
+    <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
+      <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" preserveAspectRatio="xMidYMid meet" style={{ background: 'transparent' }} aria-label="Level L-1 (Basement) — Pyramid of Tirana">
 
         {/* Basement floor plate */}
         <polygon points={octPts} fill="#2a2824" stroke="#3a3830" strokeWidth="2" />

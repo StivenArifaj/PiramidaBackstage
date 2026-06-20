@@ -118,8 +118,8 @@ export default function SpacesPage() {
             </div>
           </div>
 
-          {/* SVG floor plan */}
-          <div style={{ flex: 1, padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Interactive floor plan with official sketch background */}
+          <div style={{ flex: 1, display: 'flex', borderBottom: '2px solid var(--color-concrete-char)' }}>
             <FloorPlan
               floor={activeFloor}
               spaces={DEMO_SPACES}

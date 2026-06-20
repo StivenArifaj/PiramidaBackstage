@@ -58,8 +58,8 @@ export function RoofFloorPlan({ spaces = [], onSpaceClick }: RoofFloorPlanProps)
   function handleClick(code: string) { onSpaceClick ? onSpaceClick(code) : router.push(`/spaces/${code.toLowerCase()}`) }
 
   return (
-    <div className="relative w-full select-none" style={{ maxWidth: 720 }}>
-      <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" className="w-full" style={{ background: '#dde8f0' }} aria-label="Rooftop — Pyramid of Tirana">
+    <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
+      <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" preserveAspectRatio="xMidYMid meet" style={{ background: 'transparent' }} aria-label="Rooftop — Pyramid of Tirana">
 
         {/* Sky / open air background */}
         <rect x="0" y="0" width="800" height="800" fill="#dde8f0" />

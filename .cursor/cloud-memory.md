@@ -40,8 +40,11 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 
 ## Current State
 
-- **Phase:** Phase 5 complete — Supabase live (53 spaces, 11 assets, 3 demo events, 6 tasks, 1 quote). All API routes wired with Supabase + mock-data fallback. Chatbot migrated to Groq (llama-3.3-70b-versatile via openai SDK). `.env.local` has URL + anon key; needs SUPABASE_SERVICE_ROLE_KEY + GROQ_API_KEY to activate server-side queries and chatbot.
-- **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` passes with zero errors.
+- **Phase:** Phase 6 — Topographical Calibration complete. Official MVRDV architectural sketches from `public/sketches/` are now the authoritative backgrounds. Floor Selector uses `section-bb.jpeg` (cross-section) with calibrated pill positions. Floor plan SVGs overlay official plan blueprints. Pre-existing `npx tsc --noEmit` errors are limited to chatbot `openai` module (unrelated).
+- **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` shows 3 pre-existing errors in `app/api/chatbot/route.ts` and `lib/ai/tools.ts` (missing `openai` module).
+- **FloorSelector background:** Now `section-bb.jpeg` (1600×910, aspect 1.758), `background-size: contain`. Pill positions calibrated to architectural slabs: roof 35%, l3 42%, l0 50%, b1 66%, exterior 50%/12% left.
+- **Plan backgrounds:** `FloorPlan` component now renders the correct plan sketch behind each floor's SVG (plan-groundfloor.jpeg for l0, plan-level-01-basement.jpeg for l_minus_1, plan-level-03.jpeg for l3, plan-level-04.jpeg for roof, plan-topview.jpeg for exterior). SVG overlays use `preserveAspectRatio="xMidYMid meet"` for alignment.
+- **SVG Alignment:** All 5 floor plan SVGs wrapped in absolute-position containers over the plan background. SVG viewBox 0 0 800 800 preserved, using `preserveAspectRatio` for centered alignment with background.
 - **Ground floor plan:** Strict octagonal SVG using only `<polygon>` elements (no `<path>` or `<circle>` for layout). All 19 spaces (A1–A19) are clickable and navigate directly to their detail page via `router.push`. Mock data contains explicit A1–A19 entries with official area/capacity/rate values.
 - **UI Airgap (active):** Public BrandStrip only links to `/spaces`. Dashboard lives behind `/dashboard` with its own sidebar — no shared navigation with the public site.
 - **Frontend (complete):**
@@ -54,7 +57,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - **Backend (complete):**
   - All API routes: `/api/events`, `/api/events/[id]`, `/api/quotes`, `/api/quotes/[id]`, `/api/tasks`, `/api/chatbot`, `/api/spaces`, `/api/spaces/[code]`, `/api/spaces/availability`, `/api/conflicts`, `/api/dashboard/overview`, `/api/assets`, `/api/inventory`
   - Supabase provisioned, schema applied, seeded
-  - Chatbot: currently Gemini 2.5-flash — migrating to Groq llama-3.1-70b this session
+  - Chatbot: on Groq llama-3.3-70b-versatile via openai SDK
 
 ## Completed Tasks Log
 
@@ -76,6 +79,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/backend] — Supabase provisioned via MCP: schema + seed applied (53 spaces, 11 assets, 3 demo events, 6 tasks, 1 quote). `.env.local` created with URL + anon key. /api/conflicts and /api/dashboard/overview rewired to live Supabase queries. `npx tsc --noEmit` clean.
 - [2026-06-20 14:15] Claude Code [Aron/frontend] — Calibration: Replaced low-res elevation background with mvrdv-28.jpg (1333×1000), fixed topographic pill alignment (roof 7%, l3 30%, l0 58%, b1 76%, exterior 64%/12%), locked aspect-ratio to eliminate stretch distortion.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/backend] — Groq migration: installed openai SDK, rewrote lib/ai/tools.ts in OpenAI function-calling format, rewrote /api/chatbot to use Groq baseURL with llama-3.3-70b-versatile, agentic tool loop (up to 3 rounds), updated .env.example with GROQ_API_KEY. `npx tsc --noEmit` clean.
+- [2026-06-20 20:00] OpenCode [Aron/Frontend] — Topographical Calibration: Locked Floor Selector to architectural section (section-bb.jpeg), calibrated pill positions (roof 35%, l3 42%, l0 50%, b1 66%, exterior 50%/12%), set plan backgrounds behind SVG floor plans (plan-groundfloor.jpeg etc.), wrapped SVGs in absolute overlay containers with preserveAspectRatio alignment. `npx tsc --noEmit` — pre-existing errors only.
 
 ## Next Steps
 
@@ -94,8 +98,9 @@ Then restart dev server. All routes auto-switch from mock to live Supabase, chat
 7. Deploy to Vercel — add all env vars in Vercel dashboard → Environment Variables.
 
 ### Frontend (Aron):
-1. Wire `/spaces/page.tsx` floor selector to live `GET /api/spaces?floor=…` — currently uses `DEMO_SPACES` constant.
+1. Wire `/spaces/page.tsx` floor selector to live `GET /api/spaces?floor=…` — currently uses `DEMO_SPACES` constant (l0-only). Should use full mock data or live API.
 2. Add photo URLs to A-ring spaces in mock-data (or seed real URLs to Supabase) so ImageGallery doesn't show hatch placeholder.
+3. Fine-tune SVG polygon coordinates over plan-blueprint backgrounds by visually inspecting plan-groundfloor.jpeg and adjusting polygon vertices to precisely cover colored boxes in the sketch.
 
 ## Open Questions / Blockers
 
@@ -113,7 +118,10 @@ Then restart dev server. All routes auto-switch from mock to live Supabase, chat
 - **Chatbot on Groq**: `openai` SDK with `baseURL: 'https://api.groq.com/openai/v1'`, model `llama-3.3-70b-versatile`. Tools in `lib/ai/tools.ts` are OpenAI `ChatCompletionTool` format. Old `geminiTools` export is aliased to `groqTools` for backward compat. `lib/ai/gemini.ts` is dead code (no longer imported).
 - **Reference image extensions are `.png`, not `.jpg`**: The 11 source images were macOS screenshots, all PNG.
 - **Landing page uses GSAP ScrollVideo**: 265 frames at `/public/frames/detail-sample/`, `reversed=true`. Space detail: 300 frames at `/public/frames/hero/`, `reversed=true`.
-- **FloorSelector background**: `mvrdv-28.jpg` (1333×1000px), aspect-ratio locked. Pill positions (% from top): roof 7%, l3 30%, l0 58%, b1 76%, exterior 64% left / 12% top.
+- **FloorSelector background (V1)**: `mvrdv-28.jpg` (1333×1000px), aspect-ratio locked. Pill positions (% from top): roof 7%, l3 30%, l0 58%, b1 76%, exterior 64% left / 12% top.
+- **FloorSelector background (V2 — current)**: `section-bb.jpeg` (1600×910px, `public/sketches/`). Architectural cross-section from official MVRDV drawings. Pill positions (% from top): roof 35%, l3 42%, l0 50%, b1 66%, exterior 50% top / 12% left. `background-size: contain` (not cover) to prevent cropping.
+- **Plan sketch backgrounds**: Each floor's SVG now sits inside an absolute container with the official plan sketch as CSS background. SVG viewBox stays 0 0 800 800 with `preserveAspectRatio="xMidYMid meet"` for centered alignment. Fine-tuning of polygon coordinates to match colored boxes in the sketches is a follow-up task.
+- **Image extension note**: Official sketches in `public/sketches/` are `.jpeg` (not `.jpg` or `.png`).
 
 ## Reference files index
 

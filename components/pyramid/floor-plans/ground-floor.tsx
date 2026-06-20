@@ -170,12 +170,13 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
   const atriumInner  = octagonPoints(ATRIUM_R * 0.55)
 
   return (
-    <div className="relative w-full select-none" style={{ maxWidth: 720 }}>
+    <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
       <svg
         viewBox="0 0 800 800"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-full"
-        style={{ background: '#f5f5f0' }}
+        className="w-full h-full"
+        preserveAspectRatio="xMidYMid meet"
+        style={{ background: 'transparent' }}
         aria-label="Ground Floor — Pyramid of Tirana"
         role="img"
       >

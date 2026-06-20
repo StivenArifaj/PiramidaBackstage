@@ -80,8 +80,8 @@ export function ExteriorFloorPlan({ spaces = [], onSpaceClick }: ExteriorFloorPl
   }).join(' ')
 
   return (
-    <div className="relative w-full select-none" style={{ maxWidth: 720 }}>
-      <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" className="w-full" style={{ background: '#e8e5da' }} aria-label="Exterior — Pyramid of Tirana">
+    <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
+      <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" preserveAspectRatio="xMidYMid meet" style={{ background: 'transparent' }} aria-label="Exterior — Pyramid of Tirana">
 
         {/* Site pavement */}
         <polygon points={octSite} fill="#d8d5ca" stroke="#1a1a1a" strokeWidth="2" />

@@ -3,13 +3,13 @@
 import { Pill } from '@/components/ui/pill'
 import type { SpaceFloor } from '@/types/api'
 
-// Image dimensions: mvrdv-28.jpg = 1333×1000 (aspect 1.333)
-// Positions calibrated against the Pyramid's stepped facade geometry:
-//   roof      → apex boxes at the summit, ~7% from top, centered
-//   l3        → third terrace band (wide step below apex), ~30% from top, centered
-//   l0        → ground-level glass entrance facade, ~58% from top, centered
-//   l_minus_1 → below-grade level visible in the plinth, ~76% from top, centered
-//   exterior  → exterior boxes flanking the building at grade, ~64% from top, ~12% from left
+// Image dimensions: section-bb.jpeg = 1600×910 (aspect 1.758)
+// Positions calibrated against the MVRDV architectural cross-section:
+//   roof      → topmost slab at the pyramid apex, ~35% from top, centered
+//   l3        → third-level stepped terrace, ~42% from top, centered
+//   l0        → ground floor slab at the base of above-grade structure, ~50% from top, centered
+//   l_minus_1 → basement slab below grade, ~66% from top, centered
+//   exterior  → exterior boxes at grade flanking the building, ~50% from top, ~12% from left
 const FLOORS: Array<{
   key: SpaceFloor
   label: string
@@ -24,7 +24,7 @@ const FLOORS: Array<{
     label: 'Roof',
     label_sq: 'Çatia',
     elevation: '+4',
-    topPct: '7%',
+    topPct: '35%',
     leftPct: '50%',
     lineDir: 'right',
   },
@@ -33,7 +33,7 @@ const FLOORS: Array<{
     label: '3rd Floor',
     label_sq: 'Kati 3',
     elevation: '+3',
-    topPct: '30%',
+    topPct: '42%',
     leftPct: '50%',
     lineDir: 'right',
   },
@@ -42,7 +42,7 @@ const FLOORS: Array<{
     label: 'Ground Floor',
     label_sq: 'Kati Përdhes',
     elevation: '±0',
-    topPct: '58%',
+    topPct: '50%',
     leftPct: '50%',
     lineDir: 'right',
   },
@@ -51,7 +51,7 @@ const FLOORS: Array<{
     label: 'B1 Floor',
     label_sq: 'Kati B1',
     elevation: '-1',
-    topPct: '76%',
+    topPct: '66%',
     leftPct: '50%',
     lineDir: 'right',
   },
@@ -61,7 +61,7 @@ const FLOORS: Array<{
     label: 'Ext. Boxes',
     label_sq: 'Kutitë Ext.',
     elevation: 'EX',
-    topPct: '64%',
+    topPct: '50%',
     leftPct: '12%',
     lineDir: 'left',
   },
@@ -82,10 +82,10 @@ export function FloorSelector({
     <div
       className="relative w-full overflow-hidden"
       style={{
-        aspectRatio: '1333/1000',
+        aspectRatio: '1600/910',
         border: '2px solid var(--color-concrete-char)',
-        backgroundImage: "url('/pyramid/mvrdv-28.jpg')",
-        backgroundSize: 'cover',
+        backgroundImage: "url('/sketches/section-bb.jpeg')",
+        backgroundSize: 'contain',
         backgroundPosition: 'center center',
         backgroundColor: 'var(--color-concrete-black)',
       }}

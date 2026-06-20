@@ -63,8 +63,8 @@ export function L3FloorPlan({ spaces = [], onSpaceClick }: L3FloorPlanProps) {
   const octPts = Array.from({ length: 8 }, (_, i) => { const p = pt(348, i * 45 + 22.5); return `${p.x.toFixed(1)},${p.y.toFixed(1)}` }).join(' ')
 
   return (
-    <div className="relative w-full select-none" style={{ maxWidth: 720 }}>
-      <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" className="w-full" style={{ background: '#f5f5f0' }} aria-label="Level L+3 — Pyramid of Tirana">
+    <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
+      <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" preserveAspectRatio="xMidYMid meet" style={{ background: 'transparent' }} aria-label="Level L+3 — Pyramid of Tirana">
         {/* Site boundary */}
         <polygon points={octPts} fill="#e8e6dd" stroke="#1a1a1a" strokeWidth="2" />
 
