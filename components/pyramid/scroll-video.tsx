@@ -218,8 +218,8 @@ export function ScrollVideo({
             borderRadius: '24px',
             backdropFilter: 'blur(40px)',
             WebkitBackdropFilter: 'blur(40px)',
-            backgroundColor: 'rgba(255,255,255,0.10)',
-            border: '1px solid rgba(255,255,255,0.20)',
+            backgroundColor: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.10)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -230,16 +230,32 @@ export function ScrollVideo({
             pointerEvents: 'none',
           }}
         >
-          {/* HUD status row — subtle, doesn't compete with H1 */}
+          {/* macOS window controls — top-left, MVRDV box palette.
+              Master-plan override: rounded-full authorized for these three dots only. */}
+          <div style={{
+            position: 'absolute',
+            top: '16px',
+            left: '20px',
+            display: 'flex',
+            gap: '7px',
+            alignItems: 'center',
+          }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#e63946', flexShrink: 0 }} />
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#f9c74f', flexShrink: 0 }} />
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#97C459', flexShrink: 0 }} />
+          </div>
+
+          {/* HUD status row — lime accent, punchy against the blur */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '22px' }}>
-            <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'var(--color-lime)', flexShrink: 0 }} />
+            <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#c8da2b', flexShrink: 0 }} />
             <p style={{
               fontFamily: 'var(--font-mono)',
               fontSize: '8px',
               letterSpacing: '0.20em',
               textTransform: 'uppercase',
-              color: 'rgba(245,245,240,0.38)',
+              color: '#c8da2b',
               margin: 0,
+              filter: 'drop-shadow(0 0 6px rgba(200,218,43,0.55))',
             }}>
               [ PIRAMIDA BACKSTAGE // FEED ACTIVE ]
             </p>
@@ -252,33 +268,36 @@ export function ScrollVideo({
               fontSize: '9px',
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
-              color: 'rgba(245,245,240,0.50)',
+              color: 'rgba(255,255,255,0.65)',
               margin: '0 0 18px',
+              filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.6))',
             }}>
               {overlayLabel}
             </p>
           )}
 
-          {/* Main hero title — centered, full-width inside the plate */}
+          {/* Main hero title — pure white, sharp drop-shadow for glass legibility */}
           <h1 style={{
             fontFamily: 'var(--font-display)',
             fontSize: 'clamp(48px, 6vw, 88px)',
             fontWeight: 500,
             letterSpacing: '-0.02em',
-            color: 'var(--color-concrete-bone)',
+            color: '#ffffff',
             margin: 0,
             lineHeight: 0.95,
+            filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.55))',
           }}>
             {overlayTitle}
           </h1>
 
-          {/* Subtitle */}
+          {/* Subtitle — lime for that vibrant MVRDV pop */}
           <p style={{
             fontFamily: 'var(--font-mono)',
             fontSize: '11px',
             letterSpacing: '0.10em',
-            color: 'rgba(245,245,240,0.42)',
+            color: '#c8da2b',
             margin: '18px 0 0',
+            filter: 'drop-shadow(0 1px 6px rgba(200,218,43,0.40))',
           }}>
             {overlaySubtitle}
           </p>
