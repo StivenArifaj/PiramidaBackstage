@@ -269,38 +269,45 @@ export function ScrollVideo({
         {/* Slot for absolutely-positioned overlays (stats panel, CTAs, badges) */}
         {children}
 
-        {/* Centre watermark — premium glassmorphic HUD panel (authorised design-system exception).
-            Covers "BLEC!STRAKOSHA MEDIA 4K" baked into all frames. Styled as a deliberate
-            production feed indicator so it reads as intentional HUD, not a censor smudge.
-            Position: cover-fit math → source ~960×660 → screen 50%L / 58%T at 1440×900. */}
+        {/* Centre watermark mask — authorised design-system exception for backdrop-blur.
+            Covers the "BSM 4K BLEDI STRAKOSHA MEDIA" videographer text baked into all
+            frames. Positioned in the lower-centre of the viewport where the watermark
+            appears. Heavy blur + dark tint completely obliterates the white text while
+            still hinting at the building behind. Label reads as an intentional HUD feed
+            indicator, not a censor smudge.                                              */}
         <div
           aria-hidden="true"
           style={{
             position: 'absolute',
             left: '50%',
-            top: '58%',
-            transform: 'translate(-50%, -50%)',
+            transform: 'translateX(-50%)',
+            bottom: '15%',
+            width: '80%',
+            maxWidth: '900px',
+            height: '10rem',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            backgroundColor: 'rgba(0,0,0,0.20)',
+            border: '1px solid rgba(255,255,255,0.10)',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            gap: '9px',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            backgroundColor: 'rgba(255,255,255,0.10)',
-            border: '1px solid rgba(255,255,255,0.20)',
-            padding: '10px 18px',
+            justifyContent: 'center',
+            gap: '10px',
             zIndex: 3,
             pointerEvents: 'none',
-            whiteSpace: 'nowrap',
           }}
         >
-          <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'var(--color-lime)', flexShrink: 0 }} />
+          {/* Live-feed indicator dot */}
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--color-lime)', flexShrink: 0 }} />
           <p style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: '8px',
-            letterSpacing: '0.16em',
+            fontSize: '9px',
+            letterSpacing: '0.18em',
             textTransform: 'uppercase',
-            color: 'rgba(245,245,240,0.88)',
+            color: 'rgba(245,245,240,0.80)',
             margin: 0,
+            textAlign: 'center',
           }}>
             [ PIRAMIDA BACKSTAGE // FEED ACTIVE ]
           </p>
