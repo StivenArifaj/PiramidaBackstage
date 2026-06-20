@@ -111,6 +111,7 @@ export function ChatbotPanel({ history, isTyping, input, isAdmin = false, onInpu
 
         {history.map((msg, i) => {
           const isUser = msg.role === 'user'
+          const displayContent = msg.content.replace(/\[REDIRECT_TO_SPACE:[a-zA-Z0-9-]+\]/g, '').trim()
           return (
             <div
               key={i}
@@ -142,7 +143,7 @@ export function ChatbotPanel({ history, isTyping, input, isAdmin = false, onInpu
                     wordBreak: 'break-word',
                   }}
                 >
-                  {msg.content}
+                  {displayContent}
                 </p>
               </div>
             </div>

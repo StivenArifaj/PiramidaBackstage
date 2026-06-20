@@ -1,8 +1,11 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { ChatbotPanel, type ChatMessage } from './chatbot-panel'
 import type { ChatResponse } from '@/types/api'
+
+const REDIRECT_RE = /\[REDIRECT_TO_SPACE:([a-zA-Z0-9-]+)\]/
 
 const M = 'var(--font-mono)'
 
@@ -16,11 +19,22 @@ interface ChatbotCubeProps {
 }
 
 export function ChatbotCube({ isAdmin = false }: ChatbotCubeProps) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [history, setHistory] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const sessionId = useRef(genSessionId())
+
+  // Intercept [REDIRECT_TO_SPACE:CODE] tags from the AI and navigate immediately
+  useEffect(() => {
+    const last = history[history.length - 1]
+    if (!last || last.role !== 'assistant') return
+    const match = last.content.match(REDIRECT_RE)
+    if (match) {
+      router.push('/spaces/' + match[1].toUpperCase())
+    }
+  }, [history, router])
 
   const handleSend = useCallback(async () => {
     const text = input.trim()
