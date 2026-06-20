@@ -84,14 +84,24 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/backend] — Booking Pipeline: POST /api/events now auto-generates quote + 8 tasks (setup, AV, reception, security, teardown, cleaning) immediately on creation. acceptQuote fixed FK bug (depends_on_task_id null on insert), no longer duplicates tasks. `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/QA] — Automated QA: Set up Playwright (@playwright/test 1.61.0 + chromium), wrote exhaustive E2E space data audit script (`tests/spaces-audit.spec.ts`). Fetches all spaces from live API (all 5 floors), visits every detail page, checks h1 name, capacity in DOM, and primary image naturalWidth. Writes `spaces-audit-report.md`. `npx tsc --noEmit` clean.
 - [2026-06-20 20:30] OpenCode [Aron/Frontend] — Live Map Integration: Wired interactive floor plans to real API data (`/api/spaces?floor=…`) and tuned SVG polygon radii (viewBox 0 0 1000 1000, center 500,500, radii ×1.25) to match blueprint sketches.
+- [2026-06-20 22:00] OpenCode [Aron/Frontend] — Bugfix: Wired dynamic space data to DOM (H1, Capacity, Images) and patched missing A-ring photo URLs + renamed `public/Sketches/` → `public/sketches/` for case-sensitive URL consistency.
+
+## Current State
+
+- **Phase:** Phase 7 complete — Full end-to-end booking pipeline live + Live Map Integration + space detail page DOM fix.
+- The space detail page (`app/spaces/[code]/page.tsx`) now guards against undefined `code` and fetch errors, preventing hang in loading state.
+- Mock data (`lib/db/mock-data.ts`) A1–A19 photo_urls now point to `/sketches/` (lowercase) with distributed sketch files (plan-groundfloor, sections, isometrics).
+- `public/Sketches/` renamed to `public/sketches/` for URL case-sensitivity correctness on Vercel/Linux.
 
 ## Next Steps
 
-### RUN THE SPACES AUDIT (QA step before demo):
+### RE-RUN THE SPACES AUDIT (QA Lead):
+The data-binding fix is committed and pushed. QA Lead should re-run the E2E audit:
 ```bash
+git pull
 npm run dev          # terminal 1 — keep running
 npx playwright test tests/spaces-audit.spec.ts   # terminal 2
-# Report written to: spaces-audit-report.md
+# Check spaces-audit-report.md — expect all h1/capacity/img checks to pass
 ```
 
 ### READY FOR END-TO-END DEMO — run this checklist:
