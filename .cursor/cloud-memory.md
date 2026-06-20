@@ -40,30 +40,32 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 
 ## Current State
 
-- **Phase:** Phase 4 backend slice 1 ✅ **complete** as of 2026-06-20. Spaces API and seed fully implemented. Frontend page build-out in progress.
+- **Phase:** Phase 4 partially complete as of 2026-06-20. Both frontend and backend have done their first slice. Supabase project not yet created — API routes fall back to mock data.
 - **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` passes with zero errors.
-- **What exists now:**
-  - `supabase/migrations/0002_seed.sql` — 53 spaces (4 hero + 15 A-ring + 16 BE exterior + 6 L3 boxes + 4 roof boxes + 8 basement), 11 asset types, 3 demo events with spaces/assets/tasks/quote wired.
-  - `lib/db/client.ts` — `createClient()` (browser SSR) + `createAdminClient()` (service-role, for API routes).
-  - `lib/db/queries/spaces.ts` — `listSpaces`, `getSpaceByCode`, `searchAvailableSpaces` with real Supabase queries + mock-data fallback when env vars absent.
-  - `app/api/spaces/route.ts` — GET with zod-validated floor/capacity/features/date filters.
-  - `app/api/spaces/[code]/route.ts` — GET single space + upcoming bookings.
-  - `app/api/spaces/availability/route.ts` — GET availability search (from/to required, capacity/features optional).
-  - `npx tsc --noEmit` passes with zero errors.
-  - Full folder structure scaffolded per master-plan §5
-  - `app/globals.css` — Tailwind v4 `@theme` block with all design tokens (concrete, lime, box palette, status, fonts)
-  - `app/layout.tsx` — Space Grotesk + Inter + JetBrains Mono via `next/font/google`
-  - `styles/tokens.ts` — TS color/typography constants for non-CSS contexts (SVG, animations)
-  - `types/api.ts`, `types/db.ts`, `types/domain.ts` — full type system + bilingual dictionary
-  - `supabase/migrations/0001_init.sql` — complete schema verbatim from master-plan §6
-  - `lib/` — all stubs present (db client/server, queries, ai, pricing, availability, tasks)
-  - All API route stubs (return empty/501 for now)
-  - All page stubs (marketing, spaces, book, dashboard)
+- **What exists now (frontend):**
+  - **`app/(marketing)/page.tsx`** — landing page: Framer Motion scroll-driven cross-fade hero (3 images), stats panel, manifesto 2-col section, 4-feature strip, dark CTA
+  - **`app/spaces/page.tsx`** — floor selector elevation view: BrandStrip + FloorSelector (left) + FloorPlan SVG (right) + MiniMap
+  - **`app/dashboard/page.tsx`** — enterprise dashboard: KPI strip with donut rings, day-timeline SVG, occupancy segmented bars, conflict panel
+  - **`app/dashboard/events/page.tsx`** — event register: dark header, filter tabs, expand rows with Fragment key pattern, skeleton loading
+  - **`app/dashboard/inventory/page.tsx`** — inventory: grouped table with AvailBar, type SVG icons, KPI tiles
+  - **`app/dashboard/conflicts/page.tsx`** — conflict resolution: severity groups, interactive resolution checklist
+  - **`app/dashboard/layout.tsx`** + **`components/dashboard/sidebar.tsx`** — fixed 220px dark sidebar with lime active state
   - `components/ui/` — all 7 primitives: Cube, Pill, Callout, MonoTable, StatusDot, SectionDivider, BrandStrip
-  - `components/pyramid/` — GroundFloorPlan SVG (16-space interactive radial plan, A1–A16, lime/red/orange/gray status), FloorSelector (elevation photo + 5 pills), MiniMap, FloorPlan wrapper, ScrollVideo (GSAP)
-  - `components/booking/`, `components/dashboard/`, `components/chatbot/` — stubs
+  - `components/pyramid/` — all 5 floor plan SVGs (Ground L0, L3, L-1, Roof, Exterior), FloorSelector (elevation + 5 accurate pills + leader lines + elevation tags), FloorPlan wrapper, MiniMap, ScrollVideo (GSAP, awaits /public/frames/*.webp)
+  - `components/booking/`, `components/chatbot/` — stubs
+  - `public/references/` — all 11 reference images served at `/references/...`
+  - `public/pyramid/` — MVRDV photography
+- **What exists now (backend):**
+  - `supabase/migrations/0002_seed.sql` — 53 spaces (4 hero + 15 A-ring + 16 BE exterior + 6 L3 boxes + 4 roof boxes + 8 basement), 11 asset types, 3 demo events with spaces/assets/tasks/quote wired
+  - `lib/db/client.ts` — `createClient()` (browser SSR) + `createAdminClient()` (service-role, for API routes)
+  - `lib/db/queries/spaces.ts` — `listSpaces`, `getSpaceByCode`, `searchAvailableSpaces` with real Supabase queries + mock-data fallback when env vars absent
+  - `app/api/spaces/route.ts` — GET with zod-validated floor/capacity/features/date filters
+  - `app/api/spaces/[code]/route.ts` — GET single space + upcoming bookings
+  - `app/api/spaces/availability/route.ts` — GET availability search (from/to required, capacity/features optional)
+  - `lib/db/mock-data.ts` — in-memory mock store (events, spaces, assets, conflicts) used by all other API routes
+  - All other API routes (events, conflicts, inventory, dashboard overview, quotes, tasks) wired to mock data
 - **Tailwind v4 note:** No `tailwind.config.ts` — tokens live in `app/globals.css` `@theme` block. This is correct for v4.
-- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6).
+- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) — merged frontend + backend state.
 
 ## Completed Tasks Log
 
@@ -74,23 +76,23 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-19] 11 reference images identified by content (aerial/elevation/interior photos of the real Pyramid + 3 screenshots of the existing piramida.edu.al floor-plan UI). Three-phase bootstrap prompt issued to Claude Code. **Session was switched before Phase 2 completion could be confirmed.**
 - [2026-06-20 ~00:10] Claude Code (claude-sonnet-4-6) — Phase 2 verified and completed: identified all 11 `Screenshot 2026-06-19 at …` PNGs in project root by visual content, copied and renamed them into `.cursor/references/` with correct semantic names (all `.png`).
 - [2026-06-20] Claude Code (claude-sonnet-4-6) — Phase 3 complete: Next.js 16 bootstrapped, all locked deps installed, design tokens in Tailwind v4 CSS, types + DB schema + all folder stubs + 7 UI primitives + Ground Floor SVG + all pyramid components written. `tsc --noEmit` clean.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) — Phase 4 frontend: enterprise dashboard rewrite (KPI donut rings, day timeline, occupancy bars), dashboard sidebar, all 3 dashboard sub-pages (events, inventory, conflicts), all 4 missing SVG floor plans (L3, L-1, Roof, Exterior), mock data API layer.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) — Phase 4 backend slice 1: `0002_seed.sql` (53 spaces, 11 asset types, 3 demo events, tasks, quote), `lib/db/client.ts` (browser + admin clients), `lib/db/queries/spaces.ts` (real Supabase + mock fallback), all 3 spaces API routes with zod validation. `tsc --noEmit` clean.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Landing page + floor selector: built `app/(marketing)/page.tsx` (Framer Motion scroll cross-fade hero, 3 images, stats panel, manifesto, feature strip, dark CTA); updated `components/pyramid/floor-selector.tsx` (accurate pill positions, leader lines, elevation tags, exterior offset left); added `console.log` floor selection in spaces page. `tsc --noEmit` clean.
 
 ## Next Steps
 
-### Frontend Dev (Aron Gjoka) — immediate priorities:
+### Frontend Dev (Aron) — immediate priorities:
 
-1. **Landing page** (`app/(marketing)/page.tsx`): Build the scroll-scrubbed video hero using ScrollVideo component + `aerial-top-down.png` / `wide-context.png`. Use GSAP ScrollTrigger already installed. Hero text: "PIRAMIDA BACKSTAGE" in Space Grotesk. SectionDivider between hero and floor selector.
+1. **Space detail page** (`app/spaces/[code]/page.tsx`): Currently a stub. Show space name, MonoTable specs (capacity, area, hourly rate, ceiling height), photo/background using `interior-atrium.png` or `interior-boxes-detail.png` as fallback. Add `BookingPanel` stub on the right side. Wire to `/api/spaces/[code]` — which is already implemented and returns `GetSpaceResponse`. Add subtle Framer Motion parallax on the background image.
 
-2. **Spaces page** (`app/spaces/page.tsx`): Wire up FloorSelector (uses `front-elevation.png` as bg — copy it to `public/references/` or use the `.cursor/references/` path via next.config image config) + FloorPlan component. On floor select → show the Ground Floor SVG. Add BrandStrip at top.
+2. **Booking flow** (`app/book/page.tsx`, `app/book/confirmation/page.tsx`): Date/time/attendees form + inline quote display. Wire to `POST /api/events` + `POST /api/quotes`. Confirmation shows event ref code, task list, asset reservation summary.
 
-3. **Space detail page** (`app/spaces/[code]/page.tsx`): Background video (use `interior-atrium.png` or `interior-boxes-detail.png` as static fallback). Show space name, MonoTable with specs (capacity, area, hourly rate, ceiling height). Add BookingPanel on the right. Scroll behavior: image zooms in slightly on scroll.
+3. **Chatbot UI** (`components/chatbot/chatbot-cube.tsx`, `components/chatbot/chatbot-panel.tsx`): Floating dark cube (bottom-right) that expands into a panel. Wire to `/api/chatbot` once GEMINI_API_KEY is in `.env.local`.
 
-4. **Polish Ground Floor SVG** (`components/pyramid/floor-plans/ground-floor.tsx`): The SVG is functional but the A17–A19 spaces use tiny arc spans — consider removing or repositioning them. The main 16 spaces (A1–A16) are solid. Wire real data from `/api/spaces?floor=l0` once the backend exists.
+4. **Spaces page live data**: Replace `DEMO_SPACES` array in `app/spaces/page.tsx` with a fetch from `/api/spaces?floor=<activeFloor>`. The API is already live and returns `ListSpacesResponse`.
 
-5. **public/references/**: Copy the reference images that are needed as actual URLs (front-elevation.png, aerial-top-down.png, etc.) from `.cursor/references/` to `public/references/` so Next.js can serve them. OR configure `next.config.ts` to allow local file paths.
-
-### Backend Dev (Stiven) — immediate next priorities:
+### Backend Dev (Stiven) — immediate priorities:
 
 1. **Create Supabase project** and add env vars to `.env.local`:
    ```
@@ -99,30 +101,34 @@ Both read `/types/` freely. Backend Dev owns writing to it.
    SUPABASE_SERVICE_ROLE_KEY=eyJ...
    GEMINI_API_KEY=...
    ```
-2. **Run migrations**: `supabase db push` (runs `0001_init.sql` then `0002_seed.sql`). Verify with: `SELECT count(*) FROM spaces;` → should return 53.
-3. **Next backend task**: Implement `POST /api/events` + `GET /api/events` + `GET /api/events/[id]` in `lib/db/queries/events.ts` and their route files. See master-plan §7 for `CreateEventRequest`, `CreateEventResponse`, `ListEventsResponse`, `GetEventResponse`. Use same pattern as spaces (Supabase + mock fallback, zod validation).
-4. **Then**: Implement `POST /api/quotes` + `POST /api/quotes/[id]/accept` (quote generation in `lib/pricing/quote.ts`, task generation in `lib/tasks/generate.ts`).
+2. **Run migrations**: `supabase db push` (runs `0001_init.sql` then `0002_seed.sql`). Verify: `SELECT count(*) FROM spaces;` → should return 53.
+3. **Implement events API**: `POST /api/events` + `GET /api/events` + `GET /api/events/[id]` in `lib/db/queries/events.ts`. Use same pattern as spaces (Supabase + mock fallback, zod validation). See master-plan §7 for `CreateEventRequest`, `ListEventsResponse`, `GetEventResponse`.
+4. **Implement quotes**: `POST /api/quotes` + `POST /api/quotes/[id]/accept` (quote generation in `lib/pricing/quote.ts`, task generation in `lib/tasks/generate.ts`).
 
-**Sync point:** once `/api/spaces?floor=l0` returns real data (after Supabase is set up), frontend can wire the Ground Floor SVG to live availability colors.
+**Sync point:** once Supabase is live, frontend swaps `DEMO_SPACES` for a fetch call — `/api/spaces?floor=l0` returns real data with live availability colors.
 
 ## Open Questions / Blockers
 
 - **Supabase project not yet created** — all 3 spaces API routes work via mock-data fallback until env vars are set. Once set, routes automatically switch to real Supabase queries.
-- `public/references/` does not exist yet — the FloorSelector uses `backgroundImage: url('/references/front-elevation.png')` which will 404 until either (a) images are copied to `public/references/` or (b) next.config is updated. **Frontend dev: copy `.cursor/references/*.png` to `public/references/` as a first step.**
-- `pnpm tsc --noEmit` fails due to an unrelated pnpm native build script error (sharp, unrs-resolver). Use `npx tsc --noEmit` instead — this works fine.
+- `public/references/` now exists with all 11 images — FloorSelector and landing page images resolve correctly.
+- `pnpm tsc --noEmit` fails due to an unrelated pnpm native build script error (sharp, unrs-resolver). Use `npx tsc --noEmit` instead.
+- `ScrollVideo` component expects frame images at `/public/frames/0001.webp…0120.webp`. These do not exist. The landing page uses Framer Motion cross-fade instead. ScrollVideo can be wired when frames are extracted.
+- GEMINI_API_KEY not yet configured — `/api/chatbot` is stubbed.
 
 ## Key Decisions Made
 
 - **Mock-data fallback in query layer**: `lib/db/queries/spaces.ts` checks `isSupabaseConfigured()` (env vars present + URL starts with `http`) and falls back to `lib/db/mock-data.ts` if not. This keeps the frontend working during development before Supabase is wired up.
 - **`createAdminClient()` uses service-role key**: API routes use the service-role client (bypasses RLS). The browser client uses anon key. RLS policies are not defined in 0001_init.sql — add them before production.
 - **Zod v4 compatibility**: The project has `zod ^4.4.3`. Schemas use only v3-compatible APIs (`z.object`, `z.string`, `z.coerce.number`, `z.enum`, `.transform`, `.optional`, `.safeParse`). Avoided `.flatten()` on ZodError since that API changed in v4.
-- **`AvailabilityResponse.matches` uses `SpaceWithAvailability` for `space` field**: The response type declares `Space` but we return the richer `SpaceWithAvailability`. TypeScript accepts this (structural subtyping). The extra `availability` field appears in JSON — this is intentional (convenient for frontend).
 - **Reference image extensions are `.png`, not `.jpg`**: The 11 source images were macOS screenshots, all PNG. master-plan §0 lists `.jpg` for 9 of them — ignore those extensions.
 - **`aerial-top-down-day` does not exist**: No daylight straight-down aerial was in the source image set.
 - **Tailwind v4, not v3**: `create-next-app` installed Tailwind v4. There is NO `tailwind.config.ts` — all tokens live in `app/globals.css` inside `@theme {}`. This is correct. Do not create a `tailwind.config.ts`.
 - **Package name is `piramida-backstage`** (lowercase): The directory is `PiramidaBackstage` but npm requires lowercase names. `package.json` uses `"name": "piramida-backstage"`.
 - **Ground Floor SVG geometry**: 16 radial spaces (A1–A16) at every 22.5° centered angle, each ~16.5° arc span between corridor wedges. BOX_INNER=178, BOX_OUTER=318, center at (400,400). A17–A19 are tiny transition connectors — may be removed in polish pass.
-- **API route stubs return empty data**: All API routes are stubbed to return empty arrays / 501. Backend dev fills them in Phase 4.
+- **API routes use mock data (lib/db/mock-data.ts)**: All non-spaces API routes return real-looking data from the in-memory mock store. Spaces routes use Supabase with mock fallback.
+- **Landing page uses Framer Motion cross-fade, not ScrollVideo**: No `/public/frames/*.webp` files exist. The scroll-scrubbed video is implemented as a 3-image cross-fade using `useScroll` + `useTransform`. ScrollVideo component remains for future use.
+- **No CSS gradients on hero overlay**: The dark photo scrim uses flat `rgba(10,10,10,0.46)` — no `linear-gradient`. This satisfies the design system rule while maintaining text legibility.
+- **FloorSelector exterior pill offset left**: Exterior boxes (BE1–BE16) ring the building perimeter. The pill is positioned at `left: 14%, top: 62%` to appear outside/left of the building in the elevation photo, distinguishing it from the stacked center pills.
 
 ## Reference files index
 

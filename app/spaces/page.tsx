@@ -32,6 +32,11 @@ export default function SpacesPage() {
   const [activeFloor, setActiveFloor] = useState<SpaceFloor>('l0')
   const [role, setRole] = useState<'customer' | 'organizer'>('customer')
 
+  function handleFloorSelect(floor: SpaceFloor) {
+    console.log('[FloorSelector] selected floor:', floor)
+    setActiveFloor(floor)
+  }
+
   const floorLabel = FLOOR_LABELS[activeFloor]
 
   return (
@@ -57,7 +62,7 @@ export default function SpacesPage() {
           <div style={{ padding: '32px', flex: 1 }}>
             <FloorSelector
               activeFloor={activeFloor}
-              onFloorSelect={setActiveFloor}
+              onFloorSelect={handleFloorSelect}
               lang="en"
             />
           </div>
