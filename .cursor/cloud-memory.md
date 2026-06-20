@@ -40,7 +40,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 
 ## Current State
 
-- **Phase:** Phase 4 polished as of 2026-06-20. Comprehensive frontend UI/copy sweep complete. UI Airgap enforced. Supabase not yet live — all routes fall back to mock data.
+- **Phase:** Phase 4 fully wired as of 2026-06-20. Frontend UI/copy sweep complete AND backend API routes wired. App is end-to-end functional with mock-data fallback. Supabase not yet provisioned — all routes fall back to mock data until env vars set.
 - **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` passes with zero errors.
 - **Design system compliance:** All Title Case labels removed across dashboard (now UPPERCASE or lowercase per §4). Forbidden ⚠ emoji removed from booking page. Hardcoded font strings replaced with CSS variables (`var(--font-mono)`, `var(--font-display)`) in all 5 dashboard files. Brutalist hover states added to all primary action buttons via `data-brutal` / `data-brutal-outline` / `.dash-link` CSS. Missing `<h1>` elements added to all 3 dashboard sub-pages (M2 resolved).
 - **UI Airgap (active):** Public BrandStrip now only links to `/spaces`. No dashboard links anywhere on the client-facing site. `/book` breadcrumb goes to `/spaces`. Dashboard lives behind `/dashboard` with its own sidebar — no shared navigation with the public site.
@@ -51,21 +51,24 @@ Both read `/types/` freely. Backend Dev owns writing to it.
   - **`components/ui/brand-strip.tsx`** — simplified: logo + "spaces" nav link only. No role/onRoleSwitch props. No dashboard link.
   - **`components/ui/pill.tsx`** — hard rectangular, no border-radius, Tailwind hover invert.
   - **`components/ui/image-gallery.tsx`** — SVG-hatch placeholder, ← → nav with aria-labels, 6-up thumb strip.
-  - **`components/chatbot/chatbot-cube.tsx`** + **`chatbot-panel.tsx`** — floating dark cube (bottom-right, z-50), expands to chat panel. Message history, typing indicator, POST /api/chatbot. Mounted in app/layout.tsx.
+  - **`components/chatbot/chatbot-cube.tsx`** + **`chatbot-panel.tsx`** — floating dark 56px cube, expands to full chat panel. Message history, typing dots, POST /api/chatbot, session_id.
   - **`app/spaces/page.tsx`** — floor selector (no role state). BrandStrip without props.
   - **`app/spaces/[code]/page.tsx`** — space detail: ImageGallery + dark header + metrics + MonoTable + BookingPanel. Submit button has `data-brutal` hover state.
   - **`app/dashboard/layout.tsx`** — sidebar-only (DashboardSidebar), no BrandStrip. Fully isolated.
-  - **`app/dashboard/page.tsx`** — KPI strip (JetBrains Mono numerals), donut rings, day-timeline, occupancy bars, conflict panel. `<h1>` added, labels UPPERCASE. Fonts via CSS variables.
+  - **`app/dashboard/page.tsx`** — KPI strip (live from `/api/dashboard/overview`), upcoming events (live from `/api/events`). `<h1>` added, labels lowercase/UPPERCASE per §4. Fonts via CSS vars. Hardcoded UPCOMING removed.
   - **`app/dashboard/inventory/page.tsx`** — KPI strip (JetBrains Mono), grouped asset table, AvailBar. `<h1>` added, labels UPPERCASE. Fonts via CSS variables.
-  - **`app/dashboard/events/page.tsx`** — event register, filter tabs, expand rows. Labels UPPERCASE. Fonts via CSS variables.
+  - **`app/dashboard/events/page.tsx`** — event register fetched live from `/api/events`, filter tabs, expand rows with tasks lazily fetched from `/api/tasks?event_id=...`. Hardcoded TASKS removed. Labels lowercase. Fonts via CSS vars.
   - **`app/dashboard/conflicts/page.tsx`** — conflict cards, resolution checklist. `<h1>` added, labels UPPERCASE. Fonts via CSS variables.
   - **`components/dashboard/sidebar.tsx`** — nav links use `dash-link` class with hover invert effect. Fonts via CSS variables.
   - **`app/globals.css`** — added brutalist `data-brutal`, `data-brutal-outline`, `.dash-link` hover styles. All existing tokens unchanged.
-  - **`components/pyramid/scroll-video.tsx`** — Glass Hero Plate intact. Canvas `transform: scale(1.04)`.
-  - **`components/pyramid/`** — all 5 floor plan SVGs, FloorSelector, FloorPlan, MiniMap, ScrollVideo.
-- **What exists now (backend):** Mock-data layer for all routes. Supabase schema + seed ready but not deployed. Spaces queries have real Supabase + mock fallback.
+  - **`components/pyramid/scroll-video.tsx`** — Glass Hero Plate intact. Canvas `transform: scale(1.04)`. Black watermark mask removed.
+  - **`components/chatbot/chatbot-root.tsx`** — path-aware wrapper: hides chatbot on `/dashboard/**`. Mounted in `app/layout.tsx`.
+  - **`components/pyramid/`** — all 5 floor plan SVGs, FloorSelector, FloorPlan, MiniMap, ScrollVideo (GSAP canvas, Glass Hero Plate).
+- **What exists now (backend):** All API routes wired with Supabase + mock-data fallback. Gemini chatbot (`gemini-2.5-flash`) with 5 function tools (search_spaces, check_space_availability, create_event_request, generate_quote, list_assets_needed). Events, Quotes, Tasks APIs with Zod validation.
+- **Backend files wired:** `lib/db/queries/events.ts`, `lib/ai/tools.ts`, `lib/ai/gemini.ts`, `lib/ai/tool-handlers.ts`, `app/api/events/route.ts`, `app/api/events/[id]/route.ts`, `app/api/quotes/route.ts`, `app/api/quotes/[id]/route.ts`, `app/api/tasks/route.ts`, `app/api/chatbot/route.ts`.
+- **Env template:** `.env.example` created (git force-added) — developer copies to `.env.local` and fills in 4 keys.
 - **Tailwind v4 note:** No `tailwind.config.ts` — tokens in `app/globals.css` `@theme`. Correct.
-- **Last updated:** 2026-06-20, OpenCode Init (opencode) [Aron/frontend] — Comprehensive frontend UI/copy sweep: design system compliance enforcement, Title Case purge, emoji removal, font variables, `<h1>` additions, brutalist hover CSS.
+- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) [Stiven/backend] — Session Init & Full System Wiring complete. `npx tsc --noEmit` clean.
 
 ## Completed Tasks Log
 
@@ -95,30 +98,28 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Resolved C2 and H2-H5: Implemented ChatbotCube (fixed 56px dark cube, bottom-right, z-50, 2×2 SVG grid icon) + ChatbotPanel (message history, lime user bubbles, typing dots, session_id, POST /api/chatbot); mounted in app/layout.tsx. Fixed H2 (dashboard KPI D→M), H3 (inventory KPI D→M), H4 (image-gallery aria-labels), H5 (interlude "80+" in var(--font-mono) span). `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — UI Airgap: Decoupled client site and dashboard, removing all cross-navigation. Removed dashboard link + role-switch button from BrandStrip (simplified to spaces-only nav, dropped role/onRoleSwitch props). Removed "organizer view" CTA from landing page Flythrough 1. Changed /book breadcrumb from "← dashboard" to "← all spaces" (→ /spaces). Verified dashboard/layout.tsx already clean (sidebar-only, no BrandStrip). Cleaned dead role state from spaces/page.tsx. `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Deleted black watermark patch, applied canvas scale crop, and implemented C2 Chatbot UI. Removed 224×40px concrete-black mask div from scroll-video.tsx; added `transform: scale(1.04)` to canvas to push Ezgif watermark off-screen naturally. Created `components/chatbot/chatbot-root.tsx` (path-aware wrapper: hides chatbot on /dashboard/** routes via usePathname). Updated app/layout.tsx to use ChatbotRoot. `npx tsc --noEmit` clean.
-- [2026-06-20 13:15] OpenCode Init (opencode) [Aron/frontend] — Comprehensive UI/Copy Sweep: Cloned repo, ingested docs, fixed forbidden ⚠ emoji in book/page.tsx, removed all Title Case labels across 4 dashboard pages (→ UPPERCASE/lowercase per §4), added `<h1>` elements to 3 dashboard pages (M2 resolved), fixed hardcoded font strings to CSS variables in 5 dashboard files, added brutalist CSS hover states for all primary action buttons (data-brutal / data-brutal-outline / .dash-link), deleted old duplicate tailwind.config.ts reference. `npx tsc --noEmit` passes clean.
+- [2026-06-20 13:15] OpenCode Init (opencode) [Aron/frontend] — Comprehensive UI/Copy Sweep: fixed forbidden ⚠ emoji in book/page.tsx, removed all Title Case labels across 4 dashboard pages (→ UPPERCASE/lowercase per §4), added `<h1>` elements to 3 dashboard pages (M2 resolved), fixed hardcoded font strings to CSS variables in 5 dashboard files, added brutalist CSS hover states (data-brutal / data-brutal-outline / .dash-link). `npx tsc --noEmit` passes clean.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/backend] — Session Init & Full System Wiring: Synced repo (git pull), created .env.example, implemented lib/db/queries/events.ts (Supabase + mock fallback), lib/ai/tools.ts (5 Gemini function declarations), lib/ai/gemini.ts (client init), lib/ai/tool-handlers.ts (all 5 tool handlers), app/api/events/route.ts (GET+POST with Zod validation), app/api/events/[id]/route.ts (GET+PATCH), app/api/quotes/route.ts (POST with Zod), app/api/quotes/[id]/route.ts (GET+POST accept), app/api/tasks/route.ts (GET with event_id filter), app/api/chatbot/route.ts (Gemini 2.5-flash with multi-turn function calling). Deleted hardcoded UPCOMING from dashboard/page.tsx (now fetches /api/events), deleted hardcoded TASKS from dashboard/events/page.tsx (lazily fetches /api/tasks?event_id=...). `npx tsc --noEmit` clean, zero errors.
 
 ## Next Steps
 
-> UI/Copy sweep complete. C1, C2, H1–H5, M2 all resolved. Design system compliance enforced across all frontend routes. Remaining work:
+> Frontend design compliance done (Aron). Backend wiring done (Stiven). Focus: Supabase provisioning, end-to-end testing, demo rehearsal.
+
+### Both (immediate — demo prep):
+1. **Create Supabase project** — copy `.env.example` → `.env.local`, fill in the 4 keys, run `supabase db push` (`0001_init.sql` + `0002_seed.sql`). Verify `SELECT count(*) FROM spaces;` = 53.
+2. **End-to-end test the booking flow** — Submit event via `/book`, check `/dashboard/events` shows it, generate quote via chatbot, accept it, verify tasks appear in expanded row.
+3. **Test Gemini chatbot live** — say "Book Blue Space for 200 people on Friday 8pm–11pm, name Ardi, email ardi@test.al". Verify tools fire, event appears in dashboard.
+4. **Seed demo data** — 3 pre-confirmed events, 1 conflict, low chair inventory.
 
 ### Frontend (Aron):
-1. **[M4] Add photo URLs to A-ring mock spaces** — `lib/db/mock-data.ts` A1–A16 have `photo_urls: []`. Add Unsplash architecture URLs (or `/references/` images) so demo gallery doesn't show hatch placeholder for extension spaces.
-2. **[M5] Replace hardcoded UPCOMING array in dashboard** — `app/dashboard/page.tsx` has static `UPCOMING` array with stale attendee counts. Drive from `/api/dashboard/overview` response instead.
-3. **Wire chatbot to Gemini** — `app/api/chatbot/route.ts` returns `"Coming soon."`. Once `GEMINI_API_KEY` is set, implement real Gemini call with tool-call schema (create_event, generate_quote, check_availability). See `types/api.ts` ChatRequest/ChatResponse.
+1. **[M4] Add photo URLs to A-ring mock spaces** — `lib/db/mock-data.ts` A1–A16 have `photo_urls: []`. Add Unsplash architecture URLs so gallery doesn't show hatch placeholder.
+2. **Wire floor selector to live `/api/spaces?floor=…`** — `app/spaces/page.tsx` still uses `DEMO_SPACES` constant. Swap to fetch from `/api/spaces` once Supabase is live.
 
-### Backend (Stiven) — immediate priorities (point directly to Stiven):
-1. **Create Supabase project** and add env vars to `.env.local`:
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-   SUPABASE_SERVICE_ROLE_KEY=eyJ...
-   GEMINI_API_KEY=...
-   ```
-2. **Run migrations**: `supabase db push` → verify `SELECT count(*) FROM spaces;` returns 53.
-3. **Implement `POST /api/events`** (full create with reference code generation) and **`POST /api/chatbot`** (Gemini with tool-calls). See master-plan §7.
-4. **Implement `POST /api/quotes`** + task generation in `lib/tasks/generate.ts`.
-
-**Sync point:** once Supabase is live, frontend swaps `DEMO_SPACES` for `/api/spaces?floor=l0` and gets real availability colors.
+### Backend (Stiven):
+1. **Test `POST /api/quotes/[id]`** (accept) — confirm tasks inserted into Supabase `tasks` table after acceptance.
+2. **Wire `/api/dashboard/overview` occupancy to real data** — currently returns `Math.random()` pct. Replace with real `event_spaces` count.
+3. **Implement `/api/conflicts` route** — currently mock. Wire to real DB query (overlapping events in same space).
+4. **Demo script rehearsal** — run through master-plan §10 at least 3 times.
 
 ## Open Questions / Blockers
 

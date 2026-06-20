@@ -42,25 +42,6 @@ const TEAM_COLOR: Record<string, string> = {
 
 const ALL_STATUSES: EventStatus[] = ['requested', 'quoted', 'confirmed', 'in_progress', 'completed', 'cancelled']
 
-// ── Mock tasks ────────────────────────────────────────────────────────────────
-const TASKS: Record<string, Task[]> = {
-  'evt-001': [
-    { id: 't1', title: 'Stage assembly — Blue Space', team: 'logistics', status: 'pending', due_at: new Date(Date.now() + 79200000).toISOString() },
-    { id: 't2', title: 'AV system calibration', team: 'av', status: 'pending', due_at: new Date(Date.now() + 81000000).toISOString() },
-    { id: 't3', title: 'Chair placement · 250 seats', team: 'logistics', status: 'pending', due_at: new Date(Date.now() + 82800000).toISOString() },
-    { id: 't4', title: 'Reception desk setup', team: 'reception', status: 'pending', due_at: new Date(Date.now() + 84600000).toISOString() },
-    { id: 't5', title: 'Post-event teardown', team: 'logistics', status: 'pending', due_at: new Date(Date.now() + 104400000).toISOString() },
-  ],
-  'evt-002': [
-    { id: 't6', title: 'Chair placement · 80 seats', team: 'logistics', status: 'pending', due_at: new Date(Date.now() + 169200000).toISOString() },
-    { id: 't7', title: 'Projector setup and test', team: 'av', status: 'pending', due_at: new Date(Date.now() + 165600000).toISOString() },
-    { id: 't8', title: 'Post-event cleanup', team: 'cleaning', status: 'pending', due_at: new Date(Date.now() + 183600000).toISOString() },
-  ],
-  'evt-003': [
-    { id: 't9', title: 'Standing reception setup', team: 'logistics', status: 'pending', due_at: new Date(Date.now() + 255600000).toISOString() },
-    { id: 't10', title: 'Security briefing', team: 'security', status: 'pending', due_at: new Date(Date.now() + 252000000).toISOString() },
-  ],
-}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtDate(iso: string) {
@@ -97,15 +78,24 @@ export default function EventsPage() {
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [tasksByEvent, setTasksByEvent] = useState<Record<string, Task[]>>({})
 
   useEffect(() => {
     fetch('/api/events')
       .then(r => r.json())
       .then(d => {
-        setEvents((d.events ?? []).map((e: Event) => ({ ...e, tasks: TASKS[e.id] ?? [] })))
+        setEvents((d.events ?? []).map((e: Event) => ({ ...e, tasks: [] })))
         setLoading(false)
       })
   }, [])
+
+  // Lazy-load tasks when an event row is expanded
+  useEffect(() => {
+    if (!expanded || tasksByEvent[expanded] !== undefined) return
+    fetch(`/api/tasks?event_id=${expanded}`)
+      .then(r => r.json())
+      .then(d => setTasksByEvent(prev => ({ ...prev, [expanded]: d.tasks ?? [] })))
+  }, [expanded, tasksByEvent])
 
   const counts = ALL_STATUSES.reduce(
     (acc, s) => ({ ...acc, [s]: events.filter(e => e.status === s).length }),
@@ -414,16 +404,16 @@ export default function EventsPage() {
                                 <path d="M3 6.5l2.5 2.5 4-4.5" stroke="#c8da2b" strokeWidth="1.3" />
                               </svg>
                               <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9a9890', margin: 0 }}>
-                                pre-event tasks · {(evt.tasks ?? []).length}
+                                pre-event tasks · {(tasksByEvent[evt.id] ?? []).length}
                               </p>
                             </div>
-                            {(evt.tasks ?? []).map((t, ti) => (
+                            {(tasksByEvent[evt.id] ?? []).map((t, ti) => (
                               <motion.div
                                 key={t.id}
                                 initial={{ opacity: 0, x: -8 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ duration: 0.2, delay: ti * 0.04 }}
-                                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: ti < (evt.tasks ?? []).length - 1 ? '1px solid #f0ede4' : 'none' }}
+                                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: ti < (tasksByEvent[evt.id] ?? []).length - 1 ? '1px solid #f0ede4' : 'none' }}
                               >
                                 <span style={{ display: 'block', width: 5, height: 5, borderRadius: '50%', background: TEAM_COLOR[t.team] ?? '#9a9890', flexShrink: 0 }} />
                                 <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#1a1a1a', flex: 1 }}>{t.title}</span>
@@ -432,7 +422,7 @@ export default function EventsPage() {
                                 </span>
                               </motion.div>
                             ))}
-                            {(evt.tasks ?? []).length === 0 && (
+                            {(tasksByEvent[evt.id] ?? []).length === 0 && (
                               <p style={{ fontFamily: M, fontSize: '9px', color: '#c0bdb4', letterSpacing: '0.06em' }}>No tasks assigned yet</p>
                             )}
                           </div>

@@ -1,48 +1,78 @@
 import { NextResponse } from 'next/server'
-import { MOCK_EVENTS, MOCK_SPACES, MOCK_ASSETS, nextRefCode } from '@/lib/db/mock-data'
-import type { CreateEventRequest, CreateEventResponse, ListEventsResponse } from '@/types/api'
+import { z } from 'zod'
+import { createEvent, listEvents } from '@/lib/db/queries/events'
+import { searchAvailableSpaces } from '@/lib/db/queries/spaces'
+import type { CreateEventResponse, ListEventsResponse } from '@/types/api'
+
+const createEventSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  event_type: z.string().optional(),
+  organizer_name: z.string().min(1, 'Organizer name is required'),
+  organizer_email: z.string().email('Invalid email address'),
+  organizer_phone: z.string().optional(),
+  organizer_org: z.string().optional(),
+  attendees_count: z.coerce.number().int().positive('Attendees must be a positive number'),
+  start_at: z.string().min(1, 'Start time is required'),
+  end_at: z.string().min(1, 'End time is required'),
+  preferred_space_codes: z.array(z.string()).optional(),
+  setup_type: z.string().optional(),
+  features_required: z.array(z.string()).optional(),
+})
 
 export async function GET() {
-  const response: ListEventsResponse = { events: MOCK_EVENTS }
-  return NextResponse.json(response)
+  try {
+    const events = await listEvents()
+    const response: ListEventsResponse = { events }
+    return NextResponse.json(response)
+  } catch (err) {
+    console.error('[GET /api/events]', err)
+    return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 })
+  }
 }
 
 export async function POST(req: Request) {
-  const body: CreateEventRequest = await req.json()
+  try {
+    const body = await req.json()
+    const parsed = createEventSchema.safeParse(body)
 
-  // Space matching: prefer requested, then find best fit by capacity
-  let matchedSpace = body.preferred_space_codes?.length
-    ? MOCK_SPACES.find(s => body.preferred_space_codes!.includes(s.code) && s.capacity_pax >= body.attendees_count)
-    : MOCK_SPACES.filter(s => s.capacity_pax >= body.attendees_count && s.availability === 'available').sort((a, b) => a.capacity_pax - b.capacity_pax)[0]
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.issues },
+        { status: 400 }
+      )
+    }
 
-  const alternatives = MOCK_SPACES
-    .filter(s => s.capacity_pax >= body.attendees_count && s.id !== matchedSpace?.id)
-    .slice(0, 3)
+    const data = parsed.data
 
-  const newEvent = {
-    id: `evt-${Date.now()}`,
-    reference_code: nextRefCode(),
-    title: body.title,
-    description: body.description,
-    event_type: body.event_type,
-    organizer_name: body.organizer_name,
-    organizer_email: body.organizer_email,
-    organizer_phone: body.organizer_phone,
-    organizer_org: body.organizer_org,
-    attendees_count: body.attendees_count,
-    status: 'requested' as const,
-    start_at: body.start_at,
-    end_at: body.end_at,
-    setup_start_at: new Date(new Date(body.start_at).getTime() - 7200000).toISOString(),
-    teardown_end_at: new Date(new Date(body.end_at).getTime() + 3600000).toISOString(),
-    spaces: matchedSpace ? [matchedSpace] : [],
-    assets: [],
-    notes: undefined,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    // Validate that end_at is after start_at
+    if (new Date(data.end_at) <= new Date(data.start_at)) {
+      return NextResponse.json(
+        { error: 'end_at must be after start_at' },
+        { status: 400 }
+      )
+    }
+
+    const { event, matchedSpaceId } = await createEvent(data)
+
+    // Find alternatives (spaces that could work but weren't chosen)
+    const availResult = await searchAvailableSpaces({
+      from: data.start_at,
+      to: data.end_at,
+      capacity: data.attendees_count,
+    })
+    const alternatives = availResult.suggested
+      .filter(s => s.id !== matchedSpaceId)
+      .slice(0, 3)
+
+    const response: CreateEventResponse = {
+      event,
+      matched_space: event.spaces[0] ?? undefined,
+      alternatives,
+    }
+    return NextResponse.json(response, { status: 201 })
+  } catch (err) {
+    console.error('[POST /api/events]', err)
+    return NextResponse.json({ error: 'Failed to create event' }, { status: 500 })
   }
-
-  MOCK_EVENTS.push(newEvent)
-  const response: CreateEventResponse = { event: newEvent, matched_space: matchedSpace, alternatives }
-  return NextResponse.json(response, { status: 201 })
 }

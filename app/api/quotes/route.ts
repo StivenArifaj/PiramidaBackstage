@@ -1,21 +1,40 @@
 import { NextResponse } from 'next/server'
-import { MOCK_EVENTS, MOCK_QUOTES } from '@/lib/db/mock-data'
+import { z } from 'zod'
+import { getEventById, insertQuote, updateEvent } from '@/lib/db/queries/events'
 import { generateQuote } from '@/lib/pricing/quote'
-import type { GenerateQuoteRequest, GenerateQuoteResponse } from '@/types/api'
+import type { GenerateQuoteResponse } from '@/types/api'
+
+const generateQuoteSchema = z.object({
+  event_id: z.string().min(1, 'event_id is required'),
+})
 
 export async function POST(req: Request) {
-  const { event_id }: GenerateQuoteRequest = await req.json()
-  const event = MOCK_EVENTS.find(e => e.id === event_id)
-  if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+  try {
+    const body = await req.json()
+    const parsed = generateQuoteSchema.safeParse(body)
 
-  const quoteData = generateQuote(event)
-  const quote = { id: `q-${Date.now()}`, event_id, ...quoteData }
-  MOCK_QUOTES.push(quote)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.issues },
+        { status: 400 }
+      )
+    }
 
-  // Advance event to 'quoted'
-  event.status = 'quoted'
-  event.updated_at = new Date().toISOString()
+    const event = await getEventById(parsed.data.event_id)
+    if (!event) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+    }
 
-  const response: GenerateQuoteResponse = { quote }
-  return NextResponse.json(response, { status: 201 })
+    const quoteData = generateQuote(event)
+    const quote = await insertQuote(event.id, quoteData)
+
+    // Advance event to 'quoted' status
+    await updateEvent(event.id, { status: 'quoted' })
+
+    const response: GenerateQuoteResponse = { quote }
+    return NextResponse.json(response, { status: 201 })
+  } catch (err) {
+    console.error('[POST /api/quotes]', err)
+    return NextResponse.json({ error: 'Failed to generate quote' }, { status: 500 })
+  }
 }

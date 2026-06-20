@@ -4,42 +4,24 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { Variants } from 'framer-motion'
-import type { DashboardOverviewResponse } from '@/types/api'
+import type { DashboardOverviewResponse, Event } from '@/types/api'
 
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number]
 const M = 'var(--font-mono)'
 const D = 'var(--font-display)'
 
-// ── Static upcoming events ────────────────────────────────────────────────────
-const UPCOMING = [
-  {
-    ref: 'PB-2026-001',
-    title: 'Tech Summit Tirana',
-    space: 'Blue Space',
-    color: '#378ADD', textColor: '#fff',
-    startH: 9, endH: 18, status: 'confirmed',
-    attendees: 240,
-    date: new Date(Date.now() + 86400000),
-  },
-  {
-    ref: 'PB-2026-002',
-    title: 'MVRDV Architecture Talk',
-    space: 'Space A6',
-    color: '#f4a261', textColor: '#4a1b0c',
-    startH: 14, endH: 17, status: 'confirmed',
-    attendees: 90,
-    date: new Date(Date.now() + 86400000 * 2),
-  },
-  {
-    ref: 'PB-2026-003',
-    title: 'Startup Albania Night',
-    space: 'Orange Space',
-    color: '#97C459', textColor: '#173404',
-    startH: 19, endH: 23, status: 'quoted',
-    attendees: 160,
-    date: new Date(Date.now() + 86400000 * 3),
-  },
-]
+// ── Space color map (derived from API space.color field) ──────────────────────
+const SPACE_HEX: Record<string, { bg: string; text: string }> = {
+  blue:   { bg: '#378ADD', text: '#fff' },
+  orange: { bg: '#f4a261', text: '#4a1b0c' },
+  green:  { bg: '#97C459', text: '#173404' },
+  yellow: { bg: '#f9c74f', text: '#412402' },
+  red:    { bg: '#e63946', text: '#fff' },
+  pink:   { bg: '#ec4899', text: '#fff' },
+  purple: { bg: '#5a4fcf', text: '#fff' },
+  teal:   { bg: '#2a9d8f', text: '#fff' },
+  coral:  { bg: '#e76f51', text: '#fff' },
+}
 
 const FLOOR_LABELS: Record<string, string> = {
   l0: 'Ground · L0',
@@ -58,7 +40,7 @@ function toX(h: number, w: number) { return ((h - TL_START) / TL_HOURS) * w }
 function DayTimelineSVG({
   events, empty = false,
 }: {
-  events: typeof UPCOMING
+  events: UpcomingEvent[]
   empty?: boolean
 }) {
   const VW = 560, VH = 36
@@ -154,11 +136,46 @@ function StatusPill({ status }: { status: string }) {
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
+
+type UpcomingEvent = {
+  ref: string; title: string; space: string
+  color: string; textColor: string
+  startH: number; endH: number
+  status: string; attendees: number; date: Date
+}
+
+function eventsToUpcoming(events: Event[]): UpcomingEvent[] {
+  return events
+    .filter(e => ['confirmed', 'quoted', 'in_progress', 'requested'].includes(e.status))
+    .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime())
+    .map(e => {
+      const hex = SPACE_HEX[e.spaces[0]?.color ?? ''] ?? { bg: '#378ADD', text: '#fff' }
+      const startH = new Date(e.start_at).getHours()
+      const endH = new Date(e.end_at).getHours() || startH + 2
+      return {
+        ref: e.reference_code,
+        title: e.title,
+        space: e.spaces[0]?.name ?? 'TBC',
+        color: hex.bg,
+        textColor: hex.text,
+        startH,
+        endH,
+        status: e.status,
+        attendees: e.attendees_count,
+        date: new Date(e.start_at),
+      }
+    })
+}
+
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardOverviewResponse | null>(null)
+  const [UPCOMING, setUPCOMING] = useState<UpcomingEvent[]>([])
 
   useEffect(() => {
     fetch('/api/dashboard/overview').then(r => r.json()).then(setData)
+    fetch('/api/events')
+      .then(r => r.json())
+      .then(d => setUPCOMING(eventsToUpcoming(d.events ?? [])))
   }, [])
 
   const now = new Date()
