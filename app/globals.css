@@ -101,3 +101,34 @@ input, textarea, select { border-radius: 2px; }
   background: var(--color-lime);
   color: var(--color-lime-ink);
 }
+
+/* ── Brutalist hover state — primary action buttons ── */
+button[data-brutal] {
+  transition: background-color 0.1s, color 0.1s, border-color 0.1s;
+}
+button[data-brutal]:hover:not(:disabled) {
+  background-color: var(--color-concrete-char) !important;
+  color: var(--color-lime) !important;
+  border-color: var(--color-lime) !important;
+}
+
+/* ── Brutalist hover state — secondary/outline buttons ── */
+a[data-brutal-link],
+button[data-brutal-outline] {
+  transition: background-color 0.1s, color 0.1s, border-color 0.1s;
+}
+a[data-brutal-link]:hover,
+button[data-brutal-outline]:hover:not(:disabled) {
+  background-color: var(--color-lime) !important;
+  color: var(--color-lime-ink) !important;
+  border-color: var(--color-lime-ink) !important;
+}
+
+/* ── Dashboard stat links ── */
+.dash-link {
+  transition: background-color 0.1s, color 0.1s;
+}
+.dash-link:hover {
+  background-color: var(--color-lime) !important;
+  color: var(--color-lime-ink) !important;
+}

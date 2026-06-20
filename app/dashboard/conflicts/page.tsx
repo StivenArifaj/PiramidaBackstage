@@ -5,8 +5,8 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number]
-const M = 'JetBrains Mono, monospace'
-const D = 'Space Grotesk, sans-serif'
+const M = 'var(--font-mono)'
+const D = 'var(--font-display)'
 
 type ConflictType = 'space_double_booked' | 'asset_oversold' | 'setup_overlap' | 'capacity_exceeded'
 type Severity = 'high' | 'medium' | 'low'
@@ -28,7 +28,7 @@ const SEV: Record<Severity, { bg: string; text: string; border: string; label: s
 
 const TYPE_INFO: Record<ConflictType, { label: string; guide: string[] }> = {
   space_double_booked: {
-    label: 'Space Double Booked',
+    label: 'space double booked',
     guide: [
       'Contact second organizer within 24h to discuss alternatives',
       'Identify available alternative spaces for the affected time slot',
@@ -37,7 +37,7 @@ const TYPE_INFO: Record<ConflictType, { label: string; guide: string[] }> = {
     ],
   },
   asset_oversold: {
-    label: 'Asset Oversold',
+    label: 'asset oversold',
     guide: [
       'Check asset return schedule from previous or concurrent event',
       'Identify the shortage gap and contact rental suppliers for extras',
@@ -46,7 +46,7 @@ const TYPE_INFO: Record<ConflictType, { label: string; guide: string[] }> = {
     ],
   },
   setup_overlap: {
-    label: 'Setup / Teardown Overlap',
+    label: 'setup / teardown overlap',
     guide: [
       'Review setup and teardown window requirements for both events',
       'Negotiate access time adjustments with the earlier organizer\'s team',
@@ -55,7 +55,7 @@ const TYPE_INFO: Record<ConflictType, { label: string; guide: string[] }> = {
     ],
   },
   capacity_exceeded: {
-    label: 'Capacity Exceeded',
+    label: 'capacity exceeded',
     guide: [
       'Review confirmed attendee count against space fire certificate limit',
       'Contact organizer to reduce headcount or upgrade to larger space',
@@ -118,12 +118,15 @@ export default function ConflictsPage() {
     <div style={{ minHeight: '100vh', background: '#f5f5f0', display: 'flex', flexDirection: 'column' }}>
 
       {/* Top bar */}
+      <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
+        conflict resolution
+      </h1>
       <div style={{ height: 54, borderBottom: '2px solid #1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px', background: '#fafaf5', position: 'sticky', top: 0, zIndex: 10, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link href="/dashboard" style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', color: '#9a9890' }}>← Dashboard</Link>
+          <Link href="/dashboard" style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', color: '#9a9890' }}>← dashboard</Link>
           <span style={{ display: 'block', width: 1, height: 18, background: '#e8e6dd' }} />
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><polygon points="6.5,1 12.5,12.5 0.5,12.5" stroke={active.length > 0 ? '#e63946' : '#9a9890'} strokeWidth="1.4" fill="none"/><line x1="6.5" y1="5" x2="6.5" y2="8.5" stroke={active.length > 0 ? '#e63946' : '#9a9890'} strokeWidth="1.4"/><circle cx="6.5" cy="10.5" r="0.7" fill={active.length > 0 ? '#e63946' : '#9a9890'}/></svg>
-          <span style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#1a1a1a' }}>Conflict Resolution</span>
+          <span style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#1a1a1a' }}>conflict resolution</span>
           {active.length > 0 && (
             <span style={{ fontFamily: M, fontSize: '8px', background: '#e63946', color: '#fff', padding: '1px 7px', letterSpacing: '0.06em' }}>{active.length} active</span>
           )}
@@ -136,7 +139,7 @@ export default function ConflictsPage() {
             </div>
           )}
           <Link href="/dashboard/events" style={{ fontFamily: M, fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', color: '#6b7280', padding: '6px 14px', border: '1px solid #d8d5cc' }}>
-            View Events
+            view events
           </Link>
         </div>
       </div>
@@ -160,7 +163,7 @@ export default function ConflictsPage() {
             <circle cx="32" cy="32" r="30" stroke="#c8da2b" strokeWidth="2" />
             <path d="M20 32l9 9 15-15" stroke="#5a6612" strokeWidth="2.5" />
           </svg>
-          <h2 style={{ fontFamily: D, fontSize: '28px', fontWeight: 500, color: '#1a1a1a', margin: '0 0 10px', letterSpacing: '-0.02em' }}>No active conflicts</h2>
+          <h2 style={{ fontFamily: D, fontSize: '28px', fontWeight: 500, color: '#1a1a1a', margin: '0 0 10px', letterSpacing: '-0.02em' }}>no active conflicts</h2>
           <p style={{ fontFamily: M, fontSize: '10px', color: '#9a9890', margin: 0, letterSpacing: '0.08em' }}>All scheduling conflicts have been resolved or none detected</p>
           {done.length > 0 && (
             <div style={{ marginTop: 32, padding: '14px 24px', border: '1px solid #e8e6dd', background: '#fafaf5' }}>
@@ -227,7 +230,7 @@ export default function ConflictsPage() {
                         transition: 'all 0.2s',
                       }}
                     >
-                      {allChecked ? '✓ Mark Resolved' : 'Complete checklist first'}
+                      {allChecked ? '✓ mark resolved' : 'complete checklist first'}
                     </button>
                   </div>
 
@@ -236,7 +239,7 @@ export default function ConflictsPage() {
 
                     {/* Related events */}
                     <div style={{ padding: '16px 24px', borderRight: '1px solid #e8e6dd' }}>
-                      <p style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9a9890', margin: '0 0 12px' }}>Related Events</p>
+                      <p style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9a9890', margin: '0 0 12px' }}>related events</p>
                       {conflict.related_events.map(evt => (
                         <div key={evt.id} style={{ marginBottom: 12, padding: '10px 12px', border: '1px solid #e8e6dd', background: '#fafaf5' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
@@ -246,7 +249,7 @@ export default function ConflictsPage() {
                           <p style={{ fontFamily: D, fontSize: '12px', fontWeight: 500, color: '#1a1a1a', margin: '0 0 3px' }}>{evt.title}</p>
                           <p style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', margin: '0 0 3px' }}>{fmt(evt.start_at)}</p>
                           <p style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', margin: 0 }}>{evt.organizer_name}</p>
-                          <Link href={`/dashboard/events`} style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', color: '#378ADD', marginTop: '6px', display: 'inline-block' }}>View event →</Link>
+                          <Link href={`/dashboard/events`} style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', color: '#378ADD', marginTop: '6px', display: 'inline-block' }}>view event →</Link>
                         </div>
                       ))}
                       {conflict.related_events.length === 0 && <p style={{ fontFamily: M, fontSize: '8px', color: '#c0bdb4' }}>No related events</p>}
@@ -254,7 +257,7 @@ export default function ConflictsPage() {
 
                     {/* Related spaces */}
                     <div style={{ padding: '16px 24px', borderRight: '1px solid #e8e6dd' }}>
-                      <p style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9a9890', margin: '0 0 12px' }}>Affected Spaces</p>
+                      <p style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9a9890', margin: '0 0 12px' }}>affected spaces</p>
                       {conflict.related_spaces.map(space => (
                         <div key={space.id} style={{ marginBottom: 10 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -263,24 +266,24 @@ export default function ConflictsPage() {
                           </div>
                           <p style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', margin: '0 0 2px', paddingLeft: 18 }}>{FLOOR_LABELS[space.floor] ?? space.floor}</p>
                           <p style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', margin: 0, paddingLeft: 18 }}>Code: {space.code}</p>
-                          <Link href={`/spaces/${space.code.toLowerCase()}`} style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', color: '#378ADD', marginLeft: 18, marginTop: '4px', display: 'inline-block' }}>Space detail →</Link>
+                          <Link href={`/spaces/${space.code.toLowerCase()}`} style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', color: '#378ADD', marginLeft: 18, marginTop: '4px', display: 'inline-block' }}>space detail →</Link>
                         </div>
                       ))}
                       {conflict.related_spaces.length === 0 && <p style={{ fontFamily: M, fontSize: '8px', color: '#c0bdb4' }}>No affected spaces</p>}
 
                       {/* Alternative space suggestion */}
                       <div style={{ marginTop: 16, padding: '10px 12px', background: '#f0ede4', border: '1px solid #e8e6dd' }}>
-                        <p style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#5a6612', margin: '0 0 5px' }}>Suggested Alternative</p>
+                        <p style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#5a6612', margin: '0 0 5px' }}>suggested alternative</p>
                         <p style={{ fontFamily: M, fontSize: '8.5px', color: '#1a1a1a', margin: 0 }}>Green Space · Basement B1</p>
                         <p style={{ fontFamily: M, fontSize: '7.5px', color: '#9a9890', margin: '2px 0 0' }}>150m² · 160 pax · €130/hr</p>
-                        <Link href="/spaces/green" style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', color: '#5a6612', marginTop: '5px', display: 'inline-block' }}>Check availability →</Link>
+                        <Link href="/spaces/green" style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', color: '#5a6612', marginTop: '5px', display: 'inline-block' }}>check availability →</Link>
                       </div>
                     </div>
 
                     {/* Resolution checklist */}
                     <div style={{ padding: '16px 24px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                        <p style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9a9890', margin: 0 }}>Resolution Checklist</p>
+                        <p style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9a9890', margin: 0 }}>resolution checklist</p>
                         <span style={{ fontFamily: M, fontSize: '8px', color: allChecked ? '#5a6612' : '#9a9890' }}>
                           {stepsChecked.filter(Boolean).length}/{steps.length}
                         </span>
@@ -327,7 +330,7 @@ export default function ConflictsPage() {
         <div style={{ borderTop: '2px solid #1a1a1a', marginTop: 'auto' }}>
           <div style={{ padding: '10px 32px', background: 'rgba(200,218,43,0.06)', borderBottom: '1px solid #e8e6dd', display: 'flex', alignItems: 'center', gap: 8 }}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="#c8da2b" strokeWidth="1.3"/><path d="M3.5 6l2 2 3-3" stroke="#5a6612" strokeWidth="1.3"/></svg>
-            <span style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#5a6612' }}>Resolved this session · {done.length}</span>
+            <span style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#5a6612' }}>resolved this session · {done.length}</span>
           </div>
           {done.map(c => (
             <div key={c.id} style={{ padding: '10px 32px', borderBottom: '1px solid #e8e6dd', display: 'flex', alignItems: 'center', gap: 12, opacity: 0.5 }}>
@@ -335,7 +338,7 @@ export default function ConflictsPage() {
               <span style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', letterSpacing: '0.08em' }}>{c.id.toUpperCase()}</span>
               <span style={{ fontFamily: M, fontSize: '8px', color: '#9a9890' }}>·</span>
               <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#9a9890', textDecoration: 'line-through' }}>{c.description.substring(0, 80)}…</span>
-              <span style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#5a6612', background: '#c8da2b', padding: '1px 7px', marginLeft: 'auto' }}>Resolved</span>
+              <span style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#5a6612', background: '#c8da2b', padding: '1px 7px', marginLeft: 'auto' }}>resolved</span>
             </div>
           ))}
         </div>

@@ -246,12 +246,13 @@ export default function BookPage() {
           <div style={{ padding: '32px 56px' }}>
             {error && (
               <p style={{ ...M, fontSize: '10px', letterSpacing: '0.1em', color: 'var(--color-box-red)', margin: '0 0 16px', border: '1px solid var(--color-box-red)', padding: '10px 14px' }}>
-                ⚠ {error}
+                <span aria-label="error" style={{ display: 'inline-block', width: '10px', height: '10px', backgroundColor: 'var(--color-box-red)', marginRight: '8px', flexShrink: 0 }} />{error}
               </p>
             )}
             <button
               form="booking-form"
               type="submit"
+              data-brutal
               disabled={!canSubmit}
               style={{
                 fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 500,

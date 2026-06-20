@@ -40,31 +40,32 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 
 ## Current State
 
-- **Phase:** Phase 4 mostly complete as of 2026-06-20. UI Airgap enforced — client site and dashboard are experientially separate. Supabase not yet live — all routes fall back to mock data.
+- **Phase:** Phase 4 polished as of 2026-06-20. Comprehensive frontend UI/copy sweep complete. UI Airgap enforced. Supabase not yet live — all routes fall back to mock data.
 - **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` passes with zero errors.
+- **Design system compliance:** All Title Case labels removed across dashboard (now UPPERCASE or lowercase per §4). Forbidden ⚠ emoji removed from booking page. Hardcoded font strings replaced with CSS variables (`var(--font-mono)`, `var(--font-display)`) in all 5 dashboard files. Brutalist hover states added to all primary action buttons via `data-brutal` / `data-brutal-outline` / `.dash-link` CSS. Missing `<h1>` elements added to all 3 dashboard sub-pages (M2 resolved).
 - **UI Airgap (active):** Public BrandStrip now only links to `/spaces`. No dashboard links anywhere on the client-facing site. `/book` breadcrumb goes to `/spaces`. Dashboard lives behind `/dashboard` with its own sidebar — no shared navigation with the public site.
 - **What exists now (frontend):**
   - **`app/(marketing)/page.tsx`** — continuous scroll: dark cinematic div (`overflowX: 'clip'`) with BrandStrip + Flythrough 1 (stats panel, no dashboard CTA) + Interlude (3 stat cards, "80+" in JetBrains Mono) + Flythrough 2 (no CTA); bone-colored floor selector section follows. React fragment `<>` root.
-  - **`app/book/page.tsx`** — standalone booking form. Header breadcrumb "← all spaces" (→ /spaces). 2-col: form (space + event type, date/time/attendees, organizer details) + sticky QuoteSummary. POSTs to `/api/events`, redirects to confirmation.
+  - **`app/book/page.tsx`** — standalone booking form. Header breadcrumb "← all spaces" (→ /spaces). 2-col: form (space + event type, date/time/attendees, organizer details) + sticky QuoteSummary. POSTs to `/api/events`, redirects to confirmation. No emoji violations.
   - **`components/booking/quote-summary.tsx`** — live quote: rental + €50 cleaning + 8% service + 18% VAT. All in JetBrains Mono.
   - **`components/ui/brand-strip.tsx`** — simplified: logo + "spaces" nav link only. No role/onRoleSwitch props. No dashboard link.
-  - **`components/ui/pill.tsx`** — hard rectangular, no border-radius.
+  - **`components/ui/pill.tsx`** — hard rectangular, no border-radius, Tailwind hover invert.
   - **`components/ui/image-gallery.tsx`** — SVG-hatch placeholder, ← → nav with aria-labels, 6-up thumb strip.
   - **`components/chatbot/chatbot-cube.tsx`** + **`chatbot-panel.tsx`** — floating dark cube (bottom-right, z-50), expands to chat panel. Message history, typing indicator, POST /api/chatbot. Mounted in app/layout.tsx.
   - **`app/spaces/page.tsx`** — floor selector (no role state). BrandStrip without props.
-  - **`app/spaces/[code]/page.tsx`** — space detail: ImageGallery + dark header + metrics + MonoTable + BookingPanel.
+  - **`app/spaces/[code]/page.tsx`** — space detail: ImageGallery + dark header + metrics + MonoTable + BookingPanel. Submit button has `data-brutal` hover state.
   - **`app/dashboard/layout.tsx`** — sidebar-only (DashboardSidebar), no BrandStrip. Fully isolated.
-  - **`app/dashboard/page.tsx`** — KPI strip (JetBrains Mono numerals), donut rings, day-timeline, occupancy bars, conflict panel.
-  - **`app/dashboard/inventory/page.tsx`** — KPI strip (JetBrains Mono), grouped asset table, AvailBar.
-  - **`app/dashboard/events/page.tsx`** — event register, filter tabs, expand rows.
-  - **`app/dashboard/conflicts/page.tsx`** — conflict cards, resolution checklist.
-  - **`components/pyramid/scroll-video.tsx`** — black watermark mask div DELETED. Canvas now has `transform: scale(1.04)` to push watermark off-screen naturally. Glass Hero Plate intact.
-  - **`components/chatbot/chatbot-root.tsx`** — client wrapper using `usePathname()`. Renders `<ChatbotCube>` everywhere except `/dashboard/**`. Mounted in `app/layout.tsx`.
-  - **`components/chatbot/chatbot-cube.tsx`** + **`chatbot-panel.tsx`** — floating dark 56px cube, expands to full chat panel. Message history, typing dots, POST /api/chatbot, session_id.
-  - **`components/pyramid/`** — all 5 floor plan SVGs, FloorSelector, FloorPlan, MiniMap, ScrollVideo (GSAP canvas, Glass Hero Plate, no black mask).
+  - **`app/dashboard/page.tsx`** — KPI strip (JetBrains Mono numerals), donut rings, day-timeline, occupancy bars, conflict panel. `<h1>` added, labels UPPERCASE. Fonts via CSS variables.
+  - **`app/dashboard/inventory/page.tsx`** — KPI strip (JetBrains Mono), grouped asset table, AvailBar. `<h1>` added, labels UPPERCASE. Fonts via CSS variables.
+  - **`app/dashboard/events/page.tsx`** — event register, filter tabs, expand rows. Labels UPPERCASE. Fonts via CSS variables.
+  - **`app/dashboard/conflicts/page.tsx`** — conflict cards, resolution checklist. `<h1>` added, labels UPPERCASE. Fonts via CSS variables.
+  - **`components/dashboard/sidebar.tsx`** — nav links use `dash-link` class with hover invert effect. Fonts via CSS variables.
+  - **`app/globals.css`** — added brutalist `data-brutal`, `data-brutal-outline`, `.dash-link` hover styles. All existing tokens unchanged.
+  - **`components/pyramid/scroll-video.tsx`** — Glass Hero Plate intact. Canvas `transform: scale(1.04)`.
+  - **`components/pyramid/`** — all 5 floor plan SVGs, FloorSelector, FloorPlan, MiniMap, ScrollVideo.
 - **What exists now (backend):** Mock-data layer for all routes. Supabase schema + seed ready but not deployed. Spaces queries have real Supabase + mock fallback.
 - **Tailwind v4 note:** No `tailwind.config.ts` — tokens in `app/globals.css` `@theme`. Correct.
-- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) [Aron/frontend] — Watermark mask deleted, CSS scale crop applied, chatbot dashboard-exclusion fixed.
+- **Last updated:** 2026-06-20, OpenCode Init (opencode) [Aron/frontend] — Comprehensive frontend UI/copy sweep: design system compliance enforcement, Title Case purge, emoji removal, font variables, `<h1>` additions, brutalist hover CSS.
 
 ## Completed Tasks Log
 
@@ -94,18 +95,18 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Resolved C2 and H2-H5: Implemented ChatbotCube (fixed 56px dark cube, bottom-right, z-50, 2×2 SVG grid icon) + ChatbotPanel (message history, lime user bubbles, typing dots, session_id, POST /api/chatbot); mounted in app/layout.tsx. Fixed H2 (dashboard KPI D→M), H3 (inventory KPI D→M), H4 (image-gallery aria-labels), H5 (interlude "80+" in var(--font-mono) span). `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — UI Airgap: Decoupled client site and dashboard, removing all cross-navigation. Removed dashboard link + role-switch button from BrandStrip (simplified to spaces-only nav, dropped role/onRoleSwitch props). Removed "organizer view" CTA from landing page Flythrough 1. Changed /book breadcrumb from "← dashboard" to "← all spaces" (→ /spaces). Verified dashboard/layout.tsx already clean (sidebar-only, no BrandStrip). Cleaned dead role state from spaces/page.tsx. `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Deleted black watermark patch, applied canvas scale crop, and implemented C2 Chatbot UI. Removed 224×40px concrete-black mask div from scroll-video.tsx; added `transform: scale(1.04)` to canvas to push Ezgif watermark off-screen naturally. Created `components/chatbot/chatbot-root.tsx` (path-aware wrapper: hides chatbot on /dashboard/** routes via usePathname). Updated app/layout.tsx to use ChatbotRoot. `npx tsc --noEmit` clean.
+- [2026-06-20 13:15] OpenCode Init (opencode) [Aron/frontend] — Comprehensive UI/Copy Sweep: Cloned repo, ingested docs, fixed forbidden ⚠ emoji in book/page.tsx, removed all Title Case labels across 4 dashboard pages (→ UPPERCASE/lowercase per §4), added `<h1>` elements to 3 dashboard pages (M2 resolved), fixed hardcoded font strings to CSS variables in 5 dashboard files, added brutalist CSS hover states for all primary action buttons (data-brutal / data-brutal-outline / .dash-link), deleted old duplicate tailwind.config.ts reference. `npx tsc --noEmit` passes clean.
 
 ## Next Steps
 
-> Audit items C1, C2, H1–H5 resolved. UI Airgap enforced. Watermark handled via CSS crop. Remaining work:
+> UI/Copy sweep complete. C1, C2, H1–H5, M2 all resolved. Design system compliance enforced across all frontend routes. Remaining work:
 
 ### Frontend (Aron):
 1. **[M4] Add photo URLs to A-ring mock spaces** — `lib/db/mock-data.ts` A1–A16 have `photo_urls: []`. Add Unsplash architecture URLs (or `/references/` images) so demo gallery doesn't show hatch placeholder for extension spaces.
 2. **[M5] Replace hardcoded UPCOMING array in dashboard** — `app/dashboard/page.tsx` has static `UPCOMING` array with stale attendee counts. Drive from `/api/dashboard/overview` response instead.
-3. **[M2] Add H1 headings to dashboard pages** — `/dashboard`, `/dashboard/inventory`, `/dashboard/conflicts` have no `<h1>`. Screen reader accessibility.
-4. **Wire chatbot to Gemini** — `app/api/chatbot/route.ts` returns `"Coming soon."`. Once `GEMINI_API_KEY` is set, implement real Gemini call with tool-call schema (create_event, generate_quote, check_availability). See `types/api.ts` ChatRequest/ChatResponse.
+3. **Wire chatbot to Gemini** — `app/api/chatbot/route.ts` returns `"Coming soon."`. Once `GEMINI_API_KEY` is set, implement real Gemini call with tool-call schema (create_event, generate_quote, check_availability). See `types/api.ts` ChatRequest/ChatResponse.
 
-### Backend (Stiven) — immediate priorities:
+### Backend (Stiven) — immediate priorities (point directly to Stiven):
 1. **Create Supabase project** and add env vars to `.env.local`:
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co

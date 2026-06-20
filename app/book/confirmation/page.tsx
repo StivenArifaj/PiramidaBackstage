@@ -79,10 +79,10 @@ function ConfirmationContent() {
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.5 }}
           style={{ display: 'flex', gap: '16px', marginTop: '40px' }}>
-          <Link href="/dashboard" style={{ fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', color: 'var(--color-lime-ink)', backgroundColor: 'var(--color-lime)', padding: '14px 32px' }}>
+          <Link href="/dashboard" data-brutal style={{ fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', color: 'var(--color-lime-ink)', backgroundColor: 'var(--color-lime)', padding: '14px 32px' }}>
             open dashboard
           </Link>
-          <Link href="/spaces" style={{ fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', color: 'rgba(245,245,240,0.6)', border: '2px solid rgba(245,245,240,0.15)', padding: '12px 32px' }}>
+          <Link href="/spaces" data-brutal-link style={{ fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', color: 'rgba(245,245,240,0.6)', border: '2px solid rgba(245,245,240,0.15)', padding: '12px 32px' }}>
             book another space
           </Link>
         </motion.div>

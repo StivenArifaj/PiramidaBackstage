@@ -113,6 +113,7 @@ function BookingPanel({ space }: { space: SpaceWithAvailability }) {
 
         <button
           type="submit"
+          data-brutal
           disabled={submitting || space.availability !== 'available'}
           style={{
             fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 500,

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const M = 'JetBrains Mono, monospace'
+const M = 'var(--font-mono)'
 
 const NAV = [
   {
@@ -99,6 +99,7 @@ export function DashboardSidebar() {
             <Link
               key={href}
               href={href}
+              className="dash-link"
               style={{
                 display: 'flex', alignItems: 'center', gap: 9,
                 padding: '9px 20px',
@@ -120,7 +121,7 @@ export function DashboardSidebar() {
       {/* Quick links */}
       <div style={{ padding: '10px 20px', borderTop: '1px solid #252422', borderBottom: '1px solid #252422', flexShrink: 0 }}>
         <Link href="/book" style={{ display: 'block', fontFamily: M, fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', color: '#5a6612', background: '#c8da2b', padding: '8px 12px', textAlign: 'center', fontWeight: 600 }}>
-          + New Booking
+          + new booking
         </Link>
       </div>
 

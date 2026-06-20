@@ -5,8 +5,8 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number]
-const M = 'JetBrains Mono, monospace'
-const D = 'Space Grotesk, sans-serif'
+const M = 'var(--font-mono)'
+const D = 'var(--font-display)'
 
 interface AssetRow {
   id: string; type: string; name: string
@@ -84,25 +84,28 @@ export default function InventoryPage() {
     <div style={{ minHeight: '100vh', background: '#f5f5f0', display: 'flex', flexDirection: 'column' }}>
 
       {/* Top bar */}
+      <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
+        asset inventory
+      </h1>
       <div style={{ height: 54, borderBottom: '2px solid #1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px', background: '#fafaf5', position: 'sticky', top: 0, zIndex: 10, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link href="/dashboard" style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', color: '#9a9890' }}>← Dashboard</Link>
+          <Link href="/dashboard" style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', color: '#9a9890' }}>← dashboard</Link>
           <span style={{ display: 'block', width: 1, height: 18, background: '#e8e6dd' }} />
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="3.5" width="11" height="8.5" stroke="#1a1a1a" strokeWidth="1.4"/><path d="M3.5 3.5V2.5a3 3 0 016 0v1" stroke="#1a1a1a" strokeWidth="1.4"/></svg>
-          <span style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#1a1a1a' }}>Asset Inventory</span>
+          <span style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#1a1a1a' }}>asset inventory</span>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ display: 'block', width: 8, height: 8, background: '#378ADD' }} />
-            <span style={{ fontFamily: M, fontSize: '7.5px', color: '#9a9890', letterSpacing: '0.06em' }}>In use</span>
+                <span style={{ fontFamily: M, fontSize: '7.5px', color: '#9a9890', letterSpacing: '0.06em' }}>in use</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ display: 'block', width: 8, height: 8, background: '#c8da2b' }} />
-            <span style={{ fontFamily: M, fontSize: '7.5px', color: '#9a9890', letterSpacing: '0.06em' }}>Available</span>
+                <span style={{ fontFamily: M, fontSize: '7.5px', color: '#9a9890', letterSpacing: '0.06em' }}>available</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ display: 'block', width: 8, height: 8, background: '#e8e6dd' }} />
-            <span style={{ fontFamily: M, fontSize: '7.5px', color: '#9a9890', letterSpacing: '0.06em' }}>Untracked</span>
+                <span style={{ fontFamily: M, fontSize: '7.5px', color: '#9a9890', letterSpacing: '0.06em' }}>untracked</span>
           </div>
         </div>
       </div>
@@ -110,10 +113,10 @@ export default function InventoryPage() {
       {/* KPI strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderBottom: '2px solid #1a1a1a', flexShrink: 0 }}>
         {[
-          { label: 'Asset SKUs', value: data?.total_skus ?? '—', sub: 'categories tracked', accent: '#c8da2b', icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="5" width="16" height="12" stroke="#1a1a1a" strokeWidth="1.5"/><path d="M5 5V3.5a4 4 0 018 0V5" stroke="#1a1a1a" strokeWidth="1.5"/></svg> },
-          { label: 'Total Units', value: data?.total_units ?? '—', sub: 'across all categories', accent: '#c8da2b', icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="7" height="7" stroke="#1a1a1a" strokeWidth="1.5"/><rect x="10" y="1" width="7" height="7" stroke="#1a1a1a" strokeWidth="1.5"/><rect x="1" y="10" width="7" height="7" stroke="#1a1a1a" strokeWidth="1.5"/><rect x="10" y="10" width="7" height="7" stroke="#1a1a1a" strokeWidth="1.5"/></svg> },
-          { label: 'Currently In Use', value: data?.total_in_use ?? '—', sub: 'allocated to events', accent: '#378ADD', icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="#378ADD" strokeWidth="1.5"/><path d="M5 9l3 3 5-5" stroke="#378ADD" strokeWidth="1.5"/></svg> },
-          { label: 'Low Stock Items', value: data?.low_stock ?? '—', sub: 'below 50% availability', accent: data?.low_stock ? '#e63946' : '#c8da2b', icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><polygon points="9,2 16,16 2,16" stroke={data?.low_stock ? '#e63946' : '#c8da2b'} strokeWidth="1.5" fill="none"/><line x1="9" y1="7" x2="9" y2="11.5" stroke={data?.low_stock ? '#e63946' : '#c8da2b'} strokeWidth="1.5"/><circle cx="9" cy="13.5" r="0.8" fill={data?.low_stock ? '#e63946' : '#c8da2b'}/></svg> },
+          { label: 'asset skus', value: data?.total_skus ?? '—', sub: 'categories tracked', accent: '#c8da2b', icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="5" width="16" height="12" stroke="#1a1a1a" strokeWidth="1.5"/><path d="M5 5V3.5a4 4 0 018 0V5" stroke="#1a1a1a" strokeWidth="1.5"/></svg> },
+          { label: 'total units', value: data?.total_units ?? '—', sub: 'across all categories', accent: '#c8da2b', icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="7" height="7" stroke="#1a1a1a" strokeWidth="1.5"/><rect x="10" y="1" width="7" height="7" stroke="#1a1a1a" strokeWidth="1.5"/><rect x="1" y="10" width="7" height="7" stroke="#1a1a1a" strokeWidth="1.5"/><rect x="10" y="10" width="7" height="7" stroke="#1a1a1a" strokeWidth="1.5"/></svg> },
+          { label: 'currently in use', value: data?.total_in_use ?? '—', sub: 'allocated to events', accent: '#378ADD', icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="#378ADD" strokeWidth="1.5"/><path d="M5 9l3 3 5-5" stroke="#378ADD" strokeWidth="1.5"/></svg> },
+          { label: 'low stock items', value: data?.low_stock ?? '—', sub: 'below 50% availability', accent: data?.low_stock ? '#e63946' : '#c8da2b', icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><polygon points="9,2 16,16 2,16" stroke={data?.low_stock ? '#e63946' : '#c8da2b'} strokeWidth="1.5" fill="none"/><line x1="9" y1="7" x2="9" y2="11.5" stroke={data?.low_stock ? '#e63946' : '#c8da2b'} strokeWidth="1.5"/><circle cx="9" cy="13.5" r="0.8" fill={data?.low_stock ? '#e63946' : '#c8da2b'}/></svg> },
         ].map(({ label, value, sub, accent, icon }, i) => (
           <motion.div
             key={label}
@@ -147,10 +150,10 @@ export default function InventoryPage() {
               {/* Group header */}
               <thead key={`head-${group}`}>
                 <tr style={{ background: '#f0ede4', borderBottom: '1px solid #e8e6dd', borderTop: '2px solid #d8d5cc' }}>
-                  <th colSpan={2} style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', padding: '8px 16px', fontWeight: 600 }}>{group}</th>
-                  <th style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9a9890', textAlign: 'left', padding: '8px 16px', fontWeight: 400 }}>Availability · In Use (blue) / Available (green)</th>
-                  <th style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9a9890', textAlign: 'left', padding: '8px 16px', fontWeight: 400 }}>Storage Location</th>
-                  <th style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9a9890', textAlign: 'right', padding: '8px 16px', fontWeight: 400 }}>Rate / Unit</th>
+                  <th colSpan={2} style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#6b7280', textAlign: 'left', padding: '8px 16px', fontWeight: 600 }}>{group.toLowerCase()}</th>
+                  <th style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9a9890', textAlign: 'left', padding: '8px 16px', fontWeight: 400 }}>availability · in use / available</th>
+                  <th style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9a9890', textAlign: 'left', padding: '8px 16px', fontWeight: 400 }}>storage location</th>
+                  <th style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9a9890', textAlign: 'right', padding: '8px 16px', fontWeight: 400 }}>rate / unit</th>
                 </tr>
               </thead>
               <tbody key={`body-${group}`}>
@@ -206,7 +209,7 @@ export default function InventoryPage() {
 
       {/* Footer legend */}
       <div style={{ borderTop: '2px solid #1a1a1a', padding: '10px 32px', background: '#fafaf5', display: 'flex', gap: 20, alignItems: 'center', flexShrink: 0 }}>
-        <span style={{ fontFamily: M, fontSize: '7.5px', color: '#9a9890', textTransform: 'uppercase', letterSpacing: '0.14em' }}>Storage · </span>
+              <span style={{ fontFamily: M, fontSize: '7.5px', color: '#9a9890', textTransform: 'uppercase', letterSpacing: '0.14em' }}>storage · </span>
         {['storage-l-1-a', 'storage-l-1-b', 'storage-l-1-c', 'av-booth-l3'].map(loc => (
           <div key={loc} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="0.5" y="2.5" width="9" height="7" stroke="#9a9890" strokeWidth="1"/></svg>

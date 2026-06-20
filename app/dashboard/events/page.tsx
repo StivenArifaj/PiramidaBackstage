@@ -6,20 +6,20 @@ import { motion } from 'framer-motion'
 import type { Event, EventStatus } from '@/types/api'
 
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number]
-const M = 'JetBrains Mono, monospace'
-const D = 'Space Grotesk, sans-serif'
+const M = 'var(--font-mono)'
+const D = 'var(--font-display)'
 
 type Task = { id: string; title: string; team: string; status: string; due_at: string }
 type EventWithExtras = Event & { tasks?: Task[] }
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS: Record<string, { bg: string; color: string; dot: string; label: string }> = {
-  requested:   { bg: '#f0ede4',             color: '#6b7280', dot: '#c0bdb4', label: 'Requested' },
-  quoted:      { bg: 'rgba(249,199,79,0.2)', color: '#7a3a00', dot: '#f9c74f', label: 'Quoted' },
-  confirmed:   { bg: '#c8da2b',             color: '#3a4400', dot: '#8fa018', label: 'Confirmed' },
-  in_progress: { bg: 'rgba(55,138,221,0.15)',color: '#042C53', dot: '#378ADD', label: 'In Progress' },
-  completed:   { bg: '#f5f5f0',             color: '#9a9890', dot: '#d8d5cc', label: 'Completed' },
-  cancelled:   { bg: 'rgba(230,57,70,0.12)', color: '#e63946', dot: '#e63946', label: 'Cancelled' },
+  requested:   { bg: '#f0ede4',             color: '#6b7280', dot: '#c0bdb4', label: 'requested' },
+  quoted:      { bg: 'rgba(249,199,79,0.2)', color: '#7a3a00', dot: '#f9c74f', label: 'quoted' },
+  confirmed:   { bg: '#c8da2b',             color: '#3a4400', dot: '#8fa018', label: 'confirmed' },
+  in_progress: { bg: 'rgba(55,138,221,0.15)',color: '#042C53', dot: '#378ADD', label: 'in progress' },
+  completed:   { bg: '#f5f5f0',             color: '#9a9890', dot: '#d8d5cc', label: 'completed' },
+  cancelled:   { bg: 'rgba(230,57,70,0.12)', color: '#e63946', dot: '#e63946', label: 'cancelled' },
 }
 
 // ── Event type colors ─────────────────────────────────────────────────────────
@@ -135,7 +135,7 @@ export default function EventsPage() {
       <div style={{ background: '#1a1a1a', padding: '28px 36px 0', flexShrink: 0 }}>
         {/* Breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-          <Link href="/dashboard" style={{ fontFamily: M, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', color: '#6b6966' }}>Dashboard</Link>
+          <Link href="/dashboard" style={{ fontFamily: M, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', color: '#6b6966' }}>dashboard</Link>
           <span style={{ color: '#3a3835', fontSize: 10 }}>/</span>
           <span style={{ fontFamily: M, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c8da2b' }}>Events</span>
         </div>
@@ -144,7 +144,7 @@ export default function EventsPage() {
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 24 }}>
           <div>
             <h1 style={{ fontFamily: D, fontSize: '32px', fontWeight: 500, color: '#f5f5f0', margin: '0 0 10px', letterSpacing: '-0.02em' }}>
-              Event Register
+              event register
             </h1>
             {/* Inline stat chips */}
             <div style={{ display: 'flex', gap: 8 }}>
@@ -185,7 +185,7 @@ export default function EventsPage() {
             </div>
             <Link href="/book" style={{ fontFamily: M, fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', color: '#3a4400', background: '#c8da2b', padding: '9px 20px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
               <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><line x1="5.5" y1="1" x2="5.5" y2="10" stroke="currentColor" strokeWidth="1.8"/><line x1="1" y1="5.5" x2="10" y2="5.5" stroke="currentColor" strokeWidth="1.8"/></svg>
-              New Booking
+               new booking
             </Link>
           </div>
         </div>
@@ -212,7 +212,7 @@ export default function EventsPage() {
                 }}
               >
                 {cfg && <span style={{ display: 'block', width: 6, height: 6, borderRadius: '50%', background: active ? cfg.dot : '#3a3835', flexShrink: 0 }} />}
-                {s === 'all' ? 'All Events' : STATUS[s]?.label ?? s}
+                {s === 'all' ? 'all events' : STATUS[s]?.label ?? s}
                 <span style={{
                   fontFamily: M, fontSize: '9px', padding: '1px 6px',
                   background: active ? (s === 'confirmed' ? '#c8da2b' : '#e8e6dd') : 'rgba(255,255,255,0.08)',
@@ -244,14 +244,14 @@ export default function EventsPage() {
           <thead>
             <tr style={{ background: '#f0ede4', borderBottom: '2px solid #1a1a1a', position: 'sticky', top: 0, zIndex: 5 }}>
               {[
-                { label: 'Status',     align: 'left' as const },
-                { label: 'Ref',        align: 'left' as const },
-                { label: 'Event',      align: 'left' as const },
-                { label: 'Type',       align: 'left' as const },
-                { label: 'Date · Time',align: 'left' as const },
-                { label: 'Space',      align: 'left' as const },
-                { label: 'Pax',        align: 'right' as const },
-                { label: 'Organizer',  align: 'left' as const },
+                { label: 'status',     align: 'left' as const },
+                { label: 'ref',        align: 'left' as const },
+                { label: 'event',      align: 'left' as const },
+                { label: 'type',       align: 'left' as const },
+                { label: 'date · time',align: 'left' as const },
+                { label: 'space',      align: 'left' as const },
+                { label: 'pax',        align: 'right' as const },
+                { label: 'organizer',  align: 'left' as const },
               ].map(({ label, align }) => (
                 <th key={label} style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9a9890', textAlign: align, padding: '11px 16px', fontWeight: 500, borderRight: '1px solid #e8e6dd' }}>
                   {label}
@@ -414,7 +414,7 @@ export default function EventsPage() {
                                 <path d="M3 6.5l2.5 2.5 4-4.5" stroke="#c8da2b" strokeWidth="1.3" />
                               </svg>
                               <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9a9890', margin: 0 }}>
-                                Pre-Event Tasks · {(evt.tasks ?? []).length}
+                                pre-event tasks · {(evt.tasks ?? []).length}
                               </p>
                             </div>
                             {(evt.tasks ?? []).map((t, ti) => (
@@ -445,7 +445,7 @@ export default function EventsPage() {
                                 <path d="M3.5 3.5V2.5a3 3 0 016 0v1" stroke="#9a9890" strokeWidth="1.2" />
                               </svg>
                               <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9a9890', margin: 0 }}>
-                                Booked Assets · {evt.assets.length}
+                                booked assets · {evt.assets.length}
                               </p>
                             </div>
                             {evt.assets.map(({ asset, quantity }, ai) => (
@@ -465,7 +465,7 @@ export default function EventsPage() {
                           {/* Event meta */}
                           <div style={{ padding: '20px 24px', background: '#f8f6f0' }}>
                             <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9a9890', margin: '0 0 14px' }}>
-                              Event Details
+                              event details
                             </p>
                             {[
                               { label: 'Email', value: evt.organizer_email },
@@ -485,14 +485,14 @@ export default function EventsPage() {
                                   href={`/spaces/${evt.spaces[0].code.toLowerCase()}`}
                                   style={{ fontFamily: M, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', color: '#5a6612', background: '#c8da2b', padding: '6px 12px', textAlign: 'center' }}
                                 >
-                                  View Space →
+                                  view space →
                                 </Link>
                               )}
                               <Link
                                 href="/dashboard/conflicts"
                                 style={{ fontFamily: M, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', color: '#9a9890', border: '1px solid #e8e6dd', padding: '5px 12px', textAlign: 'center' }}
                               >
-                                Check Conflicts →
+                                check conflicts →
                               </Link>
                             </div>
                           </div>

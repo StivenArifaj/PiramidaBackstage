@@ -7,8 +7,8 @@ import type { Variants } from 'framer-motion'
 import type { DashboardOverviewResponse } from '@/types/api'
 
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number]
-const M = 'JetBrains Mono, monospace'
-const D = 'Space Grotesk, sans-serif'
+const M = 'var(--font-mono)'
+const D = 'var(--font-display)'
 
 // ── Static upcoming events ────────────────────────────────────────────────────
 const UPCOMING = [
@@ -171,16 +171,19 @@ export default function DashboardPage() {
   const conflicts    = data?.active_conflicts.length ?? 0
 
   const kpis = [
-    { label: 'Events Today',     value: eventsToday,  sub: 'scheduled for today',   accent: '#c8da2b', alert: false,  pct: Math.min(100, eventsToday * 12) },
-    { label: 'This Week',        value: eventsWeek,   sub: 'next 7 days',           accent: '#c8da2b', alert: false,  pct: Math.min(100, eventsWeek * 5) },
-    { label: 'This Month',       value: eventsMonth,  sub: 'next 30 days',          accent: '#c8da2b', alert: false,  pct: Math.min(100, eventsMonth * 2.5) },
-    { label: 'Active Conflicts', value: conflicts,    sub: conflicts > 0 ? 'action required' : 'all clear', accent: conflicts > 0 ? '#e63946' : '#c8da2b', alert: conflicts > 0, pct: Math.min(100, conflicts * 33) },
+    { label: 'events today',     value: eventsToday,  sub: 'scheduled for today',   accent: '#c8da2b', alert: false,  pct: Math.min(100, eventsToday * 12) },
+    { label: 'this week',        value: eventsWeek,   sub: 'next 7 days',           accent: '#c8da2b', alert: false,  pct: Math.min(100, eventsWeek * 5) },
+    { label: 'this month',       value: eventsMonth,  sub: 'next 30 days',          accent: '#c8da2b', alert: false,  pct: Math.min(100, eventsMonth * 2.5) },
+    { label: 'active conflicts', value: conflicts,    sub: conflicts > 0 ? 'action required' : 'all clear', accent: conflicts > 0 ? '#e63946' : '#c8da2b', alert: conflicts > 0, pct: Math.min(100, conflicts * 33) },
   ]
 
   return (
     <div style={{ minHeight: '100vh', background: '#f5f5f0', display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Top bar ── */}
+      <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
+        operations dashboard
+      </h1>
       <div style={{
         height: 54, borderBottom: '2px solid #1a1a1a',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -205,13 +208,13 @@ export default function DashboardPage() {
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <Link href="/dashboard/events" style={{ fontFamily: M, fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', color: '#6b7280', padding: '6px 14px', border: '1px solid #d8d5cc' }}>
-            Events
+            events
           </Link>
           <Link href="/dashboard/inventory" style={{ fontFamily: M, fontSize: '8.5px', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', color: '#6b7280', padding: '6px 14px', border: '1px solid #d8d5cc' }}>
-            Inventory
+            inventory
           </Link>
           <Link href="/book" style={{ fontFamily: M, fontSize: '8.5px', letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', color: '#5a6612', background: '#c8da2b', padding: '8px 18px', fontWeight: 600 }}>
-            + New Booking
+            + new booking
           </Link>
         </div>
       </div>
@@ -278,7 +281,7 @@ export default function DashboardPage() {
               </span>
             </div>
             <Link href="/dashboard/events" style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', color: '#9a9890' }}>
-              All events →
+              all events →
             </Link>
           </div>
 
@@ -293,7 +296,7 @@ export default function DashboardPage() {
                     <path d="M3.5 6l2 2 3-3" stroke="#5a6612" strokeWidth="1.4" />
                   </svg>
                   <span style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', letterSpacing: '0.08em' }}>
-                    No events today — next event in {Math.ceil((UPCOMING[0].date.getTime() - Date.now()) / 86400000)} day(s) · {UPCOMING[0].ref}
+                    no events today — next event in {Math.ceil((UPCOMING[0].date.getTime() - Date.now()) / 86400000)} day(s) · {UPCOMING[0].ref}
                   </span>
                 </div>
               </>
@@ -323,7 +326,7 @@ export default function DashboardPage() {
                 <line x1="10" y1="1" x2="10" y2="4" stroke="#1a1a1a" strokeWidth="1.4" />
               </svg>
               <span style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#1a1a1a' }}>
-                Upcoming · {UPCOMING.length} events this week
+                upcoming · {UPCOMING.length} events this week
               </span>
             </div>
           </div>
@@ -370,12 +373,12 @@ export default function DashboardPage() {
           {/* Reference table */}
           <div style={{ borderTop: '2px solid #1a1a1a', flexShrink: 0, overflowX: 'auto' }}>
             <div style={{ padding: '12px 28px 8px', background: '#f8f6f0', borderBottom: '1px solid #e8e6dd' }}>
-              <span style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9a9890' }}>Booking Reference Index</span>
+              <span style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9a9890' }}>booking reference index</span>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #e8e6dd', background: '#fafaf5' }}>
-                  {['Ref', 'Event Title', 'Space', 'Date', 'Pax', 'Status'].map(h => (
+                  {['ref', 'event', 'space', 'date', 'pax', 'status'].map(h => (
                     <th key={h} style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#9a9890', textAlign: 'left', padding: '8px 12px', fontWeight: 400 }}>{h}</th>
                   ))}
                 </tr>
@@ -421,7 +424,7 @@ export default function DashboardPage() {
                 <rect x="4.5" y="9.5" width="2" height="3.5" stroke="#1a1a1a" strokeWidth="1" />
                 <rect x="7.5" y="9.5" width="2" height="3.5" stroke="#1a1a1a" strokeWidth="1" />
               </svg>
-              <span style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#1a1a1a' }}>Space Occupancy</span>
+              <span style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#1a1a1a' }}>space occupancy</span>
             </div>
           </div>
 
@@ -484,7 +487,7 @@ export default function DashboardPage() {
                     <path d="M3.5 4V3a3 3 0 016 0v1" stroke="#f4a261" strokeWidth="1.3" />
                   </svg>
                   <span style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#f4a261' }}>
-                    Inventory · Low Stock
+                    inventory · low stock
                   </span>
                 </div>
               </div>
@@ -513,7 +516,7 @@ export default function DashboardPage() {
                   <circle cx="7" cy="11" r="0.8" fill={conflicts > 0 ? '#e63946' : '#9a9890'} />
                 </svg>
                 <span style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: conflicts > 0 ? '#e63946' : '#9a9890' }}>
-                  Active Conflicts
+                  active conflicts
                 </span>
               </div>
               {conflicts > 0 && (
