@@ -7,19 +7,23 @@ import { motion } from 'framer-motion'
 import { BrandStrip } from '@/components/ui/brand-strip'
 import { MonoTable } from '@/components/ui/mono-table'
 import { StatusDot } from '@/components/ui/status-dot'
+import { ScrollVideo } from '@/components/pyramid/scroll-video'
 import type { GetSpaceResponse, SpaceWithAvailability } from '@/types/api'
 
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number]
 
-const HERO_IMGS: Record<string, string> = {
-  BLUE: '/pyramid/mvrdv-15.jpg', ORANGE: '/pyramid/mvrdv-10.jpg',
-  GREEN: '/pyramid/mvrdv-13.jpg', YELLOW: '/pyramid/mvrdv-11.jpg',
-  default: '/pyramid/mvrdv-27.jpg',
-}
-
 const COLOR_MAP: Record<string, string> = {
   blue: '#378ADD', orange: '#f4a261', green: '#97C459', yellow: '#f9c74f',
   red: '#e63946', purple: '#5a4fcf', teal: '#2a9d8f', coral: '#e76f51', pink: '#ec4899',
+}
+
+function formatFloor(floor: string) {
+  return floor
+    .replace('l_minus_1', 'B1')
+    .replace('l0', 'L0')
+    .replace('l3', 'L+3')
+    .replace('roof', 'Roof')
+    .replace('exterior', 'Exterior')
 }
 
 function BookingPanel({ space }: { space: SpaceWithAvailability }) {
@@ -152,50 +156,67 @@ export default function SpaceDetailPage() {
   )
 
   const { space, upcoming_bookings } = data
-  const heroImg = HERO_IMGS[space.code] ?? HERO_IMGS.default
   const accentColor = space.color ? COLOR_MAP[space.color] ?? '#c8da2b' : '#c8da2b'
 
   return (
     <div style={{ backgroundColor: 'var(--color-concrete-bone)', minHeight: '100vh' }}>
       <BrandStrip />
 
-      {/* Hero */}
-      <section style={{ position: 'relative', height: '65vh', minHeight: '480px', overflow: 'hidden', backgroundColor: '#050505' }}>
-        <motion.div
-          initial={{ scale: 1.06 }} animate={{ scale: 1 }} transition={{ duration: 1.2, ease: EASE }}
-          style={{ position: 'absolute', inset: 0, backgroundImage: `url(${heroImg})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.75 }}
-        />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(5,5,5,0.85) 0%, rgba(5,5,5,0.2) 70%, transparent 100%)' }} />
-
-        {/* Breadcrumb */}
-        <div style={{ position: 'absolute', top: '80px', left: '64px' }}>
-          <Link href="/spaces" style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', textDecoration: 'none', color: 'rgba(245,245,240,0.5)' }}>
+      {/* Scroll-scrubbed hero — first 100 frames of hero sequence */}
+      <ScrollVideo
+        framesFolder="/frames/hero"
+        frameCount={100}
+        overlayLabel={`${formatFloor(space.floor)} · ${space.category.replace(/_/g, ' ')}`}
+        overlayTitle={space.name}
+        overlaySubtitle={space.name_sq ?? space.code}
+        scrollHeight="200vh"
+      >
+        {/* Breadcrumb — top left, below BrandStrip */}
+        <div style={{ position: 'absolute', top: '80px', left: '64px', zIndex: 2 }}>
+          <Link
+            href="/spaces"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '9px',
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+              color: 'rgba(245,245,240,0.5)',
+            }}
+          >
             ← all spaces
           </Link>
         </div>
 
-        {/* Space identity */}
-        <div style={{ position: 'absolute', bottom: '48px', left: '64px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-            <span style={{ width: '12px', height: '12px', backgroundColor: accentColor, display: 'inline-block' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(245,245,240,0.5)' }}>
-              {space.floor.replace('l_minus_1', 'B1').replace('l0', 'L0').replace('l3', 'L+3').replace('roof', 'Roof').replace('exterior', 'Exterior')} · {space.category}
-            </span>
-          </div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(40px, 6vw, 80px)', fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--color-concrete-bone)', margin: 0, lineHeight: 1 }}>
-            {space.name}
-          </h1>
-          {space.name_sq && (
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '0.06em', color: 'rgba(245,245,240,0.4)', margin: '8px 0 0' }}>{space.name_sq}</p>
-          )}
-        </div>
-
-        {/* Status badge */}
-        <div style={{ position: 'absolute', top: '80px', right: '64px', border: `2px solid ${accentColor}`, padding: '8px 16px', backgroundColor: 'rgba(5,5,5,0.6)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Status badge — bottom right */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '18px',
+            right: '40px',
+            border: `2px solid ${accentColor}`,
+            padding: '8px 16px',
+            backgroundColor: 'rgba(5,5,5,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            zIndex: 2,
+          }}
+        >
           <StatusDot status={space.availability} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-concrete-bone)' }}>{space.availability}</span>
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '9px',
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: 'var(--color-concrete-bone)',
+            }}
+          >
+            {space.availability}
+          </span>
         </div>
-      </section>
+      </ScrollVideo>
 
       {/* Content grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '0', borderTop: '2px solid var(--color-concrete-char)' }}>
@@ -232,7 +253,7 @@ export default function SpaceDetailPage() {
               <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)', margin: '0 0 16px' }}>specifications</p>
               <MonoTable rows={[
                 { label: 'space code', value: space.code },
-                { label: 'floor', value: space.floor.replace('l_minus_1', 'B1').replace('l0', 'Ground / L0').replace('l3', 'Level L+3').replace('roof', 'Rooftop').replace('exterior', 'Exterior') },
+                { label: 'floor', value: formatFloor(space.floor) },
                 { label: 'category', value: space.category.replace('_', ' ') },
                 { label: 'area', value: space.area_sqm, unit: 'm²' },
                 { label: 'capacity', value: space.capacity_pax, unit: 'pax' },

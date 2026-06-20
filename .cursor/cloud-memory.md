@@ -43,7 +43,8 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - **Phase:** Phase 4 partially complete as of 2026-06-20. Both frontend and backend have done their first slice. Supabase project not yet created — API routes fall back to mock data.
 - **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` passes with zero errors.
 - **What exists now (frontend):**
-  - **`app/(marketing)/page.tsx`** — landing page: Framer Motion scroll-driven cross-fade hero (3 images), stats panel, manifesto 2-col section, 4-feature strip, dark CTA
+  - **`app/(marketing)/page.tsx`** — landing page: GSAP scroll-scrubbed canvas hero (300 frames from `/frames/hero/`), stats panel top-right, CTA buttons bottom-right, manifesto 2-col section, 4-feature strip, dark CTA. Framer Motion hero removed.
+  - **`app/spaces/[code]/page.tsx`** — space detail: GSAP scroll-scrubbed canvas hero (100 frames, ScrollVideo), breadcrumb top-left, status badge bottom-right, content grid with 4 metrics, specs MonoTable, BookingPanel with live estimate + POST /api/events. Gradient removed.
   - **`app/spaces/page.tsx`** — floor selector elevation view: BrandStrip + FloorSelector (left) + FloorPlan SVG (right) + MiniMap
   - **`app/dashboard/page.tsx`** — enterprise dashboard: KPI strip with donut rings, day-timeline SVG, occupancy segmented bars, conflict panel
   - **`app/dashboard/events/page.tsx`** — event register: dark header, filter tabs, expand rows with Fragment key pattern, skeleton loading
@@ -51,8 +52,10 @@ Both read `/types/` freely. Backend Dev owns writing to it.
   - **`app/dashboard/conflicts/page.tsx`** — conflict resolution: severity groups, interactive resolution checklist
   - **`app/dashboard/layout.tsx`** + **`components/dashboard/sidebar.tsx`** — fixed 220px dark sidebar with lime active state
   - `components/ui/` — all 7 primitives: Cube, Pill, Callout, MonoTable, StatusDot, SectionDivider, BrandStrip
-  - `components/pyramid/` — all 5 floor plan SVGs (Ground L0, L3, L-1, Roof, Exterior), FloorSelector (elevation + 5 accurate pills + leader lines + elevation tags), FloorPlan wrapper, MiniMap, ScrollVideo (GSAP, awaits /public/frames/*.webp)
+  - `components/pyramid/scroll-video.tsx` — full GSAP canvas component: cover-fit render, frame counter (DOM ref), progress bar (DOM ref), overlayTitle/overlaySubtitle/overlayLabel text block, children slot for overlays, loading skeleton, window resize handler
+  - `components/pyramid/` — all 5 floor plan SVGs, FloorSelector, FloorPlan wrapper, MiniMap
   - `components/booking/`, `components/chatbot/` — stubs
+  - `public/frames/hero/` — 300 frames (`0001.jpg`–`0300.jpg`, 38.55 MB total, 132 KB avg), moved from `background2/` via `scripts/process-frames.mjs`
   - `public/references/` — all 11 reference images served at `/references/...`
   - `public/pyramid/` — MVRDV photography
 - **What exists now (backend):**
@@ -79,18 +82,17 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) — Phase 4 frontend: enterprise dashboard rewrite (KPI donut rings, day timeline, occupancy bars), dashboard sidebar, all 3 dashboard sub-pages (events, inventory, conflicts), all 4 missing SVG floor plans (L3, L-1, Roof, Exterior), mock data API layer.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) — Phase 4 backend slice 1: `0002_seed.sql` (53 spaces, 11 asset types, 3 demo events, tasks, quote), `lib/db/client.ts` (browser + admin clients), `lib/db/queries/spaces.ts` (real Supabase + mock fallback), all 3 spaces API routes with zod validation. `tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Landing page + floor selector: built `app/(marketing)/page.tsx` (Framer Motion scroll cross-fade hero, 3 images, stats panel, manifesto, feature strip, dark CTA); updated `components/pyramid/floor-selector.tsx` (accurate pill positions, leader lines, elevation tags, exterior offset left); added `console.log` floor selection in spaces page. `tsc --noEmit` clean.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — GSAP Scroll-Video Canvas Engine: wrote `scripts/process-frames.mjs` (moved 300 frames from `background2/` → `public/frames/hero/`, zero-padded naming, source dir deleted, 38.55 MB total); rewrote `components/pyramid/scroll-video.tsx` (cover-fit canvas, DOM-ref frame counter + progress bar, overlayTitle/Subtitle/Label text block, children slot, loading skeleton, resize handler, GSAP cleanup); updated landing page to use ScrollVideo (removed Framer Motion hero, 3-image cross-fade replaced by canvas engine); updated space detail page to use ScrollVideo (first 100 frames, breadcrumb + status badge as children, linear-gradient removed, formatFloor helper). `tsc --noEmit` clean.
 
 ## Next Steps
 
 ### Frontend Dev (Aron) — immediate priorities:
 
-1. **Space detail page** (`app/spaces/[code]/page.tsx`): Currently a stub. Show space name, MonoTable specs (capacity, area, hourly rate, ceiling height), photo/background using `interior-atrium.png` or `interior-boxes-detail.png` as fallback. Add `BookingPanel` stub on the right side. Wire to `/api/spaces/[code]` — which is already implemented and returns `GetSpaceResponse`. Add subtle Framer Motion parallax on the background image.
+1. **Booking flow** (`app/book/page.tsx`, `app/book/confirmation/page.tsx`): Date/time/attendees form + inline quote display. Wire to `POST /api/events` + `POST /api/quotes`. Confirmation shows event ref code, task list, asset reservation summary.
 
-2. **Booking flow** (`app/book/page.tsx`, `app/book/confirmation/page.tsx`): Date/time/attendees form + inline quote display. Wire to `POST /api/events` + `POST /api/quotes`. Confirmation shows event ref code, task list, asset reservation summary.
+2. **Chatbot UI** (`components/chatbot/chatbot-cube.tsx`, `components/chatbot/chatbot-panel.tsx`): Floating dark cube (bottom-right) that expands into a panel. Wire to `/api/chatbot` once GEMINI_API_KEY is in `.env.local`.
 
-3. **Chatbot UI** (`components/chatbot/chatbot-cube.tsx`, `components/chatbot/chatbot-panel.tsx`): Floating dark cube (bottom-right) that expands into a panel. Wire to `/api/chatbot` once GEMINI_API_KEY is in `.env.local`.
-
-4. **Spaces page live data**: Replace `DEMO_SPACES` array in `app/spaces/page.tsx` with a fetch from `/api/spaces?floor=<activeFloor>`. The API is already live and returns `ListSpacesResponse`.
+3. **Spaces page live data**: Replace `DEMO_SPACES` array in `app/spaces/page.tsx` with a fetch from `/api/spaces?floor=<activeFloor>`. The API is already live and returns `ListSpacesResponse`.
 
 ### Backend Dev (Stiven) — immediate priorities:
 
@@ -112,7 +114,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - **Supabase project not yet created** — all 3 spaces API routes work via mock-data fallback until env vars are set. Once set, routes automatically switch to real Supabase queries.
 - `public/references/` now exists with all 11 images — FloorSelector and landing page images resolve correctly.
 - `pnpm tsc --noEmit` fails due to an unrelated pnpm native build script error (sharp, unrs-resolver). Use `npx tsc --noEmit` instead.
-- `ScrollVideo` component expects frame images at `/public/frames/0001.webp…0120.webp`. These do not exist. The landing page uses Framer Motion cross-fade instead. ScrollVideo can be wired when frames are extracted.
+- GEMINI_API_KEY not yet configured — `/api/chatbot` is stubbed.
 - GEMINI_API_KEY not yet configured — `/api/chatbot` is stubbed.
 
 ## Key Decisions Made
@@ -126,8 +128,10 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - **Package name is `piramida-backstage`** (lowercase): The directory is `PiramidaBackstage` but npm requires lowercase names. `package.json` uses `"name": "piramida-backstage"`.
 - **Ground Floor SVG geometry**: 16 radial spaces (A1–A16) at every 22.5° centered angle, each ~16.5° arc span between corridor wedges. BOX_INNER=178, BOX_OUTER=318, center at (400,400). A17–A19 are tiny transition connectors — may be removed in polish pass.
 - **API routes use mock data (lib/db/mock-data.ts)**: All non-spaces API routes return real-looking data from the in-memory mock store. Spaces routes use Supabase with mock fallback.
-- **Landing page uses Framer Motion cross-fade, not ScrollVideo**: No `/public/frames/*.webp` files exist. The scroll-scrubbed video is implemented as a 3-image cross-fade using `useScroll` + `useTransform`. ScrollVideo component remains for future use.
-- **No CSS gradients on hero overlay**: The dark photo scrim uses flat `rgba(10,10,10,0.46)` — no `linear-gradient`. This satisfies the design system rule while maintaining text legibility.
+- **Landing page uses GSAP ScrollVideo, not Framer Motion cross-fade**: 300 frames at `/public/frames/hero/0001.jpg`–`0300.jpg`. Framer Motion hero fully removed.
+- **Space detail hero uses ScrollVideo with frameCount=100**: Pulls first 100 frames of the same hero sequence. No separate `detail-sample/` directory (background1 was absent).
+- **No CSS gradients anywhere**: Scrim is flat `rgba(10,10,10,0.38)` in ScrollVideo. Space detail page gradient removed.
+- **`formatFloor()` helper in `app/spaces/[code]/page.tsx`**: Replaces repeated inline `.replace()` chains throughout the file.
 - **FloorSelector exterior pill offset left**: Exterior boxes (BE1–BE16) ring the building perimeter. The pill is positioned at `left: 14%, top: 62%` to appear outside/left of the building in the elevation photo, distinguishing it from the stacked center pills.
 
 ## Reference files index

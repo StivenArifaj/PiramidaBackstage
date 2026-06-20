@@ -1,28 +1,9 @@
 'use client'
 
-import { useRef } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
-import { motion, useScroll, useTransform } from 'framer-motion'
 import { BrandStrip } from '@/components/ui/brand-strip'
 import { SectionDivider } from '@/components/ui/section-divider'
-
-const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number]
-
-const HERO_IMAGES = [
-  {
-    src: '/references/wide-context.png',
-    alt: 'Pyramid of Tirana in Tirana city context, aerial view',
-  },
-  {
-    src: '/references/aerial-three-quarter-a.png',
-    alt: 'Pyramid of Tirana three-quarter aerial view, MVRDV colored boxes visible',
-  },
-  {
-    src: '/references/aerial-top-down.png',
-    alt: 'Pyramid of Tirana top-down aerial view, radial structure',
-  },
-]
+import { ScrollVideo } from '@/components/pyramid/scroll-video'
 
 const BUILDING_STATS = [
   { value: '80+', label: 'spaces' },
@@ -66,297 +47,116 @@ const BUILDING_SPECS = [
 ]
 
 export default function LandingPage() {
-  const heroRef = useRef<HTMLDivElement>(null)
-
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ['start start', 'end start'],
-  })
-
-  // Three images cross-fade across the scroll zone
-  const img1Opacity = useTransform(scrollYProgress, [0, 0.28, 0.42], [1, 1, 0])
-  const img2Opacity = useTransform(scrollYProgress, [0.28, 0.42, 0.68, 0.82], [0, 1, 1, 0])
-  const img3Opacity = useTransform(scrollYProgress, [0.68, 0.82, 1.0], [0, 1, 1])
-
-  // Hero text drifts upward and fades as user scrolls into the image sequence
-  const textY    = useTransform(scrollYProgress, [0, 0.55], ['0%', '-22%'])
-  const textFade = useTransform(scrollYProgress, [0, 0.42, 0.62], [1, 1, 0])
-
-  const opacities = [img1Opacity, img2Opacity, img3Opacity]
-
   return (
     <div style={{ backgroundColor: 'var(--color-concrete-char)' }}>
       <BrandStrip />
 
-      {/* ── Scroll-driven hero ─────────────────────────────────────────── */}
-      <div ref={heroRef} style={{ height: '300vh' }}>
+      {/* ── Scroll-scrubbed video hero ──────────────────────────────────── */}
+      <ScrollVideo
+        framesFolder="/frames/hero"
+        frameCount={300}
+        overlayLabel="event coordination platform"
+        overlayTitle="PIRAMIDA E SHQIPËRISË"
+        overlaySubtitle="EST. 1988 · REIMAGINED 2023 · BACKSTAGE 2026"
+        scrollHeight="300vh"
+      >
+        {/* Stats panel — top right */}
         <div
           style={{
-            position: 'sticky',
-            top: 0,
-            height: '100vh',
-            overflow: 'hidden',
-            backgroundColor: 'var(--color-concrete-black)',
+            position: 'absolute',
+            top: '72px',
+            right: '40px',
+            border: '2px solid rgba(245,245,240,0.18)',
+            backgroundColor: 'rgba(10,10,10,0.62)',
+            zIndex: 2,
           }}
         >
-          {/* Layered images — cross-fade on scroll */}
-          {HERO_IMAGES.map((img, i) => (
-            <motion.div
-              key={img.src}
+          {BUILDING_STATS.map(({ value, label }, i) => (
+            <div
+              key={label}
               style={{
-                opacity: opacities[i],
-                position: 'absolute',
-                inset: 0,
+                padding: '14px 22px',
+                borderBottom:
+                  i < BUILDING_STATS.length - 1
+                    ? '1px solid rgba(245,245,240,0.1)'
+                    : 'none',
               }}
             >
-              <Image
-                src={img.src}
-                alt={img.alt}
-                fill
-                priority={i === 0}
-                style={{ objectFit: 'cover', objectPosition: 'center' }}
-                sizes="100vw"
-              />
-            </motion.div>
+              <p
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '22px',
+                  fontWeight: 500,
+                  color: 'var(--color-concrete-bone)',
+                  margin: 0,
+                  letterSpacing: '0.03em',
+                }}
+              >
+                {value}
+              </p>
+              <p
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '8px',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(245,245,240,0.38)',
+                  margin: '3px 0 0',
+                }}
+              >
+                {label}
+              </p>
+            </div>
           ))}
-
-          {/* Flat dark scrim — no gradient, just uniform darkening for legibility */}
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundColor: 'rgba(10,10,10,0.46)',
-              pointerEvents: 'none',
-            }}
-          />
-
-          {/* Stats panel — top right */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.7, delay: 1.0, ease: EASE }}
-            style={{
-              position: 'absolute',
-              top: '72px',
-              right: '40px',
-              border: '2px solid rgba(245,245,240,0.18)',
-              backgroundColor: 'rgba(10,10,10,0.62)',
-            }}
-          >
-            {BUILDING_STATS.map(({ value, label }, i) => (
-              <div
-                key={label}
-                style={{
-                  padding: '14px 22px',
-                  borderBottom:
-                    i < BUILDING_STATS.length - 1
-                      ? '1px solid rgba(245,245,240,0.1)'
-                      : 'none',
-                }}
-              >
-                <p
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '22px',
-                    fontWeight: 500,
-                    color: 'var(--color-concrete-bone)',
-                    margin: 0,
-                    letterSpacing: '0.03em',
-                  }}
-                >
-                  {value}
-                </p>
-                <p
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '8px',
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    color: 'rgba(245,245,240,0.38)',
-                    margin: '3px 0 0',
-                  }}
-                >
-                  {label}
-                </p>
-              </div>
-            ))}
-          </motion.div>
-
-          {/* Venue label — bottom left */}
-          <p
-            style={{
-              position: 'absolute',
-              bottom: '32px',
-              left: '48px',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '9px',
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              color: 'rgba(245,245,240,0.36)',
-              margin: 0,
-            }}
-          >
-            pyramid of tirana · tirana, al
-          </p>
-
-          {/* Scroll indicator — bottom right */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 1.4 }}
-            style={{
-              position: 'absolute',
-              bottom: '32px',
-              right: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-            }}
-          >
-            <p
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '9px',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                color: 'rgba(245,245,240,0.36)',
-                margin: 0,
-              }}
-            >
-              scroll
-            </p>
-            <motion.div
-              animate={{ y: [0, 6, 0] }}
-              transition={{ duration: 1.9, repeat: Infinity, ease: 'easeInOut' }}
-              style={{
-                width: '1px',
-                height: '28px',
-                backgroundColor: 'rgba(245,245,240,0.3)',
-              }}
-            />
-          </motion.div>
-
-          {/* Hero text — bottom area, drifts up on scroll */}
-          <motion.div
-            style={{
-              position: 'absolute',
-              left: '48px',
-              bottom: '72px',
-              y: textY,
-              opacity: textFade,
-            }}
-          >
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10px',
-                letterSpacing: '0.22em',
-                textTransform: 'uppercase',
-                color: 'rgba(245,245,240,0.48)',
-                margin: '0 0 18px',
-              }}
-            >
-              event coordination platform
-            </motion.p>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, delay: 0.25, ease: EASE }}
-              style={{ margin: 0, lineHeight: 1 }}
-            >
-              <span
-                style={{
-                  display: 'block',
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 'clamp(52px, 7.5vw, 92px)',
-                  fontWeight: 500,
-                  letterSpacing: '-0.01em',
-                  color: 'var(--color-concrete-bone)',
-                }}
-              >
-                PIRAMIDA
-              </span>
-              <span
-                style={{
-                  display: 'inline-block',
-                  marginTop: '6px',
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 'clamp(52px, 7.5vw, 92px)',
-                  fontWeight: 500,
-                  letterSpacing: '-0.01em',
-                  color: 'var(--color-lime-ink)',
-                  backgroundColor: 'var(--color-lime)',
-                  padding: '0 14px',
-                }}
-              >
-                BACKSTAGE
-              </span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '15px',
-                lineHeight: 1.65,
-                color: 'rgba(245,245,240,0.62)',
-                margin: '22px 0 30px',
-                maxWidth: '440px',
-              }}
-            >
-              One platform for every event at the Pyramid of Tirana. Browse spaces, get an instant quote, coordinate every team.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.78, ease: EASE }}
-              style={{ display: 'flex', gap: '14px', alignItems: 'center' }}
-            >
-              <Link
-                href="/spaces"
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '11px',
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: 'var(--color-lime-ink)',
-                  backgroundColor: 'var(--color-lime)',
-                  padding: '13px 30px',
-                  border: '2px solid var(--color-lime-ink)',
-                  textDecoration: 'none',
-                  display: 'inline-block',
-                }}
-              >
-                explore spaces
-              </Link>
-              <Link
-                href="/dashboard"
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '11px',
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: 'var(--color-concrete-bone)',
-                  padding: '13px 30px',
-                  border: '2px solid rgba(245,245,240,0.28)',
-                  textDecoration: 'none',
-                  display: 'inline-block',
-                }}
-              >
-                organizer view
-              </Link>
-            </motion.div>
-          </motion.div>
         </div>
-      </div>
+
+        {/* CTA buttons — bottom right */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '18px',
+            right: '40px',
+            display: 'flex',
+            gap: '14px',
+            alignItems: 'center',
+            zIndex: 2,
+          }}
+        >
+          <Link
+            href="/spaces"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: 'var(--color-lime-ink)',
+              backgroundColor: 'var(--color-lime)',
+              padding: '13px 30px',
+              border: '2px solid var(--color-lime-ink)',
+              textDecoration: 'none',
+              display: 'inline-block',
+            }}
+          >
+            explore spaces
+          </Link>
+          <Link
+            href="/dashboard"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: 'var(--color-concrete-bone)',
+              padding: '13px 30px',
+              border: '2px solid rgba(245,245,240,0.28)',
+              textDecoration: 'none',
+              display: 'inline-block',
+            }}
+          >
+            organizer view
+          </Link>
+        </div>
+      </ScrollVideo>
 
       {/* ── Diagonal transition: dark → bone ───────────────────────────── */}
       <SectionDivider
