@@ -269,6 +269,26 @@ export function ScrollVideo({
         {/* Slot for absolutely-positioned overlays (stats panel, CTAs, badges) */}
         {children}
 
+        {/* Center watermark blur — authorized exception to design system (no hard block possible
+            without obscuring main content). Covers "BLEC!STRAKOSHA MEDIA 4K" baked into all frames.
+            Position derived from cover-fit math: source ~960×660 → screen ~50%L, 58%T at 1440×900. */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            left: '50%',
+            top: '58%',
+            transform: 'translate(-50%, -50%)',
+            width: '420px',
+            height: '88px',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            backgroundColor: 'rgba(255,255,255,0.07)',
+            zIndex: 3,
+            pointerEvents: 'none',
+          }}
+        />
+
         {/* Watermark mask — Option A: hard geometric block (bottom-right)
             Covers the Ezgif.com attribution that appears in all 565 frames
             (300 hero + 265 detail-sample). Hard edges, brutalist-compliant. */}
