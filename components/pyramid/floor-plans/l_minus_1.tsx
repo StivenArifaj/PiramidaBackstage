@@ -7,7 +7,7 @@ import type { SpaceWithAvailability, AvailabilityState } from '@/types/api'
 function pts(pctStr: string): string {
   return pctStr.split(' ').map(pair => {
     const [x, y] = pair.split(',').map(Number)
-    return `${(x * 16).toFixed(1)},${(y * 11.31).toFixed(1)}`
+    return `${(x * 16 - 120).toFixed(1)},${(y * 11.31 - 15).toFixed(1)}`
   }).join(' ')
 }
 
@@ -89,7 +89,7 @@ export function LMinusOneFloorPlan({ spaces = [], onSpaceClick }: LMinusOneFloor
   return (
     <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
       <svg
-        viewBox="0 0 1600 1131"
+        viewBox="0 0 1415 836"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
         preserveAspectRatio="xMidYMid meet"

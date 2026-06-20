@@ -4,12 +4,12 @@ import { useState } from 'react'
 import type { SpaceWithAvailability, AvailabilityState } from '@/types/api'
 
 // ── Coordinate conversion ─────────────────────────────────────────────────────
-// Mapper records percentages (0-100) relative to the JPEG (1600×1131 px).
-// SVG viewBox matches the JPEG exactly, so: x_svg = x_pct * 16, y_svg = y_pct * 11.31
+// Mapper % -> original JPEG (1600x1131), then subtract crop offset (left=120, top=15).
+// Cropped image is 1415x1081; viewBox matches that.
 function pts(pctStr: string): string {
   return pctStr.split(' ').map(pair => {
     const [x, y] = pair.split(',').map(Number)
-    return `${(x * 16).toFixed(1)},${(y * 11.31).toFixed(1)}`
+    return `${(x * 16 - 120).toFixed(1)},${(y * 11.31 - 15).toFixed(1)}`
   }).join(' ')
 }
 
@@ -120,7 +120,7 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
   return (
     <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
       <svg
-        viewBox="0 0 1600 1131"
+        viewBox="0 0 1415 1081"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
         preserveAspectRatio="xMidYMid meet"
