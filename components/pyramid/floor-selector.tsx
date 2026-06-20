@@ -3,12 +3,13 @@
 import { Pill } from '@/components/ui/pill'
 import type { SpaceFloor } from '@/types/api'
 
-// Positions calibrated against front-elevation.png:
-//   roof      → tip of pyramid,  ~7% from top, centered
-//   l3        → 3rd terrace band, ~30% from top, centered
-//   l0        → glass facade entrance, ~60% from top, centered
-//   l_minus_1 → below ground level, ~76% from top, centered
-//   exterior  → outside building perimeter (left side), ~65% from top, ~15% from left
+// Image dimensions: mvrdv-28.jpg = 1333×1000 (aspect 1.333)
+// Positions calibrated against the Pyramid's stepped facade geometry:
+//   roof      → apex boxes at the summit, ~7% from top, centered
+//   l3        → third terrace band (wide step below apex), ~30% from top, centered
+//   l0        → ground-level glass entrance facade, ~58% from top, centered
+//   l_minus_1 → below-grade level visible in the plinth, ~76% from top, centered
+//   exterior  → exterior boxes flanking the building at grade, ~64% from top, ~12% from left
 const FLOORS: Array<{
   key: SpaceFloor
   label: string
@@ -41,7 +42,7 @@ const FLOORS: Array<{
     label: 'Ground Floor',
     label_sq: 'Kati Përdhes',
     elevation: '±0',
-    topPct: '60%',
+    topPct: '58%',
     leftPct: '50%',
     lineDir: 'right',
   },
@@ -60,8 +61,8 @@ const FLOORS: Array<{
     label: 'Ext. Boxes',
     label_sq: 'Kutitë Ext.',
     elevation: 'EX',
-    topPct: '62%',
-    leftPct: '14%',
+    topPct: '64%',
+    leftPct: '12%',
     lineDir: 'left',
   },
 ]
@@ -81,19 +82,21 @@ export function FloorSelector({
     <div
       className="relative w-full overflow-hidden"
       style={{
-        aspectRatio: '3/2',
+        aspectRatio: '1333/1000',
         border: '2px solid var(--color-concrete-char)',
-        backgroundImage: "url('/references/front-elevation.png')",
+        backgroundImage: "url('/pyramid/mvrdv-28.jpg')",
         backgroundSize: 'cover',
-        backgroundPosition: 'center 30%',
-        backgroundColor: 'var(--color-concrete-char)',
+        backgroundPosition: 'center center',
+        backgroundColor: 'var(--color-concrete-black)',
       }}
     >
-      {/* Flat dark scrim for pill legibility */}
+      {/* Subtle gradient scrim — pills stay legible, image detail shows through */}
       <div
         className="absolute inset-0"
         aria-hidden="true"
-        style={{ backgroundColor: 'rgba(10,10,10,0.32)' }}
+        style={{
+          background: 'linear-gradient(180deg, rgba(10,10,10,0.20) 0%, rgba(10,10,10,0.08) 50%, rgba(10,10,10,0.28) 100%)',
+        }}
       />
 
       {/* Floor pills with leader lines */}
