@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { BrandStrip } from '@/components/ui/brand-strip'
 import { FloorSelector } from '@/components/pyramid/floor-selector'
 import { FloorPlan } from '@/components/pyramid/floor-plan'
@@ -8,31 +9,37 @@ import { MiniMap } from '@/components/pyramid/mini-map'
 import { FLOOR_LABELS } from '@/types/domain'
 import type { SpaceFloor, SpaceWithAvailability } from '@/types/api'
 
-// Demo spaces so the floor plan renders with real availability colours
 const DEMO_SPACES: SpaceWithAvailability[] = [
-  { id: '1',  code: 'A1',  name: 'Space A1',  floor: 'l0', category: 'extension', area_sqm: 85,  capacity_pax: 90,  hourly_rate_eur: 120, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '2',  code: 'A2',  name: 'Space A2',  floor: 'l0', category: 'extension', area_sqm: 92,  capacity_pax: 100, hourly_rate_eur: 130, setup_types: [], features: [], photo_urls: [], availability: 'reserved'  },
-  { id: '3',  code: 'A3',  name: 'Space A3',  floor: 'l0', category: 'extension', area_sqm: 88,  capacity_pax: 95,  hourly_rate_eur: 125, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '4',  code: 'A4',  name: 'Space A4',  floor: 'l0', category: 'extension', area_sqm: 95,  capacity_pax: 110, hourly_rate_eur: 135, setup_types: [], features: [], photo_urls: [], availability: 'pending'   },
-  { id: '5',  code: 'A5',  name: 'Space A5',  floor: 'l0', category: 'extension', area_sqm: 105, capacity_pax: 120, hourly_rate_eur: 145, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '6',  code: 'A6',  name: 'Space A6',  floor: 'l0', category: 'extension', area_sqm: 98,  capacity_pax: 108, hourly_rate_eur: 138, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '7',  code: 'A7',  name: 'Space A7',  floor: 'l0', category: 'extension', area_sqm: 90,  capacity_pax: 98,  hourly_rate_eur: 128, setup_types: [], features: [], photo_urls: [], availability: 'reserved'  },
-  { id: '8',  code: 'A8',  name: 'Space A8',  floor: 'l0', category: 'extension', area_sqm: 87,  capacity_pax: 94,  hourly_rate_eur: 122, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '9',  code: 'A9',  name: 'Space A9',  floor: 'l0', category: 'extension', area_sqm: 88,  capacity_pax: 96,  hourly_rate_eur: 124, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '10', code: 'A10', name: 'Space A10', floor: 'l0', category: 'extension', area_sqm: 92,  capacity_pax: 100, hourly_rate_eur: 130, setup_types: [], features: [], photo_urls: [], availability: 'blocked'   },
-  { id: '11', code: 'A11', name: 'Space A11', floor: 'l0', category: 'extension', area_sqm: 95,  capacity_pax: 105, hourly_rate_eur: 135, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '12', code: 'A12', name: 'Space A12', floor: 'l0', category: 'extension', area_sqm: 100, capacity_pax: 112, hourly_rate_eur: 140, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '13', code: 'A13', name: 'Space A13', floor: 'l0', category: 'extension', area_sqm: 96,  capacity_pax: 106, hourly_rate_eur: 136, setup_types: [], features: [], photo_urls: [], availability: 'pending'   },
-  { id: '14', code: 'A14', name: 'Space A14', floor: 'l0', category: 'extension', area_sqm: 90,  capacity_pax: 98,  hourly_rate_eur: 128, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '15', code: 'A15', name: 'Space A15', floor: 'l0', category: 'extension', area_sqm: 87,  capacity_pax: 93,  hourly_rate_eur: 122, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '16', code: 'A16', name: 'Space A16', floor: 'l0', category: 'extension', area_sqm: 84,  capacity_pax: 90,  hourly_rate_eur: 120, setup_types: [], features: [], photo_urls: [], availability: 'reserved'  },
+  { id: '1',  code: 'A1',  name: 'Exhibition Room A1',  floor: 'l0', category: 'extension', area_sqm: 85,  capacity_pax: 90,  hourly_rate_eur: 120, setup_types: [], features: [], photo_urls: [], availability: 'available' },
+  { id: '2',  code: 'A2',  name: 'Exhibition Room A2',  floor: 'l0', category: 'extension', area_sqm: 92,  capacity_pax: 100, hourly_rate_eur: 130, setup_types: [], features: [], photo_urls: [], availability: 'reserved'  },
+  { id: '3',  code: 'A3',  name: 'Exhibition Room A3',  floor: 'l0', category: 'extension', area_sqm: 88,  capacity_pax: 95,  hourly_rate_eur: 125, setup_types: [], features: [], photo_urls: [], availability: 'available' },
+  { id: '4',  code: 'A4',  name: 'Exhibition Room A4',  floor: 'l0', category: 'extension', area_sqm: 95,  capacity_pax: 110, hourly_rate_eur: 135, setup_types: [], features: [], photo_urls: [], availability: 'pending'   },
+  { id: '5',  code: 'A5',  name: 'Exhibition Room A5',  floor: 'l0', category: 'extension', area_sqm: 105, capacity_pax: 120, hourly_rate_eur: 145, setup_types: [], features: [], photo_urls: [], availability: 'available' },
+  { id: '6',  code: 'A6',  name: 'Exhibition Room A6',  floor: 'l0', category: 'extension', area_sqm: 98,  capacity_pax: 108, hourly_rate_eur: 138, setup_types: [], features: [], photo_urls: [], availability: 'available' },
+  { id: '7',  code: 'A7',  name: 'Exhibition Room A7',  floor: 'l0', category: 'extension', area_sqm: 90,  capacity_pax: 98,  hourly_rate_eur: 128, setup_types: [], features: [], photo_urls: [], availability: 'reserved'  },
+  { id: '8',  code: 'A8',  name: 'Exhibition Room A8',  floor: 'l0', category: 'extension', area_sqm: 87,  capacity_pax: 94,  hourly_rate_eur: 122, setup_types: [], features: [], photo_urls: [], availability: 'available' },
+  { id: '9',  code: 'A9',  name: 'Exhibition Room A9',  floor: 'l0', category: 'extension', area_sqm: 88,  capacity_pax: 96,  hourly_rate_eur: 124, setup_types: [], features: [], photo_urls: [], availability: 'available' },
+  { id: '10', code: 'A10', name: 'Exhibition Room A10', floor: 'l0', category: 'extension', area_sqm: 92,  capacity_pax: 100, hourly_rate_eur: 130, setup_types: [], features: [], photo_urls: [], availability: 'blocked'   },
+  { id: '11', code: 'A11', name: 'Exhibition Room A11', floor: 'l0', category: 'extension', area_sqm: 95,  capacity_pax: 105, hourly_rate_eur: 135, setup_types: [], features: [], photo_urls: [], availability: 'available' },
+  { id: '12', code: 'A12', name: 'Exhibition Room A12', floor: 'l0', category: 'extension', area_sqm: 100, capacity_pax: 112, hourly_rate_eur: 140, setup_types: [], features: [], photo_urls: [], availability: 'available' },
+  { id: '13', code: 'A13', name: 'Exhibition Room A13', floor: 'l0', category: 'extension', area_sqm: 96,  capacity_pax: 106, hourly_rate_eur: 136, setup_types: [], features: [], photo_urls: [], availability: 'pending'   },
+  { id: '14', code: 'A14', name: 'Exhibition Room A14', floor: 'l0', category: 'extension', area_sqm: 90,  capacity_pax: 98,  hourly_rate_eur: 128, setup_types: [], features: [], photo_urls: [], availability: 'available' },
+  { id: '15', code: 'A15', name: 'Exhibition Room A15', floor: 'l0', category: 'extension', area_sqm: 87,  capacity_pax: 93,  hourly_rate_eur: 122, setup_types: [], features: [], photo_urls: [], availability: 'available' },
+  { id: '16', code: 'A16', name: 'Exhibition Room A16', floor: 'l0', category: 'extension', area_sqm: 84,  capacity_pax: 90,  hourly_rate_eur: 120, setup_types: [], features: [], photo_urls: [], availability: 'reserved'  },
+  { id: '17', code: 'A17', name: 'Entrance Node A17',   floor: 'l0', category: 'extension', area_sqm: 42,  capacity_pax: 38,  hourly_rate_eur: 75,  setup_types: [], features: [], photo_urls: [], availability: 'available' },
+  { id: '18', code: 'A18', name: 'Entrance Node A18',   floor: 'l0', category: 'extension', area_sqm: 42,  capacity_pax: 38,  hourly_rate_eur: 75,  setup_types: [], features: [], photo_urls: [], availability: 'available' },
+  { id: '19', code: 'A19', name: 'Entrance Node A19',   floor: 'l0', category: 'extension', area_sqm: 40,  capacity_pax: 35,  hourly_rate_eur: 70,  setup_types: [], features: [], photo_urls: [], availability: 'pending'   },
 ]
 
 export default function SpacesPage() {
+  const router = useRouter()
   const [activeFloor, setActiveFloor] = useState<SpaceFloor>('l0')
   function handleFloorSelect(floor: SpaceFloor) {
-    console.log('[FloorSelector] selected floor:', floor)
     setActiveFloor(floor)
+  }
+
+  function handleSpaceClick(code: string) {
+    router.push(`/spaces/${code.toLowerCase()}`)
   }
 
   const floorLabel = FLOOR_LABELS[activeFloor]
@@ -116,6 +123,7 @@ export default function SpacesPage() {
             <FloorPlan
               floor={activeFloor}
               spaces={DEMO_SPACES}
+              onSpaceClick={handleSpaceClick}
             />
           </div>
 

@@ -49,17 +49,18 @@ function octagonPoints(circumR: number): string {
 }
 
 /**
- * Straight-sided trapezoidal sector — NO arcs whatsoever.
+ * Straight-sided trapezoidal sector points — NO arcs whatsoever.
  * All four corners are computed via octPt(), producing a quadrilateral that
  * lies entirely within the octagon boundary when the sector doesn't cross a vertex.
+ * Returns space-separated "x,y" pairs for use in <polygon points="...">.
  */
-function octSector(startDeg: number, endDeg: number, innerR: number, outerR: number): string {
+function octSectorPoints(startDeg: number, endDeg: number, innerR: number, outerR: number): string {
   const p1 = octPt(startDeg, innerR)
   const p2 = octPt(startDeg, outerR)
   const p3 = octPt(endDeg, outerR)
   const p4 = octPt(endDeg, innerR)
   const f = (n: number) => n.toFixed(2)
-  return `M${f(p1.x)},${f(p1.y)} L${f(p2.x)},${f(p2.y)} L${f(p3.x)},${f(p3.y)} L${f(p4.x)},${f(p4.y)} Z`
+  return `${f(p1.x)},${f(p1.y)} ${f(p2.x)},${f(p2.y)} ${f(p3.x)},${f(p3.y)} ${f(p4.x)},${f(p4.y)}`
 }
 
 // ─── Space definitions ────────────────────────────────────────────────────────
@@ -232,8 +233,8 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
               onKeyDown={(e) => e.key === 'Enter' && handleClick(def.code)}
             >
               {/* Main fill — octagonal trapezoid, zero arcs */}
-              <path
-                d={octSector(startDeg, endDeg, BOX_INNER, BOX_OUTER)}
+              <polygon
+                points={octSectorPoints(startDeg, endDeg, BOX_INNER, BOX_OUTER)}
                 fill={fill}
                 fillOpacity={fillOpacity}
                 stroke="#1a1a1a"
@@ -242,8 +243,8 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
               />
               {/* Lime selection ring — inset by 3px */}
               {isHov && (
-                <path
-                  d={octSector(startDeg - 0.4, endDeg + 0.4, BOX_INNER - 4, BOX_OUTER + 4)}
+                <polygon
+                  points={octSectorPoints(startDeg - 0.4, endDeg + 0.4, BOX_INNER - 4, BOX_OUTER + 4)}
                   fill="none"
                   stroke="#c8da2b"
                   strokeWidth="3"
@@ -296,8 +297,8 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
               onMouseLeave={() => { setHovered(null); setTooltip(null) }}
               onKeyDown={(e) => e.key === 'Enter' && handleClick(def.code)}
             >
-              <path
-                d={octSector(startDeg, endDeg, BOX_INNER, BOX_OUTER)}
+              <polygon
+                points={octSectorPoints(startDeg, endDeg, BOX_INNER, BOX_OUTER)}
                 fill={fill}
                 fillOpacity={fillOpacity}
                 stroke="#1a1a1a"

@@ -55,21 +55,41 @@ export const MOCK_SPACES: SpaceWithAvailability[] = [
     availability: 'available',
   },
 
-  // ── GROUND FLOOR EXTENSION (A1–A15) ──────────────────────────────────────
-  ...Array.from({ length: 15 }, (_, i) => {
-    const code = `A${i + 1}`
-    const states: AvailabilityState[] = ['available', 'available', 'available', 'reserved', 'pending', 'available', 'available', 'blocked', 'available', 'available', 'reserved', 'available', 'available', 'pending', 'available']
-    const refs = ['/references/current-site-plan-ground.png', '/references/interior-boxes-detail.png', '/references/aerial-three-quarter-a.png', '/references/front-elevation.png', '/references/entrance-view.png']
+  // ── GROUND FLOOR EXTENSION (A1–A19) ──────────────────────────────────────
+  // Official Pyramid of Tirana ground-floor radial extension spaces.
+  // A1–A16 are the 16 main radial bays; A17–A19 are transition/entrance nodes.
+  ...[
+    { code: 'A1',  name: 'Exhibition Room A1',  name_sq: 'Salla Ekspozite A1',  area_sqm: 85,  cap: 90,  rate: 120, photo: '/references/current-site-plan-ground.png' },
+    { code: 'A2',  name: 'Exhibition Room A2',  name_sq: 'Salla Ekspozite A2',  area_sqm: 92,  cap: 100, rate: 130, photo: '/references/interior-boxes-detail.png' },
+    { code: 'A3',  name: 'Exhibition Room A3',  name_sq: 'Salla Ekspozite A3',  area_sqm: 88,  cap: 95,  rate: 125, photo: '/references/aerial-three-quarter-a.png' },
+    { code: 'A4',  name: 'Exhibition Room A4',  name_sq: 'Salla Ekspozite A4',  area_sqm: 95,  cap: 110, rate: 135, photo: '/references/front-elevation.png' },
+    { code: 'A5',  name: 'Exhibition Room A5',  name_sq: 'Salla Ekspozite A5',  area_sqm: 105, cap: 120, rate: 145, photo: '/references/entrance-view.png' },
+    { code: 'A6',  name: 'Exhibition Room A6',  name_sq: 'Salla Ekspozite A6',  area_sqm: 98,  cap: 108, rate: 138, photo: '/references/current-site-plan-ground.png' },
+    { code: 'A7',  name: 'Exhibition Room A7',  name_sq: 'Salla Ekspozite A7',  area_sqm: 90,  cap: 98,  rate: 128, photo: '/references/interior-boxes-detail.png' },
+    { code: 'A8',  name: 'Exhibition Room A8',  name_sq: 'Salla Ekspozite A8',  area_sqm: 87,  cap: 94,  rate: 122, photo: '/references/aerial-three-quarter-a.png' },
+    { code: 'A9',  name: 'Exhibition Room A9',  name_sq: 'Salla Ekspozite A9',  area_sqm: 88,  cap: 96,  rate: 124, photo: '/references/front-elevation.png' },
+    { code: 'A10', name: 'Exhibition Room A10', name_sq: 'Salla Ekspozite A10', area_sqm: 92,  cap: 100, rate: 130, photo: '/references/entrance-view.png' },
+    { code: 'A11', name: 'Exhibition Room A11', name_sq: 'Salla Ekspozite A11', area_sqm: 95,  cap: 105, rate: 135, photo: '/references/current-site-plan-ground.png' },
+    { code: 'A12', name: 'Exhibition Room A12', name_sq: 'Salla Ekspozite A12', area_sqm: 100, cap: 112, rate: 140, photo: '/references/interior-boxes-detail.png' },
+    { code: 'A13', name: 'Exhibition Room A13', name_sq: 'Salla Ekspozite A13', area_sqm: 96,  cap: 106, rate: 136, photo: '/references/aerial-three-quarter-a.png' },
+    { code: 'A14', name: 'Exhibition Room A14', name_sq: 'Salla Ekspozite A14', area_sqm: 90,  cap: 98,  rate: 128, photo: '/references/front-elevation.png' },
+    { code: 'A15', name: 'Exhibition Room A15', name_sq: 'Salla Ekspozite A15', area_sqm: 87,  cap: 93,  rate: 122, photo: '/references/entrance-view.png' },
+    { code: 'A16', name: 'Exhibition Room A16', name_sq: 'Salla Ekspozite A16', area_sqm: 84,  cap: 90,  rate: 120, photo: '/references/current-site-plan-ground.png' },
+    { code: 'A17', name: 'Entrance Node A17',   name_sq: 'Nyja e Hyrjes A17',  area_sqm: 42,  cap: 38,  rate: 75,  photo: '/references/interior-boxes-detail.png' },
+    { code: 'A18', name: 'Entrance Node A18',   name_sq: 'Nyja e Hyrjes A18',  area_sqm: 42,  cap: 38,  rate: 75,  photo: '/references/aerial-three-quarter-a.png' },
+    { code: 'A19', name: 'Entrance Node A19',   name_sq: 'Nyja e Hyrjes A19',  area_sqm: 40,  cap: 35,  rate: 70,  photo: '/references/front-elevation.png' },
+  ].map(({ name, name_sq, area_sqm, cap, rate, photo, code }, i) => {
+    const states: AvailabilityState[] = ['available', 'available', 'available', 'reserved', 'pending', 'available', 'available', 'blocked', 'available', 'available', 'reserved', 'available', 'available', 'pending', 'available', 'reserved', 'available', 'available', 'pending']
     return {
-      id: `ext-${code.toLowerCase()}`, code, name: `Space ${code}`, name_sq: `Hapësira ${code}`,
+      id: `ext-${code.toLowerCase()}`, code, name, name_sq,
       floor: 'l0' as const, category: 'extension' as const,
-      area_sqm: 85 + (i % 4) * 8, capacity_pax: 90 + (i % 5) * 8,
+      area_sqm, capacity_pax: cap,
       ceiling_m: 3.6,
-      hourly_rate_eur: 95 + (i % 3) * 15,
+      hourly_rate_eur: rate,
       setup_types: ['roundtable', 'standing', 'flex'],
       features: i % 3 === 0 ? ['projector', 'natural_light'] : ['natural_light'],
-      description: `Extension room on the ground-floor radial ring. Flexible layout with 2px concrete borders visible on three sides.`,
-      photo_urls: [refs[i % refs.length]],
+      description: `Ground-floor radial extension space on the Pyramid of Tirana's octagonal perimeter ring. ${code}: ${area_sqm} m², up to ${cap} guests.`,
+      photo_urls: [photo],
       availability: states[i],
     }
   }),
