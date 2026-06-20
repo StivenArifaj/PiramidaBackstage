@@ -43,8 +43,8 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - **Phase:** Phase 4 partially complete as of 2026-06-20. Both frontend and backend have done their first slice. Supabase project not yet created — API routes fall back to mock data.
 - **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` passes with zero errors.
 - **What exists now (frontend):**
-  - **`app/(marketing)/page.tsx`** — landing page: GSAP scroll-scrubbed canvas hero (300 frames from `/frames/hero/`), stats panel top-right, CTA buttons bottom-right, manifesto 2-col section, 4-feature strip, dark CTA. Framer Motion hero removed.
-  - **`app/spaces/[code]/page.tsx`** — space detail: GSAP scroll-scrubbed canvas hero (100 frames, ScrollVideo), breadcrumb top-left, status badge bottom-right, content grid with 4 metrics, specs MonoTable, BookingPanel with live estimate + POST /api/events. Gradient removed.
+  - **`app/page.tsx`** (root, actually served at `/`) — landing page: GSAP scroll-scrubbed canvas hero (`/frames/detail-sample/`, 265 frames, `reversed`: starts at wide Tirana city shot, zooms toward Pyramid facade as user scrolls), stats panel top-right, CTA buttons bottom-right, Ticker, stats 4-col, blueprint section, floor selector, photo strip, space types grid, footer. Framer Motion hero removed. Root div uses `overflowX: 'clip'` (not 'hidden') to preserve CSS sticky.
+  - **`app/spaces/[code]/page.tsx`** — space detail: GSAP scroll-scrubbed canvas hero (`/frames/hero/`, 300 frames, `reversed`: starts at aerial top-down Pyramid, zooms into interior), breadcrumb top-left, status badge bottom-right, content grid with 4 metrics, specs MonoTable, BookingPanel with live estimate + POST /api/events. Gradient removed.
   - **`app/spaces/page.tsx`** — floor selector elevation view: BrandStrip + FloorSelector (left) + FloorPlan SVG (right) + MiniMap
   - **`app/dashboard/page.tsx`** — enterprise dashboard: KPI strip with donut rings, day-timeline SVG, occupancy segmented bars, conflict panel
   - **`app/dashboard/events/page.tsx`** — event register: dark header, filter tabs, expand rows with Fragment key pattern, skeleton loading
@@ -83,6 +83,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) — Phase 4 backend slice 1: `0002_seed.sql` (53 spaces, 11 asset types, 3 demo events, tasks, quote), `lib/db/client.ts` (browser + admin clients), `lib/db/queries/spaces.ts` (real Supabase + mock fallback), all 3 spaces API routes with zod validation. `tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Landing page + floor selector: built `app/(marketing)/page.tsx` (Framer Motion scroll cross-fade hero, 3 images, stats panel, manifesto, feature strip, dark CTA); updated `components/pyramid/floor-selector.tsx` (accurate pill positions, leader lines, elevation tags, exterior offset left); added `console.log` floor selection in spaces page. `tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — GSAP Scroll-Video Canvas Engine: wrote `scripts/process-frames.mjs` (moved 300 frames from `background2/` → `public/frames/hero/`, zero-padded naming, source dir deleted, 38.55 MB total); rewrote `components/pyramid/scroll-video.tsx` (cover-fit canvas, DOM-ref frame counter + progress bar, overlayTitle/Subtitle/Label text block, children slot, loading skeleton, resize handler, GSAP cleanup); updated landing page to use ScrollVideo (removed Framer Motion hero, 3-image cross-fade replaced by canvas engine); updated space detail page to use ScrollVideo (first 100 frames, breadcrumb + status badge as children, linear-gradient removed, formatFloor helper). `tsc --noEmit` clean.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — UX Audit, Video Swap & Scroll-Pin Refactor: (1) wrote `scripts/snapshot.mjs` Playwright visual audit; (2) fixed CSS sticky break — root div `overflowX: 'hidden'` → `'clip'` (hidden creates scroll context that kills sticky, clip does not); (3) swapped video sources — landing now uses `/frames/detail-sample/` (265 frames, reversed: wide city → building facade), space detail now uses `/frames/hero/` (300 frames, reversed: aerial → interior); (4) increased overlay title from `clamp(32px,5vw,68px)` to `clamp(56px,7vw,96px)`, changed h2 → h1, reduced scrim opacity 0.38 → 0.22. `tsc --noEmit` clean.
 
 ## Next Steps
 
@@ -115,7 +116,6 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - `public/references/` now exists with all 11 images — FloorSelector and landing page images resolve correctly.
 - `pnpm tsc --noEmit` fails due to an unrelated pnpm native build script error (sharp, unrs-resolver). Use `npx tsc --noEmit` instead.
 - GEMINI_API_KEY not yet configured — `/api/chatbot` is stubbed.
-- GEMINI_API_KEY not yet configured — `/api/chatbot` is stubbed.
 
 ## Key Decisions Made
 
@@ -128,9 +128,10 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - **Package name is `piramida-backstage`** (lowercase): The directory is `PiramidaBackstage` but npm requires lowercase names. `package.json` uses `"name": "piramida-backstage"`.
 - **Ground Floor SVG geometry**: 16 radial spaces (A1–A16) at every 22.5° centered angle, each ~16.5° arc span between corridor wedges. BOX_INNER=178, BOX_OUTER=318, center at (400,400). A17–A19 are tiny transition connectors — may be removed in polish pass.
 - **API routes use mock data (lib/db/mock-data.ts)**: All non-spaces API routes return real-looking data from the in-memory mock store. Spaces routes use Supabase with mock fallback.
-- **Landing page uses GSAP ScrollVideo, not Framer Motion cross-fade**: 300 frames at `/public/frames/hero/0001.jpg`–`0300.jpg`. Framer Motion hero fully removed.
-- **Space detail hero uses ScrollVideo with frameCount=100**: Pulls first 100 frames of the same hero sequence. No separate `detail-sample/` directory (background1 was absent).
-- **No CSS gradients anywhere**: Scrim is flat `rgba(10,10,10,0.38)` in ScrollVideo. Space detail page gradient removed.
+- **Landing page uses GSAP ScrollVideo with detail-sample frames**: 265 frames at `/public/frames/detail-sample/`, `reversed=true` (starts frame 265 wide city, scrolls to frame 1 building facade). Framer Motion hero fully removed.
+- **Space detail hero uses ScrollVideo with hero frames**: 300 frames at `/public/frames/hero/`, `reversed=true` (starts frame 300 aerial, scrolls to frame 1 interior). Front elevation (detail-sample) is the landing video; drone aerial (hero) is the detail page video.
+- **`overflowX: 'clip'` on landing page root div**: Using `clip` not `hidden` — `overflow: hidden` creates a new scroll context which silently kills `position: sticky` children. `clip` clips overflow without creating a scroll context. This is a critical distinction.
+- **ScrollVideo overlay title is `<h1>`**: Always the primary heading. Font size `clamp(56px, 7vw, 96px)` per master-plan §4 (64–96px hero display). Scrim is flat `rgba(10,10,10,0.22)` — lighter to show video quality.
 - **`formatFloor()` helper in `app/spaces/[code]/page.tsx`**: Replaces repeated inline `.replace()` chains throughout the file.
 - **FloorSelector exterior pill offset left**: Exterior boxes (BE1–BE16) ring the building perimeter. The pill is positioned at `left: 14%, top: 62%` to appear outside/left of the building in the elevation photo, distinguishing it from the stacked center pills.
 

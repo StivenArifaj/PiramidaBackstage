@@ -164,12 +164,13 @@ export default function SpaceDetailPage() {
 
       {/* Scroll-scrubbed hero — first 100 frames of hero sequence */}
       <ScrollVideo
-        framesFolder="/frames/detail-sample"
-        frameCount={265}
+        framesFolder="/frames/hero"
+        frameCount={300}
         overlayLabel={`${formatFloor(space.floor)} · ${space.category.replace(/_/g, ' ')}`}
         overlayTitle={space.name}
         overlaySubtitle={space.name_sq ?? space.code}
         scrollHeight="200vh"
+        reversed
       >
         {/* Breadcrumb — top left, below BrandStrip */}
         <div style={{ position: 'absolute', top: '80px', left: '64px', zIndex: 2 }}>

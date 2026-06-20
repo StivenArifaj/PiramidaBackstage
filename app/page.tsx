@@ -144,15 +144,15 @@ export default function LandingPage() {
   const [activeFloor, setActiveFloor] = useState<SpaceFloor>('l0')
 
   return (
-    <div style={{ backgroundColor: 'var(--color-concrete-bone)', overflowX: 'hidden' }}>
+    <div style={{ backgroundColor: 'var(--color-concrete-bone)', overflowX: 'clip' }}>
       <BrandStrip />
 
       {/* ══════════════════════════════════════════════════════
           01 · HERO — GSAP scroll-scrubbed canvas (300 frames)
       ══════════════════════════════════════════════════════ */}
       <ScrollVideo
-        framesFolder="/frames/hero"
-        frameCount={300}
+        framesFolder="/frames/detail-sample"
+        frameCount={265}
         overlayLabel="Pyramid of Tirana · MVRDV · Albania · 2023"
         overlayTitle="piramida backstage."
         overlaySubtitle="EST. 1988 · REIMAGINED 2023 · BACKSTAGE 2026"

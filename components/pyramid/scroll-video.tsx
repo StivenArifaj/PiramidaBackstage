@@ -163,7 +163,7 @@ export function ScrollVideo({
           style={{
             position: 'absolute',
             inset: 0,
-            backgroundColor: 'rgba(10,10,10,0.38)',
+            backgroundColor: 'rgba(10,10,10,0.22)',
             pointerEvents: 'none',
           }}
         />
@@ -240,19 +240,19 @@ export function ScrollVideo({
               {overlayLabel}
             </p>
           )}
-          <h2
+          <h1
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(32px, 5vw, 68px)',
+              fontSize: 'clamp(56px, 7vw, 96px)',
               fontWeight: 500,
-              letterSpacing: '-0.01em',
+              letterSpacing: '-0.02em',
               color: 'var(--color-concrete-bone)',
               margin: 0,
-              lineHeight: 1,
+              lineHeight: 0.95,
             }}
           >
             {overlayTitle}
-          </h2>
+          </h1>
           <p
             style={{
               fontFamily: 'var(--font-mono)',
