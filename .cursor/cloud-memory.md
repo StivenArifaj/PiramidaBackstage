@@ -47,7 +47,9 @@ Both read `/types/` freely. Backend Dev owns writing to it.
   - **`app/spaces/page.tsx`** — standalone floor selector page (still exists and works independently at `/spaces`).
   - **`app/spaces/[code]/page.tsx`** — space detail: dark page header (breadcrumb + h1 + status badge) + `<ImageGallery>` (shows photo_urls or SVG-hatch placeholder) + content grid (4 metrics, MonoTable, BookingPanel). ScrollVideo removed.
   - **`components/ui/image-gallery.tsx`** — brutalist gallery: SVG 30°-hatch placeholder, crosshair overlay, view-label + counter, ← → nav, 6-up thumb strip with lime accent bar.
-  - **`components/pyramid/scroll-video.tsx`** — two watermark masks: (a) Option-A hard block: 224×40px `concrete-black` at `bottom:4px right:0` zIndex 4 covers Ezgif corner attribution in all 565 frames; (b) premium glassmorphic HUD: tight flex row, `blur(12px) rgba(255,255,255,0.10) border rgba(255,255,255,0.20)`, lime live-dot + "PIRAMIDA BACKSTAGE // FEED ACTIVE" 8px mono, at `left:50% top:58%`, zIndex 3 covers "BLEC!STRAKOSHA MEDIA 4K" videographer watermark (authorised design-system exception). CTA overlay children use `bottom:64px` to clear hard mask.
+  - **`components/pyramid/scroll-video.tsx`** — two watermark masks: (a) Option-A hard block: 224×40px `concrete-black` at `bottom:4px right:0` zIndex 4 covers Ezgif corner attribution; (b) premium glassmorphic HUD: `blur(12px) rgba(255,255,255,0.10) border rgba(255,255,255,0.20)`, lime dot + `[ PIRAMIDA BACKSTAGE // FEED ACTIVE ]` 8px JetBrains Mono, at `left:50% top:58%`, zIndex 3.
+  - **`components/pyramid/floor-plans/ground-floor.tsx`** — **strict octagonal geometry**, zero SVG arcs. `octPt()` (ray-to-octagon intersection) + `octSector()` (straight-sided trapezoids). All rings are `<polygon>` elements; A1–A19 clickable.
+  - **`components/pyramid/mini-map.tsx`** — **stepped pyramid elevation**, 5 tiers (RF→L3→L0→B1→EX) widening toward base. Active tier lime-filled with left accent bar + right dot.
   - **`app/spaces/page.tsx`** — floor selector elevation view: BrandStrip + FloorSelector (left) + FloorPlan SVG (right) + MiniMap
   - **`app/dashboard/page.tsx`** — enterprise dashboard: KPI strip with donut rings, day-timeline SVG, occupancy segmented bars, conflict panel
   - **`app/dashboard/events/page.tsx`** — event register: dark header, filter tabs, expand rows with Fragment key pattern, skeleton loading
@@ -71,7 +73,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
   - `lib/db/mock-data.ts` — in-memory mock store (events, spaces, assets, conflicts) used by all other API routes
   - All other API routes (events, conflicts, inventory, dashboard overview, quotes, tasks) wired to mock data
 - **Tailwind v4 note:** No `tailwind.config.ts` — tokens live in `app/globals.css` `@theme` block. This is correct for v4.
-- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) — emergency save / session handoff.
+- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) [Aron/frontend] — Repo sync, octagonal floor plan rewrite, tiered mini-map, watermark label polish.
 
 ## Completed Tasks Log
 
@@ -90,6 +92,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — UX Layout Refactor & Geometric Watermark Masking: (1) created `components/ui/image-gallery.tsx` — brutalist gallery, SVG hatch placeholder, thumb strip with accent border, no images/gradients/rounded corners; (2) refactored `app/spaces/[code]/page.tsx` — removed ScrollVideo, added dark page header (breadcrumb+h1+status badge) + ImageGallery showing real photo_urls or placeholder; (3) refactored `app/(marketing)/page.tsx` — dual flythrough: hero frames (300, reversed) → interlude 3-col stat block → detail-sample frames (265, reversed), manifesto + features below; (4) deleted `app/page.tsx` (was shadowing `(marketing)/page.tsx`, violating master-plan §5); (5) added Option-A watermark mask to `scroll-video.tsx` — solid 224×40px `concrete-black` block, bottom-right, zIndex 4, "[MASK // WM]" JetBrains Mono label — covers Ezgif attribution in all 565 frames (300 hero + 265 detail-sample). `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — UI Bug Fixes, Content Purge & Centre Watermark: (1) PURGED all marketing copy from `app/(marketing)/page.tsx`; (2) FIXED button overlap — CTAs raised to `bottom: 64px`; (3) ADDED centre watermark blur — 420×88px `backdropFilter: blur(12px)` div. `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Premium Watermark HUD & Continuous Scroll Flow: (1) REPLACED ugly 420×88px blur smudge in `scroll-video.tsx` with a tight glassmorphic HUD panel — auto-sized flex row, `blur(12px) bg-white/10 border-white/20`, lime live-dot + "PIRAMIDA BACKSTAGE // FEED ACTIVE" in 8px JetBrains Mono; (2) REFACTORED `app/(marketing)/page.tsx` as continuous scroll — dark cinematic section (BrandStrip + F1 + Interlude + F2) closes, then a bone-colored floor selector section slides up naturally; (3) REMOVED all "explore spaces"/"open floor plans" CTAs (F1 now only shows "organizer view", F2 has no CTA); (4) EMBEDDED full FloorSelector + FloorPlan from `/spaces` inline at the bottom of the landing page with same layout/data — `DEMO_SPACES`, `activeFloor` state, `FLOOR_LABELS`, available count badge, "view as page ↗" escape hatch link. `npx tsc --noEmit` clean.
+- [2026-06-20 ~session-handoff] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Repo sync, watermark label fix, octagonal floor plan, tiered mini-map: (1) `git pull` — synced 586 files from remote (previous session had pushed); (2) fixed watermark HUD label in `scroll-video.tsx`: added `[ ]` brackets → `[ PIRAMIDA BACKSTAGE // FEED ACTIVE ]`; (3) rewrote `components/pyramid/floor-plans/ground-floor.tsx` — deleted ALL circular arcs, replaced with strict octagonal geometry using `octPt()` (ray-to-octagon intersection) and `octSector()` (straight-sided trapezoids, zero `A` arc commands) — outer/inner/atrium all `<polygon>` elements, corridor spokes are `<line>` elements, A1–A19 all represented; (4) redesigned `components/pyramid/mini-map.tsx` — replaced flat triangle silhouette with a 5-tier stepped pyramid elevation (Roof→L3→L0→B1→EX, each tier steps outward, active tier lime-filled with left accent bar + right indicator dot); `app/(marketing)/page.tsx` unchanged (continuous scroll already in place from previous session). `npx tsc --noEmit` clean.
 
 ## Next Steps
 
@@ -99,11 +102,9 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 
 2. **Chatbot UI** (`components/chatbot/chatbot-cube.tsx`, `components/chatbot/chatbot-panel.tsx`): Floating dark cube (bottom-right) that expands into a panel. Wire to `/api/chatbot` once GEMINI_API_KEY is in `.env.local`.
 
-3. **Live floor data on landing page**: Replace `DEMO_SPACES` in `app/(marketing)/page.tsx` with a fetch from `/api/spaces?floor=${activeFloor}` once Supabase is wired. The floor selector on the landing page currently uses static mock data.
+3. **Space detail page improvements** (`app/spaces/[code]/page.tsx`): Populate `photo_urls` in `lib/db/mock-data.ts` for hero spaces (Blue, Orange, Green, Yellow) so the ImageGallery shows real imagery. Add Framer Motion parallax on the gallery scroll.
 
-3. **Spaces page live data**: Replace `DEMO_SPACES` array in `app/spaces/page.tsx` with a fetch from `/api/spaces?floor=<activeFloor>`. The API is already live and returns `ListSpacesResponse`.
-
-4. **ImageGallery real photos** (`app/spaces/[code]/page.tsx`): The gallery shows placeholder hatching because `photo_urls: []` in seed data. Upload real interior photos to `public/pyramid/` and populate `photo_urls` in `lib/db/mock-data.ts` for at least the 4 hero spaces (Blue, Orange, Green, Yellow) so the detail page gallery shows real imagery for the demo.
+4. **Live floor data**: Replace `DEMO_SPACES` in both `app/(marketing)/page.tsx` and `app/spaces/page.tsx` with `fetch('/api/spaces?floor=${activeFloor}')` once Supabase is wired.
 
 ### Backend Dev (Stiven) — immediate priorities:
 

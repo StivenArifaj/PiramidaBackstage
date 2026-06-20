@@ -302,7 +302,7 @@ export function ScrollVideo({
             color: 'rgba(245,245,240,0.88)',
             margin: 0,
           }}>
-            PIRAMIDA BACKSTAGE // FEED ACTIVE
+            [ PIRAMIDA BACKSTAGE // FEED ACTIVE ]
           </p>
         </div>
 
