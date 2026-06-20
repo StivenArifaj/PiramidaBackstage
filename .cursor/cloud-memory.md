@@ -40,9 +40,16 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 
 ## Current State
 
-- **Phase:** Phase 3 ✅ **complete** as of 2026-06-20. Phase 4 (backend API implementation + frontend page build-out) **not started.**
+- **Phase:** Phase 4 backend slice 1 ✅ **complete** as of 2026-06-20. Spaces API and seed fully implemented. Frontend page build-out in progress.
 - **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` passes with zero errors.
 - **What exists now:**
+  - `supabase/migrations/0002_seed.sql` — 53 spaces (4 hero + 15 A-ring + 16 BE exterior + 6 L3 boxes + 4 roof boxes + 8 basement), 11 asset types, 3 demo events with spaces/assets/tasks/quote wired.
+  - `lib/db/client.ts` — `createClient()` (browser SSR) + `createAdminClient()` (service-role, for API routes).
+  - `lib/db/queries/spaces.ts` — `listSpaces`, `getSpaceByCode`, `searchAvailableSpaces` with real Supabase queries + mock-data fallback when env vars absent.
+  - `app/api/spaces/route.ts` — GET with zod-validated floor/capacity/features/date filters.
+  - `app/api/spaces/[code]/route.ts` — GET single space + upcoming bookings.
+  - `app/api/spaces/availability/route.ts` — GET availability search (from/to required, capacity/features optional).
+  - `npx tsc --noEmit` passes with zero errors.
   - Full folder structure scaffolded per master-plan §5
   - `app/globals.css` — Tailwind v4 `@theme` block with all design tokens (concrete, lime, box palette, status, fonts)
   - `app/layout.tsx` — Space Grotesk + Inter + JetBrains Mono via `next/font/google`
@@ -67,6 +74,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-19] 11 reference images identified by content (aerial/elevation/interior photos of the real Pyramid + 3 screenshots of the existing piramida.edu.al floor-plan UI). Three-phase bootstrap prompt issued to Claude Code. **Session was switched before Phase 2 completion could be confirmed.**
 - [2026-06-20 ~00:10] Claude Code (claude-sonnet-4-6) — Phase 2 verified and completed: identified all 11 `Screenshot 2026-06-19 at …` PNGs in project root by visual content, copied and renamed them into `.cursor/references/` with correct semantic names (all `.png`).
 - [2026-06-20] Claude Code (claude-sonnet-4-6) — Phase 3 complete: Next.js 16 bootstrapped, all locked deps installed, design tokens in Tailwind v4 CSS, types + DB schema + all folder stubs + 7 UI primitives + Ground Floor SVG + all pyramid components written. `tsc --noEmit` clean.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) — Phase 4 backend slice 1: `0002_seed.sql` (53 spaces, 11 asset types, 3 demo events, tasks, quote), `lib/db/client.ts` (browser + admin clients), `lib/db/queries/spaces.ts` (real Supabase + mock fallback), all 3 spaces API routes with zod validation. `tsc --noEmit` clean.
 
 ## Next Steps
 
@@ -82,24 +90,33 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 
 5. **public/references/**: Copy the reference images that are needed as actual URLs (front-elevation.png, aerial-top-down.png, etc.) from `.cursor/references/` to `public/references/` so Next.js can serve them. OR configure `next.config.ts` to allow local file paths.
 
-### Backend Dev — immediate priorities (once Supabase project is created):
+### Backend Dev (Stiven) — immediate next priorities:
 
-1. Create Supabase project, add env vars to `.env.local` (copy from `.env.local.example`)
-2. Run `supabase db push` with `supabase/migrations/0001_init.sql`
-3. Write `supabase/migrations/0002_seed.sql` per master-plan §6 seed spec (~50 spaces, assets)
-4. Implement `GET /api/spaces` — query Supabase, return `ListSpacesResponse`
-5. Implement `GET /api/spaces/[code]` — return `GetSpaceResponse` with upcoming bookings
-6. Implement `GET /api/spaces/availability` — date/capacity filter
+1. **Create Supabase project** and add env vars to `.env.local`:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+   SUPABASE_SERVICE_ROLE_KEY=eyJ...
+   GEMINI_API_KEY=...
+   ```
+2. **Run migrations**: `supabase db push` (runs `0001_init.sql` then `0002_seed.sql`). Verify with: `SELECT count(*) FROM spaces;` → should return 53.
+3. **Next backend task**: Implement `POST /api/events` + `GET /api/events` + `GET /api/events/[id]` in `lib/db/queries/events.ts` and their route files. See master-plan §7 for `CreateEventRequest`, `CreateEventResponse`, `ListEventsResponse`, `GetEventResponse`. Use same pattern as spaces (Supabase + mock fallback, zod validation).
+4. **Then**: Implement `POST /api/quotes` + `POST /api/quotes/[id]/accept` (quote generation in `lib/pricing/quote.ts`, task generation in `lib/tasks/generate.ts`).
 
-**Sync point:** once `/api/spaces?floor=l0` returns real data, frontend can wire the Ground Floor SVG to live availability colors.
+**Sync point:** once `/api/spaces?floor=l0` returns real data (after Supabase is set up), frontend can wire the Ground Floor SVG to live availability colors.
 
 ## Open Questions / Blockers
 
+- **Supabase project not yet created** — all 3 spaces API routes work via mock-data fallback until env vars are set. Once set, routes automatically switch to real Supabase queries.
 - `public/references/` does not exist yet — the FloorSelector uses `backgroundImage: url('/references/front-elevation.png')` which will 404 until either (a) images are copied to `public/references/` or (b) next.config is updated. **Frontend dev: copy `.cursor/references/*.png` to `public/references/` as a first step.**
 - `pnpm tsc --noEmit` fails due to an unrelated pnpm native build script error (sharp, unrs-resolver). Use `npx tsc --noEmit` instead — this works fine.
 
 ## Key Decisions Made
 
+- **Mock-data fallback in query layer**: `lib/db/queries/spaces.ts` checks `isSupabaseConfigured()` (env vars present + URL starts with `http`) and falls back to `lib/db/mock-data.ts` if not. This keeps the frontend working during development before Supabase is wired up.
+- **`createAdminClient()` uses service-role key**: API routes use the service-role client (bypasses RLS). The browser client uses anon key. RLS policies are not defined in 0001_init.sql — add them before production.
+- **Zod v4 compatibility**: The project has `zod ^4.4.3`. Schemas use only v3-compatible APIs (`z.object`, `z.string`, `z.coerce.number`, `z.enum`, `.transform`, `.optional`, `.safeParse`). Avoided `.flatten()` on ZodError since that API changed in v4.
+- **`AvailabilityResponse.matches` uses `SpaceWithAvailability` for `space` field**: The response type declares `Space` but we return the richer `SpaceWithAvailability`. TypeScript accepts this (structural subtyping). The extra `availability` field appears in JSON — this is intentional (convenient for frontend).
 - **Reference image extensions are `.png`, not `.jpg`**: The 11 source images were macOS screenshots, all PNG. master-plan §0 lists `.jpg` for 9 of them — ignore those extensions.
 - **`aerial-top-down-day` does not exist**: No daylight straight-down aerial was in the source image set.
 - **Tailwind v4, not v3**: `create-next-app` installed Tailwind v4. There is NO `tailwind.config.ts` — all tokens live in `app/globals.css` inside `@theme {}`. This is correct. Do not create a `tailwind.config.ts`.

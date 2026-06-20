@@ -1,16 +1,29 @@
 import { NextResponse } from 'next/server'
-import { MOCK_SPACES, MOCK_EVENTS } from '@/lib/db/mock-data'
+import { z } from 'zod'
 import type { GetSpaceResponse } from '@/types/api'
+import { getSpaceByCode } from '@/lib/db/queries/spaces'
 
-export async function GET(_req: Request, { params }: { params: Promise<{ code: string }> }) {
-  const { code } = await params
-  const space = MOCK_SPACES.find(s => s.code === code.toUpperCase())
-  if (!space) return NextResponse.json({ error: 'Space not found' }, { status: 404 })
+const paramsSchema = z.object({ code: z.string().min(1).max(32) })
 
-  const upcoming_bookings = MOCK_EVENTS
-    .filter(e => e.spaces.some(s => s.code === space.code) && ['confirmed', 'quoted', 'in_progress'].includes(e.status))
-    .map(e => ({ start_at: e.start_at, end_at: e.end_at, status: e.status }))
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ code: string }> }
+) {
+  const raw = await params
+  const parsed = paramsSchema.safeParse(raw)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid space code' }, { status: 400 })
+  }
 
-  const response: GetSpaceResponse = { space, upcoming_bookings }
-  return NextResponse.json(response)
+  try {
+    const result = await getSpaceByCode(parsed.data.code)
+    if (!result) {
+      return NextResponse.json({ error: 'Space not found' }, { status: 404 })
+    }
+    const response: GetSpaceResponse = result
+    return NextResponse.json(response)
+  } catch (err) {
+    console.error('[GET /api/spaces/[code]]', err)
+    return NextResponse.json({ error: 'Failed to load space' }, { status: 500 })
+  }
 }
