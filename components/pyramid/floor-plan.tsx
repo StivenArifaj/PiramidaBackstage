@@ -8,11 +8,22 @@ import { RoofFloorPlan } from './floor-plans/roof'
 import { ExteriorFloorPlan } from './floor-plans/exterior'
 
 const PLAN_BACKGROUNDS: Record<SpaceFloor, string> = {
-  l0: "url('/sketches/plan-groundfloor.jpeg')",
+  l0:       "url('/sketches/plan-groundfloor.jpeg')",
   l_minus_1: "url('/sketches/plan-level-01-basement.jpeg')",
-  l3: "url('/sketches/plan-level-03.jpeg')",
-  roof: "url('/sketches/plan-level-04.jpeg')",
+  l3:       "url('/sketches/plan-level-03.jpeg')",
+  roof:     "url('/sketches/plan-level-04.jpeg')",
   exterior: "url('/sketches/plan-topview.jpeg')",
+}
+
+// Per-floor zoom: scale + translate to center the cluster on screen.
+// translate(tx%, ty%) moves the cluster center to the viewport center before scale.
+// Formula (with transform-origin 50% 50%): tx = 50 - cx, ty = 50 - cy
+const FLOOR_ZOOM: Record<SpaceFloor, { scale: number; tx: number; ty: number }> = {
+  l0:       { scale: 1,   tx: 0,  ty: 0  },
+  l_minus_1: { scale: 2.5, tx: 0,  ty: 14 },
+  l3:       { scale: 3.5, tx: 1,  ty: 12 },
+  roof:     { scale: 3.5, tx: 1,  ty: 24 },
+  exterior: { scale: 1.2, tx: 0,  ty: 0  },
 }
 
 interface FloorPlanProps {
@@ -44,22 +55,24 @@ function renderFloor(floor: SpaceFloor, spaces: SpaceWithAvailability[], onSpace
 
 export function FloorPlan({ floor, spaces, onSpaceClick }: FloorPlanProps) {
   const bgImage = PLAN_BACKGROUNDS[floor]
+  const z = FLOOR_ZOOM[floor]
 
   return (
-    <div
-      className="relative w-full h-full overflow-hidden"
-      style={{
-        backgroundImage: bgImage,
-        backgroundSize: 'contain',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center center',
-        backgroundColor: '#f5f5f0',
-      }}
-    >
-      <div className="absolute inset-0 flex items-center justify-center" style={{ pointerEvents: 'none' }}>
-        <div className="relative w-full h-full" style={{ pointerEvents: 'auto' }}>
-          {renderFloor(floor, spaces, onSpaceClick)}
-        </div>
+    <div className="relative w-full h-full overflow-hidden" style={{ backgroundColor: '#f5f5f0' }}>
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: bgImage,
+          backgroundSize: 'contain',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center center',
+          transform: z.scale !== 1
+            ? `scale(${z.scale}) translate(${z.tx}%, ${z.ty}%)`
+            : undefined,
+          transformOrigin: '50% 50%',
+        }}
+      >
+        {renderFloor(floor, spaces, onSpaceClick)}
       </div>
     </div>
   )
