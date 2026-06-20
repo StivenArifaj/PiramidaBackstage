@@ -40,7 +40,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 
 ## Current State
 
-- **Phase:** Phase 5 — Supabase live (53 spaces, 11 assets, 3 demo events, 6 tasks, 1 quote seeded). All API routes wired with Supabase + mock-data fallback. Chatbot migrating from Gemini → Groq. `.env.local` has URL + anon key; needs SUPABASE_SERVICE_ROLE_KEY + GROQ_API_KEY to activate server-side queries and chatbot.
+- **Phase:** Phase 5 complete — Supabase live (53 spaces, 11 assets, 3 demo events, 6 tasks, 1 quote). All API routes wired with Supabase + mock-data fallback. Chatbot migrated to Groq (llama-3.3-70b-versatile via openai SDK). `.env.local` has URL + anon key; needs SUPABASE_SERVICE_ROLE_KEY + GROQ_API_KEY to activate server-side queries and chatbot.
 - **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` passes with zero errors.
 - **Ground floor plan:** Strict octagonal SVG using only `<polygon>` elements (no `<path>` or `<circle>` for layout). All 19 spaces (A1–A19) are clickable and navigate directly to their detail page via `router.push`. Mock data contains explicit A1–A19 entries with official area/capacity/rate values.
 - **UI Airgap (active):** Public BrandStrip only links to `/spaces`. Dashboard lives behind `/dashboard` with its own sidebar — no shared navigation with the public site.
@@ -75,12 +75,14 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/backend] — Full backend wiring: lib/db/queries/events.ts, lib/ai/{tools,gemini,tool-handlers}.ts, all events/quotes/tasks/chatbot API routes with Zod validation, Gemini 2.5-flash chatbot with 5 function tools. `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/backend] — Supabase provisioned via MCP: schema + seed applied (53 spaces, 11 assets, 3 demo events, 6 tasks, 1 quote). `.env.local` created with URL + anon key. /api/conflicts and /api/dashboard/overview rewired to live Supabase queries. `npx tsc --noEmit` clean.
 - [2026-06-20 14:15] Claude Code [Aron/frontend] — Calibration: Replaced low-res elevation background with mvrdv-28.jpg (1333×1000), fixed topographic pill alignment (roof 7%, l3 30%, l0 58%, b1 76%, exterior 64%/12%), locked aspect-ratio to eliminate stretch distortion.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/backend] — Groq migration: installed openai SDK, rewrote lib/ai/tools.ts in OpenAI function-calling format, rewrote /api/chatbot to use Groq baseURL with llama-3.3-70b-versatile, agentic tool loop (up to 3 rounds), updated .env.example with GROQ_API_KEY. `npx tsc --noEmit` clean.
 
 ## Next Steps
 
-### IMMEDIATE — Developer must do:
-1. **Fill in `.env.local`** — add `SUPABASE_SERVICE_ROLE_KEY` (Supabase Dashboard → Project Settings → API) and `GROQ_API_KEY` (console.groq.com). Restart `pnpm dev`.
-2. **Verify live DB**: `GET /api/spaces` should return 53 spaces from Supabase. `GET /api/events` should return 3 seeded events.
+### IMMEDIATE — Developer must fill 2 keys in `.env.local`:
+1. `SUPABASE_SERVICE_ROLE_KEY` — Supabase Dashboard → Project Settings → API → service_role
+2. `GROQ_API_KEY` — https://console.groq.com → API Keys → Create API key (free, no billing required)
+Then restart dev server. All routes auto-switch from mock to live Supabase, chatbot activates.
 
 ### End-to-end test checklist:
 3. Submit event via `/book` → check `/dashboard/events` shows it (live DB row).
@@ -97,7 +99,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 
 ## Open Questions / Blockers
 
-- **`.env.local` missing 2 keys**: `SUPABASE_SERVICE_ROLE_KEY` + `GROQ_API_KEY`. URL + anon key already present.
+- **`.env.local` missing 2 keys**: `SUPABASE_SERVICE_ROLE_KEY` (from Supabase Dashboard) + `GROQ_API_KEY` (from console.groq.com — free). URL + anon key already present. Once filled in, all routes switch to live Supabase and chatbot activates.
 - `pnpm tsc --noEmit` fails due to unrelated pnpm native build script error (sharp, unrs-resolver). Use `npx tsc --noEmit` instead.
 
 ## Key Decisions Made
@@ -108,7 +110,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - **Tailwind v4, not v3**: `create-next-app` installed Tailwind v4. There is NO `tailwind.config.ts` — all tokens live in `app/globals.css` inside `@theme {}`. This is correct. Do not create a `tailwind.config.ts`.
 - **`overflowX: 'clip'` on landing page root div**: Using `clip` not `hidden` — `overflow: hidden` creates a new scroll context which silently kills `position: sticky` children. `clip` clips overflow without creating a scroll context.
 - **Ground Floor SVG**: Strict octagonal geometry using `octPt()` / `octSector()`, pure `<polygon>` elements. A1–A19 all clickable, navigate via `router.push('/spaces/[code]')`.
-- **Chatbot migrating to Groq**: Gemini billing-blocked. Use `openai` SDK with `baseURL: 'https://api.groq.com/openai/v1'` and model `llama-3.1-70b-versatile`. Tool definitions stay in `lib/ai/tools.ts` (converted to OpenAI function-calling format).
+- **Chatbot on Groq**: `openai` SDK with `baseURL: 'https://api.groq.com/openai/v1'`, model `llama-3.3-70b-versatile`. Tools in `lib/ai/tools.ts` are OpenAI `ChatCompletionTool` format. Old `geminiTools` export is aliased to `groqTools` for backward compat. `lib/ai/gemini.ts` is dead code (no longer imported).
 - **Reference image extensions are `.png`, not `.jpg`**: The 11 source images were macOS screenshots, all PNG.
 - **Landing page uses GSAP ScrollVideo**: 265 frames at `/public/frames/detail-sample/`, `reversed=true`. Space detail: 300 frames at `/public/frames/hero/`, `reversed=true`.
 - **FloorSelector background**: `mvrdv-28.jpg` (1333×1000px), aspect-ratio locked. Pill positions (% from top): roof 7%, l3 30%, l0 58%, b1 76%, exterior 64% left / 12% top.
