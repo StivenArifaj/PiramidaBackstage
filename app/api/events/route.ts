@@ -57,6 +57,15 @@ export async function POST(req: Request) {
       )
     }
 
+    // Normalise incoming date strings to explicit UTC ISO format.
+    // Zod only validates non-empty strings; a local-time value like
+    // "2026-08-08T10:00" (no TZ suffix) is interpreted differently by
+    // JavaScript vs PostgreSQL, breaking the lt/gt timestamp boundary checks.
+    // Parsing through Date and re-serialising guarantees a stable UTC offset
+    // ("2026-08-08T08:00:00.000Z") before any database comparison.
+    const startIso = new Date(data.start_at).toISOString()
+    const endIso = new Date(data.end_at).toISOString()
+
     // Maintenance gate — no bookings allowed for inactive spaces, even priority requests
     if (data.preferred_space_codes?.length) {
       const active = await getSpaceIsActive(data.preferred_space_codes[0])
@@ -72,8 +81,8 @@ export async function POST(req: Request) {
     if (!data.is_priority_request && data.preferred_space_codes?.length) {
       const hasConflict = await checkSpaceConflict(
         data.preferred_space_codes[0],
-        data.start_at,
-        data.end_at
+        startIso,
+        endIso
       )
       if (hasConflict) {
         return NextResponse.json(
@@ -101,8 +110,8 @@ export async function POST(req: Request) {
 
     // Find alternatives (spaces that could work but weren't chosen)
     const availResult = await searchAvailableSpaces({
-      from: data.start_at,
-      to: data.end_at,
+      from: startIso,
+      to: endIso,
       capacity: data.attendees_count,
     })
     const alternatives = availResult.suggested

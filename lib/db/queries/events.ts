@@ -477,12 +477,18 @@ export async function checkSpaceConflict(
   startAt: string,
   endAt: string
 ): Promise<boolean> {
+  // Normalise to explicit UTC ISO strings before any comparison.
+  // Without this, a local-time string like "2026-08-08T10:00" (no TZ suffix)
+  // would be interpreted differently by JS vs PostgreSQL, causing false positives.
+  const startIso = new Date(startAt).toISOString()
+  const endIso = new Date(endAt).toISOString()
+
   if (!isSupabaseConfigured()) {
     const hit = MOCK_EVENTS.find(e => {
       if (!['confirmed', 'quoted', 'requested', 'in_progress'].includes(e.status)) return false
-      // Precise temporal overlap: existing must start before requested ends AND end after requested starts
-      if (new Date(e.end_at) <= new Date(startAt)) return false
-      if (new Date(e.start_at) >= new Date(endAt)) return false
+      // Overlap: existing event must start before requested end AND end after requested start
+      if (new Date(e.end_at) <= new Date(startIso)) return false
+      if (new Date(e.start_at) >= new Date(endIso)) return false
       return e.spaces.some(s => s.code.toUpperCase() === spaceCode.toUpperCase())
     })
     return !!hit
@@ -500,7 +506,7 @@ export async function checkSpaceConflict(
   const spaceId = (spaceRows as { id: string }[] | null)?.[0]?.id
   if (!spaceId) return false
 
-  // Step 2: Collect all event IDs that are linked to this specific space
+  // Step 2: All event IDs ever linked to this specific space
   const { data: esRows } = await db
     .from('event_spaces')
     .select('event_id')
@@ -509,16 +515,22 @@ export async function checkSpaceConflict(
   const spaceEventIds = ((esRows ?? []) as { event_id: string }[]).map(r => r.event_id)
   if (!spaceEventIds.length) return false
 
-  // Step 3: Among those space-specific events, find any that actually overlap
-  // the requested window AND carry an active status.
-  // Overlap condition: existing.start_at < requested.end_at AND existing.end_at > requested.start_at
+  // Step 3: Within that space-scoped set, find any event whose time window
+  // genuinely overlaps the requested window AND has an active blocking status.
+  //
+  // Overlap boundary math (standard interval intersection test):
+  //   existing.start_at < requested.end_at   ← existing started before new booking ends
+  //   existing.end_at   > requested.start_at  ← existing ends after new booking starts
+  //
+  // Both sides are explicit UTC ISO strings so PostgreSQL performs a deterministic
+  // timestamptz comparison — no string-sort ambiguity.
   const { data: overlapRows } = await db
     .from('events')
     .select('id')
     .in('id', spaceEventIds)
     .in('status', ['confirmed', 'quoted', 'requested', 'in_progress'])
-    .lt('start_at', endAt)
-    .gt('end_at', startAt)
+    .lt('start_at', endIso)
+    .gt('end_at', startIso)
     .limit(1)
 
   return (overlapRows?.length ?? 0) > 0
