@@ -182,10 +182,10 @@ export default function DashboardPage() {
   const dateLabel = now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
   const timeLabel = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 
-  const eventsToday  = data?.events_today.length ?? 0
+  const eventsToday  = data?.events_today?.length ?? 0
   const eventsWeek   = data?.events_this_week ?? 0
   const eventsMonth  = data?.events_this_month ?? 0
-  const conflicts    = data?.active_conflicts.length ?? 0
+  const conflicts    = data?.active_conflicts?.length ?? 0
 
   const kpis = [
     { label: 'events today',     value: eventsToday,  sub: 'scheduled for today',   accent: '#c8da2b', alert: false,  pct: Math.min(100, eventsToday * 12) },
@@ -304,7 +304,7 @@ export default function DashboardPage() {
 
           {/* Today's timeline — empty or populated */}
           <div style={{ padding: '16px 28px', borderBottom: '2px solid #1a1a1a', background: '#fafaf5', flexShrink: 0 }}>
-            {(!data || data.events_today.length === 0) ? (
+            {(!data || (data.events_today?.length ?? 0) === 0) ? (
               <>
                 <DayTimelineSVG events={[]} empty />
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
@@ -545,7 +545,7 @@ export default function DashboardPage() {
           </div>
 
           {/* No conflicts state */}
-          {(!data || data.active_conflicts.length === 0) && (
+          {(!data || (data.active_conflicts?.length ?? 0) === 0) && (
             <div style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', gap: 10 }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <circle cx="8" cy="8" r="7" stroke="#c8da2b" strokeWidth="1.4" />

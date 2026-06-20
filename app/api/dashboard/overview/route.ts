@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/db/client'
+import { listEvents } from '@/lib/db/queries/events'
 import { MOCK_EVENTS, MOCK_CONFLICTS, MOCK_ASSETS } from '@/lib/db/mock-data'
 import type { DashboardOverviewResponse, SpaceFloor } from '@/types/api'
 
@@ -51,14 +52,9 @@ export async function GET() {
     const weekEnd    = new Date(now.getTime() + 86400000 * 7)
     const monthEnd   = new Date(now.getTime() + 86400000 * 30)
 
-    // All active events with spaces
-    const { data: allEvents } = await db
-      .from('events')
-      .select('*, event_spaces(setup_type, spaces(*))', )
-      .in('status', ['confirmed', 'in_progress', 'quoted'])
-      .order('start_at', { ascending: true })
-
-    const events = allEvents ?? []
+    // Use listEvents() so every event has spaces: Space[] (properly mapped, not raw Supabase rows)
+    const allMapped = await listEvents()
+    const events = allMapped.filter(e => ['confirmed', 'in_progress', 'quoted'].includes(e.status))
 
     const events_today = events.filter(
       e => new Date(e.start_at) >= todayStart && new Date(e.start_at) < todayEnd
@@ -162,8 +158,7 @@ export async function GET() {
     }
 
     const response: DashboardOverviewResponse = {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      events_today: events_today as any,
+      events_today,
       events_this_week,
       events_this_month,
       active_conflicts,
