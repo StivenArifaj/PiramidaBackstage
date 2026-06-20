@@ -47,13 +47,14 @@ export function FloorPlan({ floor, spaces, onSpaceClick }: FloorPlanProps) {
 
   return (
     <div
-      className="relative w-full h-full overflow-hidden"
+      className="relative w-full overflow-hidden"
       style={{
         backgroundImage: bgImage,
         backgroundSize: 'contain',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center center',
         backgroundColor: '#f5f5f0',
+        aspectRatio: '1600 / 1131',
       }}
     >
       <div className="absolute inset-0 flex items-center justify-center" style={{ pointerEvents: 'none' }}>

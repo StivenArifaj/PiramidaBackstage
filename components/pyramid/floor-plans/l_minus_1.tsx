@@ -72,20 +72,8 @@ export function LMinusOneFloorPlan({ spaces = [], onSpaceClick }: LMinusOneFloor
     <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
       <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" preserveAspectRatio="xMidYMid meet" style={{ background: 'transparent' }} aria-label="Level L-1 (Basement) — Pyramid of Tirana">
 
-        {/* Basement floor plate */}
-        <polygon points={octPts} fill="#2a2824" stroke="#3a3830" strokeWidth="2" />
-
-        {/* Concrete grid texture lines */}
-        {Array.from({ length: 20 }, (_, i) => (
-          <line key={`h${i}`} x1="52" y1={52 + i * 35} x2="748" y2={52 + i * 35} stroke="#2e2c28" strokeWidth="0.5" opacity="0.6" />
-        ))}
-        {Array.from({ length: 20 }, (_, i) => (
-          <line key={`v${i}`} x1={52 + i * 35} y1="52" x2={52 + i * 35} y2="748" stroke="#2e2c28" strokeWidth="0.5" opacity="0.6" />
-        ))}
-
-        {/* Structural depth ring — suggests basement ceiling */}
-        <circle cx={CX} cy={CY} r={340} fill="none" stroke="#3a3830" strokeWidth="6" />
-        <circle cx={CX} cy={CY} r={312} fill="none" stroke="#444038" strokeWidth="1.5" />
+        {/* Building outline — stroke-only, MVRDV JPEG is the background */}
+        <polygon points={octPts} fill="none" stroke="#3a3830" strokeWidth="2" />
 
         {/* Sectors */}
         {BASEMENT_SECTORS.map(sector => {
@@ -161,13 +149,7 @@ export function LMinusOneFloorPlan({ spaces = [], onSpaceClick }: LMinusOneFloor
           )
         })}
 
-        {/* Central service core */}
-        <circle cx={CX} cy={CY} r={78} fill="#1a1a1a" stroke="#3a3830" strokeWidth="2" />
-        <circle cx={CX} cy={CY} r={64} fill="#232220" stroke="#444038" strokeWidth="1" />
-        {[0, 60, 120, 180, 240, 300].map(a => {
-          const p = pt(55, a)
-          return <line key={a} x1={CX} y1={CY} x2={p.x} y2={p.y} stroke="#444038" strokeWidth="1" />
-        })}
+        {/* Central core datum */}
         <circle cx={CX} cy={CY} r={8} fill="#c8da2b" />
         <circle cx={CX} cy={CY} r={4} fill="#1a1a1a" />
         <text x={CX} y={CY + 18} textAnchor="middle" fontSize="6" fill="#6b7280" letterSpacing="0.12em" style={{ fontFamily: 'JetBrains Mono, monospace' }}>CORE</text>

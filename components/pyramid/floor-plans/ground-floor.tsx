@@ -181,10 +181,10 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
         aria-label="Ground Floor — Pyramid of Tirana"
         role="img"
       >
-        {/* ── Outer site octagon — the true building boundary ── */}
+        {/* ── Outer site octagon — stroke-only, MVRDV JPEG is the background ── */}
         <polygon
           points={outerOctPts}
-          fill="#e8e6dd"
+          fill="none"
           stroke="#1a1a1a"
           strokeWidth="2.5"
         />
@@ -325,10 +325,10 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
           )
         })}
 
-        {/* ── Inner circulation ring — octagonal, flat-sided ── */}
+        {/* ── Inner circulation ring — stroke-only overlay ── */}
         <polygon
           points={ringOctPts}
-          fill="#f0ede6"
+          fill="none"
           stroke="#1a1a1a"
           strokeWidth="1.5"
         />
@@ -349,10 +349,10 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
           )
         })}
 
-        {/* ── Central atrium — double-octagon ── */}
+        {/* ── Central atrium — stroke-only overlay ── */}
         <polygon
           points={atriumOctPts}
-          fill="#fafaf5"
+          fill="none"
           stroke="#1a1a1a"
           strokeWidth="2"
         />

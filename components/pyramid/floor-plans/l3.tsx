@@ -9,12 +9,6 @@ const CX = 400, CY = 400
 function toRad(deg: number) { return (deg - 90) * (Math.PI / 180) }
 function pt(r: number, deg: number) { return { x: CX + r * Math.cos(toRad(deg)), y: CY + r * Math.sin(toRad(deg)) } }
 
-function annularSector(startDeg: number, endDeg: number, innerR: number, outerR: number): string {
-  const p1 = pt(innerR, startDeg), p2 = pt(outerR, startDeg), p3 = pt(outerR, endDeg), p4 = pt(innerR, endDeg)
-  const large = (endDeg - startDeg) > 180 ? 1 : 0
-  return [`M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`, `L ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`, `A ${outerR} ${outerR} 0 ${large} 1 ${p3.x.toFixed(2)} ${p3.y.toFixed(2)}`, `L ${p4.x.toFixed(2)} ${p4.y.toFixed(2)}`, `A ${innerR} ${innerR} 0 ${large} 0 ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`, 'Z'].join(' ')
-}
-
 const FILL: Record<AvailabilityState, string> = { available: '#c8da2b', reserved: '#e63946', blocked: '#6b7280', pending: '#f4a261' }
 
 // 6 colored box rooms arranged inside the L+3 atrium ring
@@ -65,24 +59,12 @@ export function L3FloorPlan({ spaces = [], onSpaceClick }: L3FloorPlanProps) {
   return (
     <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
       <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" preserveAspectRatio="xMidYMid meet" style={{ background: 'transparent' }} aria-label="Level L+3 — Pyramid of Tirana">
-        {/* Site boundary */}
-        <polygon points={octPts} fill="#e8e6dd" stroke="#1a1a1a" strokeWidth="2" />
+        {/* Site boundary — stroke-only, MVRDV JPEG is the background */}
+        <polygon points={octPts} fill="none" stroke="#1a1a1a" strokeWidth="2" />
 
-        {/* Radial structural fins (light gray) */}
-        {Array.from({ length: 16 }, (_, i) => {
-          const mid = i * 22.5, s = mid - 1.5, e = mid + 1.5
-          return <path key={i} d={annularSector(s, e, 72, 340)} fill="#d4d2c9" stroke="#1a1a1a" strokeWidth="0.75" opacity="0.6" />
-        })}
-
-        {/* Atrium circulation ring (walkway) */}
+        {/* Atrium circulation ring */}
         <circle cx={CX} cy={CY} r={168} fill="none" stroke="#1a1a1a" strokeWidth="1.5" strokeDasharray="6 4" />
-        <circle cx={CX} cy={CY} r={80}  fill="#fafaf5" stroke="#1a1a1a" strokeWidth="1.5" />
-
-        {/* Inner atrium fill */}
-        <circle cx={CX} cy={CY} r={79} fill="#fafaf5" />
-
-        {/* Atrium walkway ring */}
-        <path d={annularSector(0, 360, 80, 168)} fill="rgba(255,255,255,0.5)" />
+        <circle cx={CX} cy={CY} r={80}  fill="none" stroke="#1a1a1a" strokeWidth="1.5" />
 
         {/* 6 colored box rooms */}
         {L3_BOXES.map(box => {

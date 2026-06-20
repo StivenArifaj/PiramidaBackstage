@@ -61,41 +61,8 @@ export function RoofFloorPlan({ spaces = [], onSpaceClick }: RoofFloorPlanProps)
     <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
       <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" preserveAspectRatio="xMidYMid meet" style={{ background: 'transparent' }} aria-label="Rooftop — Pyramid of Tirana">
 
-        {/* Sky / open air background */}
-        <rect x="0" y="0" width="800" height="800" fill="#dde8f0" />
-
-        {/* Stepped terrace rings — outermost to innermost */}
-        {[348, 296, 244, 196, 148, 100].map((r, i) => (
-          <polygon key={r} points={octagonPoints(r, 22.5)}
-            fill={`rgba(${200 - i * 12}, ${196 - i * 10}, ${188 - i * 8}, 1)`}
-            stroke="#1a1a1a" strokeWidth={i === 0 ? 2 : 1.5}
-          />
-        ))}
-
-        {/* Terrace step labels */}
-        {[310, 258, 208, 160, 116].map((r, i) => {
-          const p = pt(r, 22.5 + 45 * 3.5)
-          return (
-            <text key={r} x={p.x} y={p.y + 4} textAnchor="middle" dominantBaseline="middle"
-              fontSize="6" fill="#8a8880" letterSpacing="0.08em"
-              style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-              +{(i + 1) * 1.2}M
-            </text>
-          )
-        })}
-
-        {/* Railing / edge detail lines */}
-        {[342, 290, 238, 190].map(r => (
-          <polygon key={`rail-${r}`} points={octagonPoints(r + 3, 22.5)}
-            fill="none" stroke="rgba(26,26,26,0.25)" strokeWidth="0.75" strokeDasharray="4 3"
-          />
-        ))}
-
-        {/* Cross-terrace walkway lines */}
-        {[0, 90, 180, 270].map(a => {
-          const p1 = pt(100, a), p2 = pt(340, a)
-          return <line key={a} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#1a1a1a" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.5" />
-        })}
+        {/* Outer building boundary — stroke-only, MVRDV JPEG is the background */}
+        <polygon points={octagonPoints(348, 22.5)} fill="none" stroke="#1a1a1a" strokeWidth="2" />
 
         {/* 4 Rooftop colored boxes */}
         {ROOF_BOXES.map(box => {

@@ -83,16 +83,8 @@ export function ExteriorFloorPlan({ spaces = [], onSpaceClick }: ExteriorFloorPl
     <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
       <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" preserveAspectRatio="xMidYMid meet" style={{ background: 'transparent' }} aria-label="Exterior — Pyramid of Tirana">
 
-        {/* Site pavement */}
-        <polygon points={octSite} fill="#d8d5ca" stroke="#1a1a1a" strokeWidth="2" />
-
-        {/* Paving pattern */}
-        {Array.from({ length: 24 }, (_, i) => (
-          <line key={`h${i}`} x1="34" y1={34 + i * 31} x2="766" y2={34 + i * 31} stroke="#ccc9be" strokeWidth="0.6" opacity="0.7" />
-        ))}
-        {Array.from({ length: 24 }, (_, i) => (
-          <line key={`v${i}`} x1={34 + i * 31} y1="34" x2={34 + i * 31} y2="766" stroke="#ccc9be" strokeWidth="0.6" opacity="0.7" />
-        ))}
+        {/* Site boundary — stroke-only, MVRDV JPEG is the background */}
+        <polygon points={octSite} fill="none" stroke="#1a1a1a" strokeWidth="2" />
 
         {/* Connection arms from building to each exterior box */}
         {BOX_COLORS.map((_, i) => {
@@ -107,22 +99,8 @@ export function ExteriorFloorPlan({ spaces = [], onSpaceClick }: ExteriorFloorPl
           )
         })}
 
-        {/* Building body (pyramid footprint) */}
-        <polygon points={octBuilding} fill="#bfbdb4" stroke="#1a1a1a" strokeWidth="2.5" />
-
-        {/* Inner atrium circle */}
-        <circle cx={CX} cy={CY} r={120} fill="#d0cec5" stroke="#1a1a1a" strokeWidth="1.5" strokeDasharray="6 4" />
-        <circle cx={CX} cy={CY} r={52} fill="#c8c6bc" stroke="#1a1a1a" strokeWidth="1.5" />
-
-        {/* Structural grid lines inside building */}
-        {[0, 45, 90, 135].map(a => {
-          const p1 = pt(50, a), p2 = pt(265, a)
-          return <line key={a} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#aaa9a0" strokeWidth="0.75" />
-        })}
-
-        {/* Building label */}
-        <text x={CX} y={CY - 4} textAnchor="middle" dominantBaseline="middle" fontSize="8" fontWeight="600" fill="#6b7280" letterSpacing="0.14em" style={{ fontFamily: 'JetBrains Mono, monospace' }}>PIRAMIDA</text>
-        <text x={CX} y={CY + 8} textAnchor="middle" dominantBaseline="middle" fontSize="6" fill="#8a8880" letterSpacing="0.1em" style={{ fontFamily: 'JetBrains Mono, monospace' }}>TIRANA</text>
+        {/* Building footprint outline */}
+        <polygon points={octBuilding} fill="none" stroke="#1a1a1a" strokeWidth="2.5" />
 
         {/* 16 Exterior boxes */}
         {BOX_COLORS.map(({ color, textColor }, i) => {
