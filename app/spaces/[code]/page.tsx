@@ -137,9 +137,11 @@ export default function SpaceDetailPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!code) return
     fetch(`/api/spaces/${code.toUpperCase()}`)
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json() })
       .then(d => { setData(d); setLoading(false) })
+      .catch(() => { setLoading(false) })
   }, [code])
 
   if (loading) return (
