@@ -5,13 +5,14 @@ import { useState } from 'react'
 import type { SpaceWithAvailability, AvailabilityState } from '@/types/api'
 
 // ─── Geometry constants ───────────────────────────────────────────────────────
-const CX = 400
-const CY = 400
-const SITE_R    = 345   // outer octagon circumradius (site boundary)
-const BOX_OUTER = 305   // circumradius of outer edge of space boxes
-const BOX_INNER = 178   // circumradius of inner edge of space boxes
-const RING_R    = 162   // circumradius of inner circulation ring (octagonal)
-const ATRIUM_R  = 68    // circumradius of central atrium octagon
+// viewBox 0 0 1000 1000, center at 500,500 — scaled 1.25× from 800×800 viewBox
+const CX = 500
+const CY = 500
+const SITE_R    = 431   // outer octagon circumradius (site boundary)
+const BOX_OUTER = 381   // circumradius of outer edge of space boxes
+const BOX_INNER = 223   // circumradius of inner edge of space boxes
+const RING_R    = 203   // circumradius of inner circulation ring (octagonal)
+const ATRIUM_R  = 85    // circumradius of central atrium octagon
 
 // ─── Geometry: strict octagon, no arcs ────────────────────────────────────────
 // Octagon orientation: faces (flat sides) at 0°, 45°, 90°, … 315°
@@ -172,7 +173,7 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
   return (
     <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
       <svg
-        viewBox="0 0 800 800"
+        viewBox="0 0 1000 1000"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
         preserveAspectRatio="xMidYMid meet"
@@ -375,7 +376,7 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
 
         {/* ── Floor label ── */}
         <text
-          x="400" y="770"
+          x="500" y="962"
           textAnchor="middle"
           fontSize="11"
           letterSpacing="0.22em"
@@ -386,22 +387,22 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
         </text>
 
         {/* ── North indicator ── */}
-        <g transform="translate(748, 54)">
+        <g transform="translate(935, 68)">
           <line x1="0" y1="18" x2="0" y2="-2" stroke="#1a1a1a" strokeWidth="1.5" />
           <polygon points="0,-7 -4,5 4,5" fill="#1a1a1a" />
           <text x="0" y="28" textAnchor="middle" fontSize="9" fill="#6b7280" style={{ fontFamily: 'JetBrains Mono, monospace' }}>N</text>
         </g>
 
         {/* ── Scale bar ── */}
-        <g transform="translate(36, 754)">
-          <line x1="0" y1="0" x2="60" y2="0" stroke="#6b7280" strokeWidth="1.5" />
+        <g transform="translate(45, 943)">
+          <line x1="0" y1="0" x2="75" y2="0" stroke="#6b7280" strokeWidth="1.5" />
           <line x1="0" y1="-4" x2="0" y2="4" stroke="#6b7280" strokeWidth="1.5" />
-          <line x1="60" y1="-4" x2="60" y2="4" stroke="#6b7280" strokeWidth="1.5" />
-          <text x="30" y="-8" textAnchor="middle" fontSize="8" fill="#6b7280" style={{ fontFamily: 'JetBrains Mono, monospace' }}>10 m</text>
+          <line x1="75" y1="-4" x2="75" y2="4" stroke="#6b7280" strokeWidth="1.5" />
+          <text x="37.5" y="-8" textAnchor="middle" fontSize="8" fill="#6b7280" style={{ fontFamily: 'JetBrains Mono, monospace' }}>10 m</text>
         </g>
 
         {/* ── Legend ── */}
-        <g transform="translate(36, 718)">
+        <g transform="translate(45, 898)">
           {([
             { label: 'available', color: '#c8da2b' },
             { label: 'reserved',  color: '#e63946' },
@@ -419,7 +420,7 @@ export function GroundFloorPlan({ spaces = [], onSpaceClick }: GroundFloorPlanPr
 
         {/* ── Tooltip (always on top) ── */}
         {tooltip && (() => {
-          const tx = Math.min(Math.max(tooltip.x, 64), 736)
+          const tx = Math.min(Math.max(tooltip.x, 80), 920)
           const ty = Math.max(tooltip.y - 58, 8)
           return (
             <g transform={`translate(${tx}, ${ty})`} style={{ pointerEvents: 'none' }}>

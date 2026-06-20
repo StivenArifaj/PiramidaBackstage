@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { BrandStrip } from '@/components/ui/brand-strip'
 import { FloorSelector } from '@/components/pyramid/floor-selector'
@@ -9,31 +9,32 @@ import { MiniMap } from '@/components/pyramid/mini-map'
 import { FLOOR_LABELS } from '@/types/domain'
 import type { SpaceFloor, SpaceWithAvailability } from '@/types/api'
 
-const DEMO_SPACES: SpaceWithAvailability[] = [
-  { id: '1',  code: 'A1',  name: 'Exhibition Room A1',  floor: 'l0', category: 'extension', area_sqm: 85,  capacity_pax: 90,  hourly_rate_eur: 120, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '2',  code: 'A2',  name: 'Exhibition Room A2',  floor: 'l0', category: 'extension', area_sqm: 92,  capacity_pax: 100, hourly_rate_eur: 130, setup_types: [], features: [], photo_urls: [], availability: 'reserved'  },
-  { id: '3',  code: 'A3',  name: 'Exhibition Room A3',  floor: 'l0', category: 'extension', area_sqm: 88,  capacity_pax: 95,  hourly_rate_eur: 125, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '4',  code: 'A4',  name: 'Exhibition Room A4',  floor: 'l0', category: 'extension', area_sqm: 95,  capacity_pax: 110, hourly_rate_eur: 135, setup_types: [], features: [], photo_urls: [], availability: 'pending'   },
-  { id: '5',  code: 'A5',  name: 'Exhibition Room A5',  floor: 'l0', category: 'extension', area_sqm: 105, capacity_pax: 120, hourly_rate_eur: 145, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '6',  code: 'A6',  name: 'Exhibition Room A6',  floor: 'l0', category: 'extension', area_sqm: 98,  capacity_pax: 108, hourly_rate_eur: 138, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '7',  code: 'A7',  name: 'Exhibition Room A7',  floor: 'l0', category: 'extension', area_sqm: 90,  capacity_pax: 98,  hourly_rate_eur: 128, setup_types: [], features: [], photo_urls: [], availability: 'reserved'  },
-  { id: '8',  code: 'A8',  name: 'Exhibition Room A8',  floor: 'l0', category: 'extension', area_sqm: 87,  capacity_pax: 94,  hourly_rate_eur: 122, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '9',  code: 'A9',  name: 'Exhibition Room A9',  floor: 'l0', category: 'extension', area_sqm: 88,  capacity_pax: 96,  hourly_rate_eur: 124, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '10', code: 'A10', name: 'Exhibition Room A10', floor: 'l0', category: 'extension', area_sqm: 92,  capacity_pax: 100, hourly_rate_eur: 130, setup_types: [], features: [], photo_urls: [], availability: 'blocked'   },
-  { id: '11', code: 'A11', name: 'Exhibition Room A11', floor: 'l0', category: 'extension', area_sqm: 95,  capacity_pax: 105, hourly_rate_eur: 135, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '12', code: 'A12', name: 'Exhibition Room A12', floor: 'l0', category: 'extension', area_sqm: 100, capacity_pax: 112, hourly_rate_eur: 140, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '13', code: 'A13', name: 'Exhibition Room A13', floor: 'l0', category: 'extension', area_sqm: 96,  capacity_pax: 106, hourly_rate_eur: 136, setup_types: [], features: [], photo_urls: [], availability: 'pending'   },
-  { id: '14', code: 'A14', name: 'Exhibition Room A14', floor: 'l0', category: 'extension', area_sqm: 90,  capacity_pax: 98,  hourly_rate_eur: 128, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '15', code: 'A15', name: 'Exhibition Room A15', floor: 'l0', category: 'extension', area_sqm: 87,  capacity_pax: 93,  hourly_rate_eur: 122, setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '16', code: 'A16', name: 'Exhibition Room A16', floor: 'l0', category: 'extension', area_sqm: 84,  capacity_pax: 90,  hourly_rate_eur: 120, setup_types: [], features: [], photo_urls: [], availability: 'reserved'  },
-  { id: '17', code: 'A17', name: 'Entrance Node A17',   floor: 'l0', category: 'extension', area_sqm: 42,  capacity_pax: 38,  hourly_rate_eur: 75,  setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '18', code: 'A18', name: 'Entrance Node A18',   floor: 'l0', category: 'extension', area_sqm: 42,  capacity_pax: 38,  hourly_rate_eur: 75,  setup_types: [], features: [], photo_urls: [], availability: 'available' },
-  { id: '19', code: 'A19', name: 'Entrance Node A19',   floor: 'l0', category: 'extension', area_sqm: 40,  capacity_pax: 35,  hourly_rate_eur: 70,  setup_types: [], features: [], photo_urls: [], availability: 'pending'   },
-]
-
 export default function SpacesPage() {
   const router = useRouter()
   const [activeFloor, setActiveFloor] = useState<SpaceFloor>('l0')
+  const [spaces, setSpaces] = useState<SpaceWithAvailability[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    fetch(`/api/spaces?floor=${activeFloor}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!cancelled) {
+          setSpaces(data.spaces ?? [])
+          setLoading(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSpaces([])
+          setLoading(false)
+        }
+      })
+    return () => { cancelled = true }
+  }, [activeFloor])
+
   function handleFloorSelect(floor: SpaceFloor) {
     setActiveFloor(floor)
   }
@@ -43,6 +44,7 @@ export default function SpacesPage() {
   }
 
   const floorLabel = FLOOR_LABELS[activeFloor]
+  const availableCount = spaces.filter(s => s.availability === 'available').length
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-concrete-bone)' }}>
@@ -109,12 +111,20 @@ export default function SpacesPage() {
 
             {/* Available count badge */}
             <div style={{ border: '2px solid var(--color-lime)', padding: '6px 14px', backgroundColor: 'var(--color-lime)', display: 'flex', gap: '6px', alignItems: 'baseline' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', fontWeight: 500, color: 'var(--color-lime-ink)', letterSpacing: '0.04em' }}>
-                {DEMO_SPACES.filter(s => s.availability === 'available').length}
-              </span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--color-lime-ink)' }}>
-                available
-              </span>
+              {loading ? (
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.12em', color: 'var(--color-lime-ink)' }}>
+                  loading…
+                </span>
+              ) : (
+                <>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', fontWeight: 500, color: 'var(--color-lime-ink)', letterSpacing: '0.04em' }}>
+                    {availableCount}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--color-lime-ink)' }}>
+                    available
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
@@ -122,7 +132,7 @@ export default function SpacesPage() {
           <div style={{ flex: 1, display: 'flex', borderBottom: '2px solid var(--color-concrete-char)' }}>
             <FloorPlan
               floor={activeFloor}
-              spaces={DEMO_SPACES}
+              spaces={spaces}
               onSpaceClick={handleSpaceClick}
             />
           </div>

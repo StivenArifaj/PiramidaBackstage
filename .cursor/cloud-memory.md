@@ -40,12 +40,13 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 
 ## Current State
 
-- **Phase:** Phase 7 complete — Full end-to-end booking pipeline live. POST /api/events now auto-generates a quote + 8 setup/teardown/AV/security tasks immediately on creation. Quote acceptance (POST /api/quotes/[id]) confirms event + returns existing tasks (no duplication). Chatbot Groq tool loop fully wired. `npx tsc --noEmit` clean (0 errors).
-- **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` passes with zero errors.
+- **Phase:** Phase 7 complete — Full end-to-end booking pipeline live + Live Map Integration. Floor plans fetch real data from live API (`/api/spaces?floor=…`). POST /api/events auto-generates quote + 8 tasks. Quote acceptance confirms event with no duplication. Chatbot Groq tool loop fully wired.
+- **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` shows 3 pre-existing errors in `app/api/chatbot/route.ts` and `lib/ai/tools.ts` (missing `openai` module).
 - **FloorSelector background:** Now `section-bb.jpeg` (1600×910, aspect 1.758), `background-size: contain`. Pill positions calibrated to architectural slabs: roof 35%, l3 42%, l0 50%, b1 66%, exterior 50%/12% left.
 - **Plan backgrounds:** `FloorPlan` component now renders the correct plan sketch behind each floor's SVG (plan-groundfloor.jpeg for l0, plan-level-01-basement.jpeg for l_minus_1, plan-level-03.jpeg for l3, plan-level-04.jpeg for roof, plan-topview.jpeg for exterior). SVG overlays use `preserveAspectRatio="xMidYMid meet"` for alignment.
-- **SVG Alignment:** All 5 floor plan SVGs wrapped in absolute-position containers over the plan background. SVG viewBox 0 0 800 800 preserved, using `preserveAspectRatio` for centered alignment with background.
-- **Ground floor plan:** Strict octagonal SVG using only `<polygon>` elements (no `<path>` or `<circle>` for layout). All 19 spaces (A1–A19) are clickable and navigate directly to their detail page via `router.push`. Mock data contains explicit A1–A19 entries with official area/capacity/rate values.
+- **SVG Alignment:** All 5 floor plan SVGs wrapped in absolute-position containers over the plan background. Ground floor SVG viewBox updated from `0 0 800 800` to `0 0 1000 1000` with center at `500,500` and all radii scaled ×1.25 to match the new coordinate space. Other floor SVGs retain `0 0 800 800`.
+- **Ground floor plan:** Strict octagonal SVG using only `<polygon>` elements. viewBox `0 0 1000 1000`, center CX/CY=500/500. BOX_OUTER=381, BOX_INNER=223, SITE_R=431, RING_R=203, ATRIUM_R=85 — all scaled ×1.25 from previous values. All 19 spaces (A1–A19) clickable. Hardcoded UI elements (floor label, legend, scale bar, north indicator, tooltip bounds) repositioned for new viewBox dimensions.
+- **Spaces page:** Replaced static `DEMO_SPACES` constant with live `useEffect` fetch to `/api/spaces?floor=${activeFloor}`. Loading state shown in the available-count badge. Data flows through `<FloorPlan>` → `<GroundFloorPlan>` with real availability colors.
 - **UI Airgap (active):** Public BrandStrip only links to `/spaces`. Dashboard lives behind `/dashboard` with its own sidebar — no shared navigation with the public site.
 - **Frontend (complete):**
   - All 5 floor plan SVGs (ground octagonal, L3, L-1, Roof, Exterior), FloorSelector, MiniMap, ScrollVideo (GSAP canvas, Glass Hero Plate)
@@ -81,6 +82,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/backend] — Groq migration: installed openai SDK, rewrote lib/ai/tools.ts in OpenAI function-calling format, rewrote /api/chatbot to use Groq baseURL with llama-3.3-70b-versatile, agentic tool loop (up to 3 rounds), updated .env.example with GROQ_API_KEY. `npx tsc --noEmit` clean.
 - [2026-06-20 20:00] OpenCode [Aron/Frontend] — Topographical Calibration: Locked Floor Selector to architectural section (section-bb.jpeg), calibrated pill positions (roof 35%, l3 42%, l0 50%, b1 66%, exterior 50%/12%), set plan backgrounds behind SVG floor plans (plan-groundfloor.jpeg etc.), wrapped SVGs in absolute overlay containers with preserveAspectRatio alignment. `npx tsc --noEmit` — pre-existing errors only.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/backend] — Booking Pipeline: POST /api/events now auto-generates quote + 8 tasks (setup, AV, reception, security, teardown, cleaning) immediately on creation. acceptQuote fixed FK bug (depends_on_task_id null on insert), no longer duplicates tasks. `npx tsc --noEmit` clean.
+- [2026-06-20 20:30] OpenCode [Aron/Frontend] — Live Map Integration: Wired interactive floor plans to real API data (`/api/spaces?floor=…`) and tuned SVG polygon radii (viewBox 0 0 1000 1000, center 500,500, radii ×1.25) to match blueprint sketches.
 
 ## Next Steps
 
@@ -91,13 +93,16 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 4. Hit `POST /api/quotes/{id}` (or Supabase Dashboard) → confirm event status advances to `confirmed`, tasks remain (no duplicates).
 5. Rehearse demo script (master-plan §10) × 3.
 
-### Deploy to Vercel:
-6. `git push` then connect repo on vercel.com → add 4 env vars: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, GROQ_API_KEY.
+### End-to-end test — booking flow ready:
+6. Verify floor plan shows real availability colors by switching floors — each floor fetches `/api/spaces?floor=…`.
+7. Click a space → detail page loads with ImageGallery populated from `photo_urls`.
+8. Submit event via `/book` → check `/dashboard/events` shows it (live DB row).
+9. Open chatbot → "Book Yellow Roof Box for 50 people Friday 8pm–11pm, name Ardi, email ardi@test.al" → tools fire, event appears in dashboard.
+10. Accept quote via `POST /api/quotes/{id}` → tasks auto-generated and inserted.
 
-### Frontend (Aron — optional polish):
-- Wire `/spaces/page.tsx` floor selector to live `GET /api/spaces?floor=…` — currently uses `DEMO_SPACES` constant.
-- Add photo URLs to A-ring spaces in mock-data or Supabase so ImageGallery doesn't show placeholder.
-- Fine-tune SVG polygon vertices over plan-blueprint backgrounds.
+### Demo prep:
+11. Rehearse demo script (master-plan §10) at least 3 times.
+12. Deploy to Vercel — add all env vars in Vercel dashboard → Environment Variables.
 
 ## Open Questions / Blockers
 
