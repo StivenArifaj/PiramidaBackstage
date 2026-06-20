@@ -5,13 +5,15 @@ import { BrandStrip } from '@/components/ui/brand-strip'
 import { SectionDivider } from '@/components/ui/section-divider'
 import { ScrollVideo } from '@/components/pyramid/scroll-video'
 
-const BUILDING_STATS = [
+// ─── Building stats (overlay on first flythrough) ─────────────────────────
+const HERO_STATS = [
   { value: '80+', label: 'spaces' },
   { value: '5',   label: 'floors' },
   { value: '300', label: 'max pax' },
   { value: '16',  label: 'ext. boxes' },
 ]
 
+// ─── Feature strips (below second flythrough) ─────────────────────────────
 const FEATURES = [
   {
     num: '01',
@@ -35,6 +37,7 @@ const FEATURES = [
   },
 ]
 
+// ─── Building spec table ────────────────────────────────────────────────────
 const BUILDING_SPECS = [
   { label: 'location',         value: 'Tirana, Albania' },
   { label: 'architect',        value: 'MVRDV (2023)' },
@@ -46,19 +49,32 @@ const BUILDING_SPECS = [
   { label: 'asset categories', value: '12' },
 ]
 
+// ─── Interlude divider text (between two flythroughs) ─────────────────────
+const INTERLUDE_LINES = [
+  { n: '01', label: 'Five floors catalogued', detail: 'Roof · L+3 · Ground · B1 · Exterior' },
+  { n: '02', label: '80+ spaces mapped', detail: 'Every room, box, and terrace bookable in real time' },
+  { n: '03', label: 'One confirmation', detail: 'Quote, assets, tasks — all in under 90 seconds' },
+]
+
+// ─── Landing page ────────────────────────────────────────────────────────────
 export default function LandingPage() {
   return (
-    <div style={{ backgroundColor: 'var(--color-concrete-char)' }}>
+    <div style={{ backgroundColor: 'var(--color-concrete-char)', overflowX: 'clip' }}>
       <BrandStrip />
 
-      {/* ── Scroll-scrubbed video hero ──────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════
+          FLYTHROUGH 1 · aerial drone — wide overhead view
+          Frames: /frames/hero · 300 frames · reversed
+          (plays aerial→interior as user scrolls down)
+      ══════════════════════════════════════════════════════ */}
       <ScrollVideo
         framesFolder="/frames/hero"
         frameCount={300}
-        overlayLabel="event coordination platform"
-        overlayTitle="PIRAMIDA E SHQIPËRISË"
+        overlayLabel="Pyramid of Tirana · MVRDV · Albania · 2023"
+        overlayTitle="piramida backstage."
         overlaySubtitle="EST. 1988 · REIMAGINED 2023 · BACKSTAGE 2026"
         scrollHeight="300vh"
+        reversed
       >
         {/* Stats panel — top right */}
         <div
@@ -67,50 +83,29 @@ export default function LandingPage() {
             top: '72px',
             right: '40px',
             border: '2px solid rgba(245,245,240,0.18)',
-            backgroundColor: 'rgba(10,10,10,0.62)',
+            backgroundColor: 'rgba(10,10,10,0.65)',
             zIndex: 2,
           }}
         >
-          {BUILDING_STATS.map(({ value, label }, i) => (
+          {HERO_STATS.map(({ value, label }, i) => (
             <div
               key={label}
               style={{
                 padding: '14px 22px',
-                borderBottom:
-                  i < BUILDING_STATS.length - 1
-                    ? '1px solid rgba(245,245,240,0.1)'
-                    : 'none',
+                borderBottom: i < HERO_STATS.length - 1 ? '1px solid rgba(245,245,240,0.1)' : 'none',
               }}
             >
-              <p
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '22px',
-                  fontWeight: 500,
-                  color: 'var(--color-concrete-bone)',
-                  margin: 0,
-                  letterSpacing: '0.03em',
-                }}
-              >
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '22px', fontWeight: 500, color: 'var(--color-concrete-bone)', margin: 0, letterSpacing: '0.03em' }}>
                 {value}
               </p>
-              <p
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '8px',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(245,245,240,0.38)',
-                  margin: '3px 0 0',
-                }}
-              >
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(245,245,240,0.38)', margin: '3px 0 0' }}>
                 {label}
               </p>
             </div>
           ))}
         </div>
 
-        {/* CTA buttons — bottom right */}
+        {/* CTA — bottom right */}
         <div
           style={{
             position: 'absolute',
@@ -158,14 +153,118 @@ export default function LandingPage() {
         </div>
       </ScrollVideo>
 
-      {/* ── Diagonal transition: dark → bone ───────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════
+          INTERLUDE · dark stat block between flythroughs
+      ══════════════════════════════════════════════════════ */}
+      <section
+        style={{
+          backgroundColor: 'var(--color-concrete-char)',
+          borderTop: '2px solid rgba(245,245,240,0.08)',
+          borderBottom: '2px solid rgba(245,245,240,0.08)',
+        }}
+      >
+        {/* Header row */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'space-between',
+            padding: '64px 72px 40px',
+            borderBottom: '1px solid rgba(245,245,240,0.06)',
+          }}
+        >
+          <div>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--color-lime)', margin: '0 0 16px' }}>
+              the building
+            </p>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(32px, 4vw, 56px)', fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--color-concrete-bone)', margin: 0, lineHeight: 1.0 }}>
+              every floor.<br />every space.
+            </h2>
+          </div>
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'rgba(245,245,240,0.4)', maxWidth: '300px', textAlign: 'right', lineHeight: 1.7, margin: 0 }}>
+            From rooftop MVRDV colour boxes to the underground B1 level — every square metre catalogued, priced, and bookable in real time.
+          </p>
+        </div>
+
+        {/* Three-column feature strips */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          {INTERLUDE_LINES.map(({ n, label, detail }, i) => (
+            <div
+              key={n}
+              style={{
+                padding: '40px 48px',
+                borderRight: i < 2 ? '1px solid rgba(245,245,240,0.06)' : 'none',
+              }}
+            >
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.14em', color: 'var(--color-lime)', margin: '0 0 14px' }}>
+                {n}
+              </p>
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 500, letterSpacing: '0.02em', textTransform: 'uppercase', color: 'var(--color-concrete-bone)', margin: '0 0 8px' }}>
+                {label}
+              </p>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'rgba(245,245,240,0.38)', margin: 0, lineHeight: 1.65 }}>
+                {detail}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          FLYTHROUGH 2 · front elevation approach
+          Frames: /frames/detail-sample · 265 frames · reversed
+          (plays wide city → building facade as user scrolls)
+      ══════════════════════════════════════════════════════ */}
+      <ScrollVideo
+        framesFolder="/frames/detail-sample"
+        frameCount={265}
+        overlayLabel="Ground Level · Front Elevation · Tirana"
+        overlayTitle="walk inside."
+        overlaySubtitle="5 FLOORS · 80+ SPACES · 3 500 m² · ALL BOOKABLE"
+        scrollHeight="260vh"
+        reversed
+      >
+        {/* Explore CTA — bottom right */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '18px',
+            right: '40px',
+            zIndex: 2,
+          }}
+        >
+          <Link
+            href="/spaces"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '12px',
+              fontWeight: 500,
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+              color: 'var(--color-lime-ink)',
+              backgroundColor: 'var(--color-lime)',
+              padding: '16px 40px',
+              display: 'inline-block',
+            }}
+          >
+            open floor plans →
+          </Link>
+        </div>
+      </ScrollVideo>
+
+      {/* ══════════════════════════════════════════════════════
+          DIAGONAL TRANSITION: dark → bone
+      ══════════════════════════════════════════════════════ */}
       <SectionDivider
         fromColor="var(--color-concrete-char)"
         toColor="var(--color-concrete-bone)"
         height={80}
       />
 
-      {/* ── Manifesto ──────────────────────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════
+          MANIFESTO
+      ══════════════════════════════════════════════════════ */}
       <section style={{ backgroundColor: 'var(--color-concrete-bone)', padding: '80px 48px' }}>
         <div
           style={{
@@ -178,41 +277,13 @@ export default function LandingPage() {
         >
           {/* Left: statement */}
           <div>
-            <p
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10px',
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                color: 'var(--color-concrete-gray)',
-                margin: '0 0 20px',
-              }}
-            >
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)', margin: '0 0 20px' }}>
               the problem
             </p>
-            <h2
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(26px, 3vw, 38px)',
-                fontWeight: 500,
-                letterSpacing: '0.01em',
-                color: 'var(--color-concrete-char)',
-                margin: 0,
-                lineHeight: 1.15,
-              }}
-            >
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px, 3vw, 38px)', fontWeight: 500, letterSpacing: '0.01em', color: 'var(--color-concrete-char)', margin: 0, lineHeight: 1.15 }}>
               30 emails. 4 spreadsheets. 2 phone calls. Replaced by one sentence.
             </h2>
-            <p
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '15px',
-                lineHeight: 1.7,
-                color: 'var(--color-concrete-gray)',
-                margin: '24px 0 0',
-                maxWidth: '460px',
-              }}
-            >
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: '15px', lineHeight: 1.7, color: 'var(--color-concrete-gray)', margin: '24px 0 0', maxWidth: '460px' }}>
               Piramida Backstage replaces fragmented event coordination with one operational system: browse 80+ spaces across 5 floors, get a live quote, reserve assets, auto-generate setup tasks, and give the chatbot one sentence to do the whole thing.
             </p>
             <Link
@@ -237,116 +308,61 @@ export default function LandingPage() {
 
           {/* Right: building specs */}
           <div>
-            <p
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10px',
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                color: 'var(--color-concrete-gray)',
-                margin: '0 0 16px',
-              }}
-            >
-              building specs
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)', margin: '0 0 24px' }}>
+              building data
             </p>
-            {BUILDING_SPECS.map(({ label, value }, i) => (
-              <div
-                key={label}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                  padding: '10px 0',
-                  borderBottom:
-                    i < BUILDING_SPECS.length - 1
-                      ? '1px solid var(--color-concrete-mid)'
-                      : 'none',
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '10px',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'var(--color-concrete-gray)',
-                  }}
-                >
-                  {label}
-                </span>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    color: 'var(--color-concrete-char)',
-                  }}
-                >
-                  {value}
-                </span>
-              </div>
-            ))}
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                {BUILDING_SPECS.map(({ label, value }) => (
+                  <tr
+                    key={label}
+                    style={{ borderBottom: '1px solid var(--color-concrete-mid)' }}
+                  >
+                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)', padding: '10px 0', width: '45%' }}>
+                      {label}
+                    </td>
+                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--color-concrete-char)', padding: '10px 0', fontWeight: 500 }}>
+                      {value}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
 
-      {/* ── Feature strip ──────────────────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════
+          FEATURE STRIP
+      ══════════════════════════════════════════════════════ */}
+      <SectionDivider
+        fromColor="var(--color-concrete-bone)"
+        toColor="var(--color-concrete-char)"
+        height={60}
+      />
       <section
         style={{
-          borderTop: '2px solid var(--color-concrete-char)',
-          borderBottom: '2px solid var(--color-concrete-char)',
-          backgroundColor: 'var(--color-concrete-bone)',
+          backgroundColor: 'var(--color-concrete-char)',
+          borderTop: '2px solid rgba(245,245,240,0.08)',
+          borderBottom: '2px solid rgba(245,245,240,0.08)',
         }}
       >
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
           {FEATURES.map(({ num, title, body }, i) => (
             <div
-              key={title}
+              key={num}
               style={{
-                padding: '40px 32px',
-                borderRight:
-                  i < FEATURES.length - 1
-                    ? '2px solid var(--color-concrete-char)'
-                    : 'none',
+                padding: '52px 40px',
+                borderRight: i < 3 ? '1px solid rgba(245,245,240,0.08)' : 'none',
               }}
             >
-              <span
-                style={{
-                  display: 'inline-block',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '9px',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  color: 'var(--color-lime-ink)',
-                  backgroundColor: 'var(--color-lime)',
-                  padding: '2px 7px',
-                  marginBottom: '18px',
-                }}
-              >
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.14em', color: 'var(--color-lime)', margin: '0 0 16px' }}>
                 {num}
-              </span>
-              <h3
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '18px',
-                  fontWeight: 500,
-                  letterSpacing: '0.04em',
-                  color: 'var(--color-concrete-char)',
-                  margin: '0 0 12px',
-                  textTransform: 'lowercase',
-                }}
-              >
+              </p>
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: '15px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-concrete-bone)', margin: '0 0 12px' }}>
                 {title}
-              </h3>
-              <p
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '14px',
-                  lineHeight: 1.65,
-                  color: 'var(--color-concrete-gray)',
-                  margin: 0,
-                }}
-              >
+              </p>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'rgba(245,245,240,0.45)', margin: 0, lineHeight: 1.65 }}>
                 {body}
               </p>
             </div>
@@ -354,61 +370,62 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Dark CTA ───────────────────────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════
+          FOOTER CTA
+      ══════════════════════════════════════════════════════ */}
       <section
         style={{
           backgroundColor: 'var(--color-concrete-char)',
-          padding: '72px 48px',
+          padding: '72px',
+          borderTop: '2px solid var(--color-lime)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '32px',
         }}
       >
         <div>
-          <p
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '10px',
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              color: 'var(--color-concrete-gray)',
-              margin: '0 0 10px',
-            }}
-          >
-            start here
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--color-lime)', margin: '0 0 12px' }}>
+            ready to book
           </p>
-          <h2
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(24px, 3vw, 36px)',
-              fontWeight: 500,
-              letterSpacing: '0.01em',
-              color: 'var(--color-concrete-bone)',
-              margin: 0,
-            }}
-          >
-            pick a floor. pick a space. book it.
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 3.5vw, 48px)', fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--color-concrete-bone)', margin: 0, lineHeight: 1.1 }}>
+            Replace 30 emails<br />with one sentence.
           </h2>
         </div>
-        <Link
-          href="/spaces"
-          style={{
-            flexShrink: 0,
-            fontFamily: 'var(--font-mono)',
-            fontSize: '12px',
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: 'var(--color-lime-ink)',
-            backgroundColor: 'var(--color-lime)',
-            padding: '16px 40px',
-            border: '2px solid var(--color-lime-ink)',
-            textDecoration: 'none',
-            display: 'inline-block',
-          }}
-        >
-          explore the pyramid →
-        </Link>
+        <div style={{ display: 'flex', gap: '14px', flexShrink: 0 }}>
+          <Link
+            href="/spaces"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+              color: 'var(--color-lime-ink)',
+              backgroundColor: 'var(--color-lime)',
+              padding: '14px 32px',
+              border: '2px solid var(--color-lime-ink)',
+              display: 'inline-block',
+            }}
+          >
+            book a space
+          </Link>
+          <Link
+            href="/dashboard"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+              color: 'rgba(245,245,240,0.75)',
+              padding: '14px 32px',
+              border: '2px solid rgba(245,245,240,0.2)',
+              display: 'inline-block',
+            }}
+          >
+            organizer view
+          </Link>
+        </div>
       </section>
     </div>
   )

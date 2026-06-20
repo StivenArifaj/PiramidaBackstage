@@ -269,6 +269,41 @@ export function ScrollVideo({
         {/* Slot for absolutely-positioned overlays (stats panel, CTAs, badges) */}
         {children}
 
+        {/* Watermark mask — Option A: hard geometric block (bottom-right)
+            Covers the Ezgif.com attribution that appears in all 565 frames
+            (300 hero + 265 detail-sample). Hard edges, brutalist-compliant. */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            bottom: '4px',
+            right: '0',
+            width: '224px',
+            height: '40px',
+            backgroundColor: 'var(--color-concrete-black)',
+            border: '2px solid rgba(245,245,240,0.06)',
+            borderRight: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 4,
+            pointerEvents: 'none',
+          }}
+        >
+          <p
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '7px',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              color: 'rgba(245,245,240,0.1)',
+              margin: 0,
+            }}
+          >
+            [ MASK // WM ]
+          </p>
+        </div>
+
         {/* Progress bar — lime on translucent track */}
         <div
           style={{

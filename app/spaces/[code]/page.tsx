@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import { BrandStrip } from '@/components/ui/brand-strip'
 import { MonoTable } from '@/components/ui/mono-table'
 import { StatusDot } from '@/components/ui/status-dot'
-import { ScrollVideo } from '@/components/pyramid/scroll-video'
+import { ImageGallery } from '@/components/ui/image-gallery'
 import type { GetSpaceResponse, SpaceWithAvailability } from '@/types/api'
 
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number]
@@ -162,18 +162,15 @@ export default function SpaceDetailPage() {
     <div style={{ backgroundColor: 'var(--color-concrete-bone)', minHeight: '100vh' }}>
       <BrandStrip />
 
-      {/* Scroll-scrubbed hero — first 100 frames of hero sequence */}
-      <ScrollVideo
-        framesFolder="/frames/hero"
-        frameCount={300}
-        overlayLabel={`${formatFloor(space.floor)} · ${space.category.replace(/_/g, ' ')}`}
-        overlayTitle={space.name}
-        overlaySubtitle={space.name_sq ?? space.code}
-        scrollHeight="200vh"
-        reversed
+      {/* Page header — breadcrumb · space identity · status */}
+      <div
+        style={{
+          paddingTop: '80px',
+          backgroundColor: 'var(--color-concrete-char)',
+          borderBottom: '2px solid var(--color-concrete-char)',
+        }}
       >
-        {/* Breadcrumb — top left, below BrandStrip */}
-        <div style={{ position: 'absolute', top: '80px', left: '64px', zIndex: 2 }}>
+        <div style={{ padding: '0 64px' }}>
           <Link
             href="/spaces"
             style={{
@@ -182,42 +179,100 @@ export default function SpaceDetailPage() {
               letterSpacing: '0.16em',
               textTransform: 'uppercase',
               textDecoration: 'none',
-              color: 'rgba(245,245,240,0.5)',
+              color: 'rgba(245,245,240,0.35)',
             }}
           >
             ← all spaces
           </Link>
         </div>
-
-        {/* Status badge — bottom right */}
         <div
           style={{
-            position: 'absolute',
-            bottom: '18px',
-            right: '40px',
-            border: `2px solid ${accentColor}`,
-            padding: '8px 16px',
-            backgroundColor: 'rgba(5,5,5,0.7)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            zIndex: 2,
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            padding: '20px 64px 32px',
           }}
         >
-          <StatusDot status={space.availability} />
-          <span
+          <div>
+            <p
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '9px',
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase',
+                color: 'rgba(245,245,240,0.35)',
+                margin: '0 0 12px',
+              }}
+            >
+              {formatFloor(space.floor)} · {space.category.replace(/_/g, ' ')}
+            </p>
+            <h1
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 'clamp(36px, 5vw, 72px)',
+                fontWeight: 500,
+                letterSpacing: '-0.02em',
+                color: 'var(--color-concrete-bone)',
+                margin: 0,
+                lineHeight: 0.95,
+              }}
+            >
+              {space.name}
+            </h1>
+            {space.name_sq && (
+              <p
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '12px',
+                  letterSpacing: '0.06em',
+                  color: 'rgba(245,245,240,0.28)',
+                  margin: '10px 0 0',
+                }}
+              >
+                {space.name_sq}
+              </p>
+            )}
+          </div>
+          <div
             style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '9px',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: 'var(--color-concrete-bone)',
+              border: `2px solid ${accentColor}`,
+              padding: '10px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              flexShrink: 0,
             }}
           >
-            {space.availability}
-          </span>
+            <StatusDot status={space.availability} />
+            <span
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '10px',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: accentColor,
+              }}
+            >
+              {space.availability}
+            </span>
+          </div>
         </div>
-      </ScrollVideo>
+      </div>
+
+      {/* Architectural image gallery */}
+      <ImageGallery
+        title={space.name}
+        spaceCode={space.code}
+        accentColor={accentColor}
+        images={
+          space.photo_urls.length > 0
+            ? space.photo_urls.map((url, i) => ({
+                url,
+                label: `${space.name.toUpperCase()} · VIEW ${String(i + 1).padStart(2, '0')}`,
+              }))
+            : undefined
+        }
+      />
 
       {/* Content grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '0', borderTop: '2px solid var(--color-concrete-char)' }}>
