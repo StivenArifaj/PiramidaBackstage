@@ -44,6 +44,9 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` passes with zero errors.
 - **What exists now (frontend):**
   - **`app/(marketing)/page.tsx`** (served at `/`) — continuous scroll experience: dark cinematic div (`overflowX: 'clip'`) contains BrandStrip + Flythrough 1 (stats panel + "organizer view" button at bottom:64px) + Interlude + Flythrough 2 (no CTA); followed immediately by bone-colored floor selector section (FloorSelector + FloorPlan, same layout as `/spaces` page, `DEMO_SPACES` data, "view as page ↗" escape link). React fragment `<>` root.
+  - **`app/book/page.tsx`** — fully implemented standalone booking form. Dark header (breadcrumb ← dashboard, H1 "reserve a space."); 2-column grid: left has 3 sections (01 space + event type, 02 date/time/attendees, 03 organizer name/email/org/notes) + lime submit button; right has `<QuoteSummary>` sticky panel (space info header, date/time summary row, line items table: rental/cleaning/service charge/subtotal/VAT/total-all in JetBrains Mono, total in lime). Fetches `/api/spaces` on mount. POSTs to `/api/events` on submit. Redirects to `/book/confirmation?ref=...`.
+  - **`components/booking/quote-summary.tsx`** — reusable live quote panel component. Props: space, date, startTime, endTime, attendees. Calculates: durationHrs × rate (rental) + €50 cleaning + 8% service = subtotal + 18% VAT = total.
+  - **`components/ui/pill.tsx`** — `rounded-full` removed. Floor selector pills are now hard rectangular (2px border, no border-radius).
   - **`app/spaces/page.tsx`** — standalone floor selector page (still exists and works independently at `/spaces`).
   - **`app/spaces/[code]/page.tsx`** — space detail: dark page header (breadcrumb + h1 + status badge) + `<ImageGallery>` (shows photo_urls or SVG-hatch placeholder) + content grid (4 metrics, MonoTable, BookingPanel). ScrollVideo removed.
   - **`components/ui/image-gallery.tsx`** — brutalist gallery: SVG 30°-hatch placeholder, crosshair overlay, view-label + counter, ← → nav, 6-up thumb strip with lime accent bar.
@@ -73,7 +76,7 @@ Both read `/types/` freely. Backend Dev owns writing to it.
   - `lib/db/mock-data.ts` — in-memory mock store (events, spaces, assets, conflicts) used by all other API routes
   - All other API routes (events, conflicts, inventory, dashboard overview, quotes, tasks) wired to mock data
 - **Tailwind v4 note:** No `tailwind.config.ts` — tokens live in `app/globals.css` `@theme` block. This is correct for v4.
-- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) [Aron/frontend] — Full system Playwright audit complete. `docs/audit-report.md` generated (2 Critical, 5 High, 6 Medium, 5 Low Polish).
+- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) [Aron/frontend] — C1 resolved: `/book` now a full 2-col booking form with live quote. H1 resolved: Pill `rounded-full` removed.
 
 ## Completed Tasks Log
 
@@ -99,17 +102,18 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20 ~session-handoff] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Repo sync, watermark label fix, octagonal floor plan, tiered mini-map: (1) `git pull` — synced 586 files from remote (previous session had pushed); (2) fixed watermark HUD label in `scroll-video.tsx`: added `[ ]` brackets → `[ PIRAMIDA BACKSTAGE // FEED ACTIVE ]`; (3) rewrote `components/pyramid/floor-plans/ground-floor.tsx` — deleted ALL circular arcs, replaced with strict octagonal geometry using `octPt()` (ray-to-octagon intersection) and `octSector()` (straight-sided trapezoids, zero `A` arc commands) — outer/inner/atrium all `<polygon>` elements, corridor spokes are `<line>` elements, A1–A19 all represented; (4) redesigned `components/pyramid/mini-map.tsx` — replaced flat triangle silhouette with a 5-tier stepped pyramid elevation (Roof→L3→L0→B1→EX, each tier steps outward, active tier lime-filled with left accent bar + right indicator dot); `app/(marketing)/page.tsx` unchanged (continuous scroll already in place from previous session). `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Final sweep: (1) silenced Ezgif corner mask in `scroll-video.tsx` — removed border, borderRight, and `[ MASK // WM ]` text label; now a pure `var(--color-concrete-black)` 224×40px block (invisible to users); (2) replaced INTERLUDE_LINES in `app/(marketing)/page.tsx` with factual challenge-brief data — 80+ spaces / Auto-generated quotes / Conflict detection. `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Executed system-wide Playwright audit across all 11 routes and generated exhaustive structural fix list at `docs/audit-report.md`. 2 Critical, 5 High, 6 Medium, 5 Low Polish issues identified. All APIs return 200. No JS runtime errors.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Resolved C1 and H1: Built standalone booking flow UI (`app/book/page.tsx` + `components/booking/quote-summary.tsx`) with space selector, 3-section form, live quote panel (JetBrains Mono throughout, grouped line items, VAT calculation), `POST /api/events` wired, redirect to confirmation. Fixed Pill `rounded-full` → no border-radius. `npx tsc --noEmit` clean.
 
 ## Next Steps
 
 > Full audit report at `docs/audit-report.md` — fix in priority order:
 
 ### CRITICAL (blocks demo):
-1. **[C1] Implement `app/book/page.tsx`** — currently a blank stub. Needs space picker, date/time/attendees form, live quote, wire to `POST /api/events`, redirect to `/book/confirmation?ref=...`.
+1. ✅ **[C1] DONE** — `app/book/page.tsx` fully implemented (space selector, date/time, attendees, organizer details, live quote panel, POST /api/events, confirmation redirect).
 2. **[C2] Implement chatbot** (`components/chatbot/chatbot-cube.tsx` + `chatbot-panel.tsx`) — floating dark cube bottom-right → expandable chat panel → wire to `POST /api/chatbot` (GEMINI_API_KEY required). Mount in root `app/layout.tsx`.
 
 ### HIGH (design-system violations):
-3. **[H1] Remove `rounded-full` from `components/ui/pill.tsx:17`** — floor selector pills violate no-rounded-corners rule. Replace with hard rectangular border.
+3. ✅ **[H1] DONE** — `rounded-full` removed from `components/ui/pill.tsx`. Pills are now hard rectangular 2px-border blocks.
 4. **[H2] Fix dashboard KPI font** — `app/dashboard/page.tsx:241` uses `fontFamily: D` (Space Grotesk) for large KPI numbers. Change to `fontFamily: M` (JetBrains Mono).
 5. **[H3] Fix inventory KPI font** — `app/dashboard/inventory/page.tsx` KPI strip (11, 1082, 139, 0) uses Space Grotesk. Change to JetBrains Mono.
 6. **[H4] Add `aria-label` to ImageGallery nav buttons** — `components/ui/image-gallery.tsx` ← → buttons have no accessible label.
