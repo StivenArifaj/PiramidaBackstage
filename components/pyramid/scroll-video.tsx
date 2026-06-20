@@ -151,10 +151,10 @@ export function ScrollVideo({
           backgroundColor: 'var(--color-concrete-black)',
         }}
       >
-        {/* Canvas — cover-fit render */}
+        {/* Canvas — cover-fit render, scaled 4% to push watermark off-screen */}
         <canvas
           ref={canvasRef}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', transform: 'scale(1.04)', transformOrigin: 'center center' }}
         />
 
         {/* Flat dark scrim — no gradient, per design system */}
@@ -329,23 +329,6 @@ export function ScrollVideo({
         <div style={{ position: 'absolute', inset: 0, zIndex: 30 }}>
           {children}
         </div>
-
-        {/* Watermark mask — Option A: hard geometric block (bottom-right)
-            Covers the Ezgif.com attribution that appears in all 565 frames
-            (300 hero + 265 detail-sample). Hard edges, brutalist-compliant. */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            bottom: '4px',
-            right: '0',
-            width: '224px',
-            height: '40px',
-            backgroundColor: 'var(--color-concrete-black)',
-            zIndex: 4,
-            pointerEvents: 'none',
-          }}
-        />
 
         {/* Progress bar — lime on translucent track */}
         <div

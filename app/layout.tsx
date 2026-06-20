@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Space_Grotesk, Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
-import { ChatbotCube } from '@/components/chatbot/chatbot-cube'
+import { ChatbotRoot } from '@/components/chatbot/chatbot-root'
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -45,7 +45,7 @@ export default function RootLayout({
     >
       <body className="min-h-screen antialiased" style={{ backgroundColor: 'var(--color-concrete-bone)', color: 'var(--color-concrete-char)', fontFamily: 'var(--font-body)' }}>
         {children}
-        <ChatbotCube />
+        <ChatbotRoot />
       </body>
     </html>
   )

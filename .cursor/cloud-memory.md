@@ -58,10 +58,13 @@ Both read `/types/` freely. Backend Dev owns writing to it.
   - **`app/dashboard/inventory/page.tsx`** — KPI strip (JetBrains Mono), grouped asset table, AvailBar.
   - **`app/dashboard/events/page.tsx`** — event register, filter tabs, expand rows.
   - **`app/dashboard/conflicts/page.tsx`** — conflict cards, resolution checklist.
-  - **`components/pyramid/`** — all 5 floor plan SVGs, FloorSelector, FloorPlan, MiniMap, ScrollVideo (GSAP canvas, Glass Hero Plate, corner mask).
+  - **`components/pyramid/scroll-video.tsx`** — black watermark mask div DELETED. Canvas now has `transform: scale(1.04)` to push watermark off-screen naturally. Glass Hero Plate intact.
+  - **`components/chatbot/chatbot-root.tsx`** — client wrapper using `usePathname()`. Renders `<ChatbotCube>` everywhere except `/dashboard/**`. Mounted in `app/layout.tsx`.
+  - **`components/chatbot/chatbot-cube.tsx`** + **`chatbot-panel.tsx`** — floating dark 56px cube, expands to full chat panel. Message history, typing dots, POST /api/chatbot, session_id.
+  - **`components/pyramid/`** — all 5 floor plan SVGs, FloorSelector, FloorPlan, MiniMap, ScrollVideo (GSAP canvas, Glass Hero Plate, no black mask).
 - **What exists now (backend):** Mock-data layer for all routes. Supabase schema + seed ready but not deployed. Spaces queries have real Supabase + mock fallback.
 - **Tailwind v4 note:** No `tailwind.config.ts` — tokens in `app/globals.css` `@theme`. Correct.
-- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) [Aron/frontend] — UI Airgap complete.
+- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) [Aron/frontend] — Watermark mask deleted, CSS scale crop applied, chatbot dashboard-exclusion fixed.
 
 ## Completed Tasks Log
 
@@ -90,16 +93,17 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Resolved C1 and H1: Built standalone booking flow UI (`app/book/page.tsx` + `components/booking/quote-summary.tsx`) with space selector, 3-section form, live quote panel (JetBrains Mono throughout, grouped line items, VAT calculation), `POST /api/events` wired, redirect to confirmation. Fixed Pill `rounded-full` → no border-radius. `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Resolved C2 and H2-H5: Implemented ChatbotCube (fixed 56px dark cube, bottom-right, z-50, 2×2 SVG grid icon) + ChatbotPanel (message history, lime user bubbles, typing dots, session_id, POST /api/chatbot); mounted in app/layout.tsx. Fixed H2 (dashboard KPI D→M), H3 (inventory KPI D→M), H4 (image-gallery aria-labels), H5 (interlude "80+" in var(--font-mono) span). `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — UI Airgap: Decoupled client site and dashboard, removing all cross-navigation. Removed dashboard link + role-switch button from BrandStrip (simplified to spaces-only nav, dropped role/onRoleSwitch props). Removed "organizer view" CTA from landing page Flythrough 1. Changed /book breadcrumb from "← dashboard" to "← all spaces" (→ /spaces). Verified dashboard/layout.tsx already clean (sidebar-only, no BrandStrip). Cleaned dead role state from spaces/page.tsx. `npx tsc --noEmit` clean.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Deleted black watermark patch, applied canvas scale crop, and implemented C2 Chatbot UI. Removed 224×40px concrete-black mask div from scroll-video.tsx; added `transform: scale(1.04)` to canvas to push Ezgif watermark off-screen naturally. Created `components/chatbot/chatbot-root.tsx` (path-aware wrapper: hides chatbot on /dashboard/** routes via usePathname). Updated app/layout.tsx to use ChatbotRoot. `npx tsc --noEmit` clean.
 
 ## Next Steps
 
-> Audit items C1, C2, H1–H5 resolved. UI Airgap enforced. Remaining work:
+> Audit items C1, C2, H1–H5 resolved. UI Airgap enforced. Watermark handled via CSS crop. Remaining work:
 
 ### Frontend (Aron):
-1. **[M4] Add photo URLs to A-ring mock spaces** — `lib/db/mock-data.ts` A1–A16 have `photo_urls: []`. Add Unsplash architecture URLs (or point to `/references/`) so demo gallery doesn't show hatch placeholder for extension spaces.
+1. **[M4] Add photo URLs to A-ring mock spaces** — `lib/db/mock-data.ts` A1–A16 have `photo_urls: []`. Add Unsplash architecture URLs (or `/references/` images) so demo gallery doesn't show hatch placeholder for extension spaces.
 2. **[M5] Replace hardcoded UPCOMING array in dashboard** — `app/dashboard/page.tsx` has static `UPCOMING` array with stale attendee counts. Drive from `/api/dashboard/overview` response instead.
 3. **[M2] Add H1 headings to dashboard pages** — `/dashboard`, `/dashboard/inventory`, `/dashboard/conflicts` have no `<h1>`. Screen reader accessibility.
-4. **Wire chatbot to Gemini** — `app/api/chatbot/route.ts` is a stub returning `"Coming soon."`. Once `GEMINI_API_KEY` is set, implement Gemini API call with the chat history, tool-call schema (create_event, generate_quote, check_availability), and structured response. See `types/api.ts` for `ChatRequest`/`ChatResponse`.
+4. **Wire chatbot to Gemini** — `app/api/chatbot/route.ts` returns `"Coming soon."`. Once `GEMINI_API_KEY` is set, implement real Gemini call with tool-call schema (create_event, generate_quote, check_availability). See `types/api.ts` ChatRequest/ChatResponse.
 
 ### Backend (Stiven) — immediate priorities:
 1. **Create Supabase project** and add env vars to `.env.local`:
