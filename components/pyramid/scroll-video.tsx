@@ -196,7 +196,52 @@ export function ScrollVideo({
           </div>
         )}
 
-        {/* Frame counter — just below BrandStrip (48px fixed header) */}
+        {/* ── LIQUID GLASS WATERMARK MASK — z:10, sits BEHIND all text overlays ──
+            Covers "BSM 4K BLEDI STRAKOSHA MEDIA" baked into video frames.
+            Positioned here in the DOM (before text blocks) so it is naturally
+            lower in the stacking context; explicit zIndex:10 < text zIndex:20.
+            Rounded corners are an authorised design-system exception for this
+            specific element only (master-plan override).                        */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            bottom: '8%',
+            width: '90%',
+            maxWidth: '800px',
+            height: '180px',
+            borderRadius: '24px',
+            backdropFilter: 'blur(40px)',
+            WebkitBackdropFilter: 'blur(40px)',
+            backgroundColor: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            zIndex: 10,
+            pointerEvents: 'none',
+          }}
+        >
+          <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'var(--color-lime)', opacity: 0.7, flexShrink: 0 }} />
+          <p style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '8px',
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: 'rgba(245,245,240,0.38)',
+            margin: 0,
+            textAlign: 'center',
+          }}>
+            [ PIRAMIDA BACKSTAGE // FEED ACTIVE ]
+          </p>
+        </div>
+
+        {/* Frame counter — zIndex:20, above glass mask */}
         <p
           ref={counterRef}
           style={{
@@ -210,20 +255,20 @@ export function ScrollVideo({
             color: 'rgba(245,245,240,0.36)',
             margin: 0,
             pointerEvents: 'none',
-            zIndex: 2,
+            zIndex: 20,
           }}
         >
           {`FRAME ${String(reversed ? frameCount : 1).padStart(4, '0')} / ${String(frameCount).padStart(4, '0')} · SCROLL ↓`}
         </p>
 
-        {/* Text block — bottom left */}
+        {/* Text block — zIndex:20, always above glass mask */}
         <div
           style={{
             position: 'absolute',
             left: '48px',
             bottom: '56px',
             pointerEvents: 'none',
-            zIndex: 2,
+            zIndex: 20,
           }}
         >
           {overlayLabel && (
@@ -266,51 +311,10 @@ export function ScrollVideo({
           </p>
         </div>
 
-        {/* Slot for absolutely-positioned overlays (stats panel, CTAs, badges) */}
-        {children}
-
-        {/* Centre watermark mask — authorised design-system exception for backdrop-blur.
-            Covers the "BSM 4K BLEDI STRAKOSHA MEDIA" videographer text baked into all
-            frames. Positioned in the lower-centre of the viewport where the watermark
-            appears. Heavy blur + dark tint completely obliterates the white text while
-            still hinting at the building behind. Label reads as an intentional HUD feed
-            indicator, not a censor smudge.                                              */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            bottom: '15%',
-            width: '80%',
-            maxWidth: '900px',
-            height: '10rem',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            backgroundColor: 'rgba(0,0,0,0.20)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '10px',
-            zIndex: 3,
-            pointerEvents: 'none',
-          }}
-        >
-          {/* Live-feed indicator dot */}
-          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--color-lime)', flexShrink: 0 }} />
-          <p style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '9px',
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
-            color: 'rgba(245,245,240,0.80)',
-            margin: 0,
-            textAlign: 'center',
-          }}>
-            [ PIRAMIDA BACKSTAGE // FEED ACTIVE ]
-          </p>
+        {/* Slot for absolutely-positioned overlays — zIndex:20, above glass mask.
+            No pointerEvents override — children manage their own (e.g. Link buttons). */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 20 }}>
+          {children}
         </div>
 
         {/* Watermark mask — Option A: hard geometric block (bottom-right)
