@@ -88,7 +88,7 @@ export default function TrackPage() {
   }, [quote, accepting, accepted])
 
   const handleCopyLink = useCallback(() => {
-    navigator.clipboard.writeText(window.location.origin + '/track/' + ref).then(() => {
+    navigator.clipboard.writeText(window.location.origin + '/invite/' + ref).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
@@ -226,10 +226,10 @@ export default function TrackPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 2, repeat: Infinity }}
                 style={{ width: 8, height: 8, borderRadius: '50%', background: '#f4a261' }} />
-              <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#f4a261', margin: 0 }}>under review</p>
+              <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#f4a261', margin: 0 }}>request received</p>
             </div>
             <p style={{ fontFamily: M, fontSize: '13px', color: 'rgba(245,245,240,0.55)', margin: 0, lineHeight: 1.65 }}>
-              We are reviewing your request. Please check back here or wait for an email from our team.
+              The Piramida Ops Team is reviewing your request. Check back here to see your official quote.
             </p>
           </motion.div>
         )}
@@ -238,8 +238,11 @@ export default function TrackPage() {
         {isQuoted && quote && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, ease: EASE }}
             style={{ border: '2px solid var(--color-lime)', padding: '28px', marginBottom: 24 }}>
-            <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--color-lime)', margin: '0 0 16px' }}>
+            <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--color-lime)', margin: '0 0 8px' }}>
               quote ready
+            </p>
+            <p style={{ fontFamily: M, fontSize: '12px', color: 'rgba(245,245,240,0.5)', margin: '0 0 20px', lineHeight: 1.65 }}>
+              The Piramida Ops Team has approved your request and issued a quote. Click &ldquo;Accept Invoice&rdquo; below to sign the agreement and lock in your reservation.
             </p>
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
               <div>
@@ -262,7 +265,7 @@ export default function TrackPage() {
                   fontWeight: 600,
                 }}
               >
-                {accepting ? 'confirming…' : 'accept quote'}
+                {accepting ? 'confirming…' : 'Accept Invoice'}
               </button>
             </div>
             <p style={{ fontFamily: M, fontSize: '10px', color: 'rgba(245,245,240,0.3)', margin: '16px 0 0', lineHeight: 1.6 }}>

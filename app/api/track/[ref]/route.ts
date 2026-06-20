@@ -21,6 +21,7 @@ export async function GET(
       reference_code: event.reference_code,
       title: event.title,
       event_type: event.event_type,
+      organizer_name: event.organizer_name,
       status: event.status,
       start_at: event.start_at,
       end_at: event.end_at,
