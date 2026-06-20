@@ -93,9 +93,8 @@ export function LMinusOneFloorPlan({ spaces = [], onSpaceClick }: LMinusOneFloor
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
         preserveAspectRatio="xMidYMid meet"
-        style={{ background: 'transparent' }}
+        style={{ background: 'transparent', pointerEvents: 'none' }}
         aria-label="Level B-1 (Basement) — Pyramid of Tirana"
-        role="img"
       >
         {SPACES.map((def) => {
           const availability = getAvailability(def.code)
@@ -124,6 +123,7 @@ export function LMinusOneFloorPlan({ spaces = [], onSpaceClick }: LMinusOneFloor
                 stroke="#1a1a1a"
                 strokeWidth={isHov ? 3 : 1.5}
                 strokeLinejoin="round"
+                style={{ pointerEvents: 'auto', cursor: 'pointer' }}
               />
               {isHov && (
                 <polygon

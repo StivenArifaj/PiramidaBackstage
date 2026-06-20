@@ -89,9 +89,8 @@ export function RoofFloorPlan({ spaces = [], onSpaceClick }: RoofFloorPlanProps)
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
         preserveAspectRatio="xMidYMid meet"
-        style={{ background: 'transparent' }}
+        style={{ background: 'transparent', pointerEvents: 'none' }}
         aria-label="Roof — Pyramid of Tirana"
-        role="img"
       >
         {SPACES.map((def) => {
           const availability = getAvailability(def.code)
@@ -120,6 +119,7 @@ export function RoofFloorPlan({ spaces = [], onSpaceClick }: RoofFloorPlanProps)
                 stroke="#1a1a1a"
                 strokeWidth={isHov ? 3 : 1.5}
                 strokeLinejoin="round"
+                style={{ pointerEvents: 'auto', cursor: 'pointer' }}
               />
               {isHov && (
                 <polygon

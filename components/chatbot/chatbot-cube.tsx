@@ -52,7 +52,7 @@ export function ChatbotCube() {
       style={{
         position: 'fixed',
         bottom: '32px',
-        right: '32px',
+        left: '32px',
         zIndex: 50,
         display: 'flex',
         flexDirection: 'column',

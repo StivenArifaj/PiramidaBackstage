@@ -100,9 +100,8 @@ export function ExteriorFloorPlan({ spaces = [], onSpaceClick }: ExteriorFloorPl
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
         preserveAspectRatio="xMidYMid meet"
-        style={{ background: 'transparent' }}
+        style={{ background: 'transparent', pointerEvents: 'none' }}
         aria-label="Exterior Boxes — Pyramid of Tirana"
-        role="img"
       >
         {SPACES.map((def) => {
           const availability = getAvailability(def.code)
@@ -131,6 +130,7 @@ export function ExteriorFloorPlan({ spaces = [], onSpaceClick }: ExteriorFloorPl
                 stroke="#1a1a1a"
                 strokeWidth={isHov ? 3 : 1.5}
                 strokeLinejoin="round"
+                style={{ pointerEvents: 'auto', cursor: 'pointer' }}
               />
               {isHov && (
                 <polygon
