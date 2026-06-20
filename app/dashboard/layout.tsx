@@ -1,4 +1,5 @@
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
+import { ChatbotCube } from '@/components/chatbot/chatbot-cube'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,6 +8,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <main style={{ flex: 1, marginLeft: 220, minWidth: 0 }}>
         {children}
       </main>
+      {/* Admin AI Ops Director — fixed bottom-right, only inside /dashboard */}
+      <ChatbotCube isAdmin />
     </div>
   )
 }

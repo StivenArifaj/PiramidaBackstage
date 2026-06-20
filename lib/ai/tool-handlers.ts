@@ -7,7 +7,15 @@ import {
 } from '@/lib/db/queries/events'
 import { generateQuote } from '@/lib/pricing/quote'
 import { generateTasks } from '@/lib/tasks/generate'
+import { createAdminClient } from '@/lib/db/client'
+import { MOCK_EVENTS, MOCK_QUOTES, MOCK_CONFLICTS } from '@/lib/db/mock-data'
 import type { CreateEventRequest } from '@/types/api'
+
+function isSupabaseConfigured(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  return Boolean(url && key && url.startsWith('http'))
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ToolArgs = Record<string, any>
@@ -28,6 +36,10 @@ export async function handleToolCall(
         return await handleGenerateQuote(args)
       case 'list_assets_needed':
         return handleListAssets(args)
+      case 'get_dashboard_metrics':
+        return await handleGetDashboardMetrics()
+      case 'get_pending_quotes':
+        return await handleGetPendingQuotes(args)
       default:
         return `Unknown tool: ${name}`
     }
@@ -174,4 +186,117 @@ function handleListAssets(args: ToolArgs): string {
     ...recommendations,
     'Confirm with our logistics team to verify current stock levels.',
   ].join('\n')
+}
+
+// ── Admin tools ───────────────────────────────────────────────────────────────
+
+async function handleGetDashboardMetrics(): Promise<string> {
+  if (!isSupabaseConfigured()) {
+    const byStatus: Record<string, number> = {}
+    for (const e of MOCK_EVENTS) {
+      byStatus[e.status] = (byStatus[e.status] ?? 0) + 1
+    }
+    const pendingQuotes = MOCK_QUOTES.filter(q => !q.accepted_at)
+    const pipeline = pendingQuotes.reduce((s, q) => s + q.total, 0)
+    const lines = [
+      '📊 Dashboard Metrics (mock data):',
+      ...Object.entries(byStatus).map(([s, n]) => `  • ${s}: ${n} event${n !== 1 ? 's' : ''}`),
+      `  • Active conflicts: ${MOCK_CONFLICTS.length}`,
+      `  • Pending quotes: ${pendingQuotes.length} (€${pipeline.toFixed(2)} pipeline)`,
+    ]
+    return lines.join('\n')
+  }
+
+  const db = createAdminClient()
+
+  // Events by status
+  const { data: eventRows } = await db.from('events').select('status')
+  const byStatus: Record<string, number> = {}
+  for (const row of eventRows ?? []) {
+    byStatus[row.status] = (byStatus[row.status] ?? 0) + 1
+  }
+
+  // Pending quotes count + pipeline value
+  const { data: pendingQuoteRows } = await db
+    .from('quotes')
+    .select('total')
+    .is('accepted_at', null)
+  const pendingCount = (pendingQuoteRows ?? []).length
+  const pipeline = (pendingQuoteRows ?? []).reduce((s, q) => s + Number(q.total), 0)
+
+  // Active conflicts — overlap detection on event_spaces
+  const { data: esRows } = await db
+    .from('event_spaces')
+    .select('space_id, event_id, events!inner(status, start_at, end_at)')
+    .in('events.status', ['confirmed', 'in_progress', 'quoted'])
+
+  const bySpace = new Map<string, Array<{ start_at: string; end_at: string }>>()
+  for (const row of esRows ?? []) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const evt = (row as any).events
+    if (!evt) continue
+    const arr = bySpace.get(row.space_id) ?? []
+    arr.push({ start_at: evt.start_at, end_at: evt.end_at })
+    bySpace.set(row.space_id, arr)
+  }
+
+  let conflictCount = 0
+  for (const [, rows] of bySpace) {
+    if (rows.length < 2) continue
+    for (let i = 0; i < rows.length; i++) {
+      for (let j = i + 1; j < rows.length; j++) {
+        const a = rows[i], b = rows[j]
+        if (new Date(a.start_at) < new Date(b.end_at) && new Date(a.end_at) > new Date(b.start_at)) {
+          conflictCount++
+        }
+      }
+    }
+  }
+
+  const total = (eventRows ?? []).length
+  const lines = [
+    `📊 Live Dashboard Metrics (${total} total events):`,
+    ...Object.entries(byStatus).map(([s, n]) => `  • ${s}: ${n}`),
+    `  • Active conflicts: ${conflictCount}${conflictCount > 0 ? ' ⚠️ action required' : ' ✓ clear'}`,
+    `  • Pending quotes: ${pendingCount} · pipeline €${pipeline.toFixed(2)}`,
+  ]
+  return lines.join('\n')
+}
+
+async function handleGetPendingQuotes(args: ToolArgs): Promise<string> {
+  const limit = Number(args.limit ?? 10)
+
+  if (!isSupabaseConfigured()) {
+    const pending = MOCK_QUOTES.filter(q => !q.accepted_at).slice(0, limit)
+    if (!pending.length) return 'No pending quotes found.'
+    const lines = [`${pending.length} pending quote(s):`]
+    for (const q of pending) {
+      const evt = MOCK_EVENTS.find(e => e.id === q.event_id)
+      const expiry = q.valid_until ? new Date(q.valid_until).toLocaleDateString('en-GB') : 'N/A'
+      const expired = q.valid_until && new Date(q.valid_until) < new Date() ? ' ⚠️ EXPIRED' : ''
+      lines.push(`  • ${evt?.title ?? 'Unknown event'} — ${evt?.organizer_name ?? '?'} — €${q.total.toFixed(2)} — valid until ${expiry}${expired} — ID: ${q.id}`)
+    }
+    return lines.join('\n')
+  }
+
+  const db = createAdminClient()
+  const { data, error } = await db
+    .from('quotes')
+    .select('id, total, valid_until, events(title, reference_code, organizer_name)')
+    .is('accepted_at', null)
+    .order('generated_at', { ascending: true })
+    .limit(limit)
+
+  if (error) throw new Error(error.message)
+  if (!data?.length) return 'No pending quotes — all quotes have been actioned.'
+
+  const lines = [`${data.length} pending quote(s):`]
+  for (const q of data) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const evt = (q as any).events
+    const expiry = q.valid_until ? new Date(q.valid_until).toLocaleDateString('en-GB') : 'N/A'
+    const expired = q.valid_until && new Date(q.valid_until) < new Date() ? ' ⚠️ EXPIRED' : ''
+    lines.push(`  • ${evt?.title ?? '?'} (${evt?.reference_code ?? '?'}) — ${evt?.organizer_name ?? '?'} — €${Number(q.total).toFixed(2)} — valid until ${expiry}${expired} — Quote ID: ${q.id}`)
+  }
+  return lines.join('\n')
 }

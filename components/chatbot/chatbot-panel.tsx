@@ -13,12 +13,13 @@ interface ChatbotPanelProps {
   history: ChatMessage[]
   isTyping: boolean
   input: string
+  isAdmin?: boolean
   onInputChange: (v: string) => void
   onSend: () => void
   onClose: () => void
 }
 
-export function ChatbotPanel({ history, isTyping, input, onInputChange, onSend, onClose }: ChatbotPanelProps) {
+export function ChatbotPanel({ history, isTyping, input, isAdmin = false, onInputChange, onSend, onClose }: ChatbotPanelProps) {
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -59,10 +60,10 @@ export function ChatbotPanel({ history, isTyping, input, onInputChange, onSend, 
       >
         <div>
           <p style={{ fontFamily: M, fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--color-lime)', margin: 0 }}>
-            piramida ai
+            {isAdmin ? 'ops director' : 'piramida ai'}
           </p>
           <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.1em', color: 'rgba(245,245,240,0.28)', margin: '3px 0 0' }}>
-            book spaces · generate quotes · check conflicts
+            {isAdmin ? 'metrics · quotes · conflicts · bookings' : 'book spaces · generate quotes · check conflicts'}
           </p>
         </div>
         <button
@@ -100,7 +101,10 @@ export function ChatbotPanel({ history, isTyping, input, onInputChange, onSend, 
         {history.length === 0 && !isTyping && (
           <div style={{ margin: 'auto', textAlign: 'center', padding: '24px 0' }}>
             <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,245,240,0.18)', margin: 0 }}>
-              ask me to book a space,<br />generate a quote, or check availability.
+              {isAdmin
+                ? <>ask for metrics, pending quotes,<br />conflicts, or create a booking.</>
+                : <>ask me to book a space,<br />generate a quote, or check availability.</>
+              }
             </p>
           </div>
         )}
@@ -117,7 +121,7 @@ export function ChatbotPanel({ history, isTyping, input, onInputChange, onSend, 
               }}
             >
               <p style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,245,240,0.22)', margin: '0 0 4px' }}>
-                {isUser ? 'you' : 'piramida ai'}
+                {isUser ? 'you' : (isAdmin ? 'ops director' : 'piramida ai')}
               </p>
               <div
                 style={{

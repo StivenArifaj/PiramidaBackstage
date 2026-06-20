@@ -11,7 +11,11 @@ function genSessionId() {
   return `pb-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
 }
 
-export function ChatbotCube() {
+interface ChatbotCubeProps {
+  isAdmin?: boolean
+}
+
+export function ChatbotCube({ isAdmin = false }: ChatbotCubeProps) {
   const [open, setOpen] = useState(false)
   const [history, setHistory] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -35,6 +39,7 @@ export function ChatbotCube() {
         body: JSON.stringify({
           session_id: sessionId.current,
           message: text,
+          isAdmin,
           history: nextHistory.slice(0, -1),
         }),
       })
@@ -45,20 +50,15 @@ export function ChatbotCube() {
     } finally {
       setIsTyping(false)
     }
-  }, [input, history, isTyping])
+  }, [input, history, isTyping, isAdmin])
+
+  // Admin panel anchors bottom-right to avoid overlapping the dark sidebar
+  const positionStyle = isAdmin
+    ? { position: 'fixed' as const, bottom: '32px', right: '32px', zIndex: 200, display: 'flex', flexDirection: 'column' as const, alignItems: 'flex-end' }
+    : { position: 'fixed' as const, bottom: '32px', left: '32px',  zIndex: 50,  display: 'flex', flexDirection: 'column' as const, alignItems: 'flex-end' }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: '32px',
-        left: '32px',
-        zIndex: 50,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-end',
-      }}
-    >
+    <div style={positionStyle}>
       {/* Chat panel — visible when open */}
       {open && (
         <div style={{ marginBottom: '10px' }}>
@@ -66,6 +66,7 @@ export function ChatbotCube() {
             history={history}
             isTyping={isTyping}
             input={input}
+            isAdmin={isAdmin}
             onInputChange={setInput}
             onSend={handleSend}
             onClose={() => setOpen(false)}
@@ -75,13 +76,17 @@ export function ChatbotCube() {
 
       {/* Cube toggle button */}
       <button
-        aria-label={open ? 'Close Piramida AI assistant' : 'Open Piramida AI assistant'}
+        aria-label={open ? 'Close AI assistant' : isAdmin ? 'Open Ops Director AI' : 'Open Piramida AI assistant'}
         onClick={() => setOpen(o => !o)}
         style={{
           width: '56px',
           height: '56px',
-          backgroundColor: open ? 'var(--color-lime)' : 'var(--color-concrete-char)',
-          border: `2px solid ${open ? 'var(--color-lime-ink)' : 'rgba(245,245,240,0.18)'}`,
+          backgroundColor: open
+            ? (isAdmin ? '#c8da2b' : 'var(--color-lime)')
+            : (isAdmin ? '#1a1a1a' : 'var(--color-concrete-char)'),
+          border: open
+            ? `2px solid ${isAdmin ? '#5a6612' : 'var(--color-lime-ink)'}`
+            : `2px solid ${isAdmin ? '#c8da2b' : 'rgba(245,245,240,0.18)'}`,
           cursor: 'pointer',
           display: 'flex',
           flexDirection: 'column',
@@ -93,18 +98,17 @@ export function ChatbotCube() {
         }}
       >
         {open ? (
-          <span style={{ fontFamily: M, fontSize: '18px', lineHeight: 1, color: 'var(--color-lime-ink)' }}>×</span>
+          <span style={{ fontFamily: M, fontSize: '18px', lineHeight: 1, color: isAdmin ? '#5a6612' : 'var(--color-lime-ink)' }}>×</span>
         ) : (
           <>
-            {/* 2×2 grid of squares — Piramida "cube" mark */}
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-              <rect x="1" y="1" width="8" height="8" stroke="rgba(245,245,240,0.7)" strokeWidth="1.5"/>
-              <rect x="13" y="1" width="8" height="8" stroke="rgba(245,245,240,0.7)" strokeWidth="1.5"/>
-              <rect x="1" y="13" width="8" height="8" stroke="rgba(245,245,240,0.7)" strokeWidth="1.5"/>
-              <rect x="13" y="13" width="8" height="8" stroke="rgba(245,245,240,0.4)" strokeWidth="1.5"/>
+              <rect x="1"  y="1"  width="8" height="8" stroke={isAdmin ? '#c8da2b' : 'rgba(245,245,240,0.7)'} strokeWidth="1.5"/>
+              <rect x="13" y="1"  width="8" height="8" stroke={isAdmin ? '#c8da2b' : 'rgba(245,245,240,0.7)'} strokeWidth="1.5"/>
+              <rect x="1"  y="13" width="8" height="8" stroke={isAdmin ? '#c8da2b' : 'rgba(245,245,240,0.7)'} strokeWidth="1.5"/>
+              <rect x="13" y="13" width="8" height="8" stroke={isAdmin ? 'rgba(200,218,43,0.5)' : 'rgba(245,245,240,0.4)'} strokeWidth="1.5"/>
             </svg>
-            <span style={{ fontFamily: M, fontSize: '6px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,245,240,0.4)', lineHeight: 1 }}>
-              ai
+            <span style={{ fontFamily: M, fontSize: '6px', letterSpacing: '0.16em', textTransform: 'uppercase', color: isAdmin ? 'rgba(200,218,43,0.7)' : 'rgba(245,245,240,0.4)', lineHeight: 1 }}>
+              {isAdmin ? 'ops' : 'ai'}
             </span>
           </>
         )}

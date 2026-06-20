@@ -2,14 +2,15 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import OpenAI from 'openai'
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions'
-import { groqTools } from '@/lib/ai/tools'
+import { groqTools, adminTools } from '@/lib/ai/tools'
 import { handleToolCall } from '@/lib/ai/tool-handlers'
-import { SYSTEM_PROMPT } from '@/lib/ai/system-prompt'
+import { SYSTEM_PROMPT, ADMIN_SYSTEM_PROMPT } from '@/lib/ai/system-prompt'
 import type { ChatRequest, ChatResponse } from '@/types/api'
 
 const chatRequestSchema = z.object({
   session_id: z.string().min(1),
   message: z.string().min(1),
+  isAdmin: z.boolean().optional().default(false),
   history: z
     .array(
       z.object({
@@ -30,6 +31,10 @@ function getGroqClient(): OpenAI {
 const MODEL = 'llama-3.3-70b-versatile'
 const MAX_TOOL_ROUNDS = 3
 
+// Admin gets all 7 tools; client gets the original 5 (no admin data tools)
+const CLIENT_TOOLS = groqTools
+const ADMIN_TOOLS  = [...groqTools, ...adminTools]
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -42,12 +47,17 @@ export async function POST(req: Request) {
       )
     }
 
-    const { message, history = [] }: ChatRequest = parsed.data
+    const { message, history = [], isAdmin } = parsed.data
+
+    // Select persona and tool set based on caller identity
+    const systemPrompt = isAdmin ? ADMIN_SYSTEM_PROMPT : SYSTEM_PROMPT
+    const tools        = isAdmin ? ADMIN_TOOLS : CLIENT_TOOLS
 
     if (!process.env.GROQ_API_KEY) {
       const response: ChatResponse = {
-        reply:
-          "I'm not available right now — the AI service is not configured. Please use the booking form to submit your request.",
+        reply: isAdmin
+          ? "AI Ops Director unavailable — GROQ_API_KEY not configured."
+          : "I'm not available right now — the AI service is not configured. Please use the booking form to submit your request.",
       }
       return NextResponse.json(response)
     }
@@ -56,8 +66,8 @@ export async function POST(req: Request) {
 
     // Build message array for Groq
     const messages: ChatCompletionMessageParam[] = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      ...history.map(h => ({
+      { role: 'system', content: systemPrompt },
+      ...(history as ChatRequest['history'] ?? []).map(h => ({
         role: h.role as 'user' | 'assistant',
         content: h.content,
       })),
@@ -71,9 +81,9 @@ export async function POST(req: Request) {
       const completion = await client.chat.completions.create({
         model: MODEL,
         messages,
-        tools: groqTools,
+        tools,
         tool_choice: 'auto',
-        temperature: 0.5,
+        temperature: isAdmin ? 0.3 : 0.5,
         max_tokens: 1024,
       })
 

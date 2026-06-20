@@ -127,3 +127,37 @@ export const groqTools: ChatCompletionTool[] = [
 
 // Keep the old export name as an alias for any remaining Gemini references during transition
 export const geminiTools = groqTools
+
+// ── Admin-only tools ──────────────────────────────────────────────────────────
+
+export const adminTools: ChatCompletionTool[] = [
+  {
+    type: 'function',
+    function: {
+      name: 'get_dashboard_metrics',
+      description:
+        'Returns live venue metrics: event counts broken down by status, number of active scheduling conflicts, pending quote count, and total pipeline value in EUR. Call this first when an admin asks for a summary or overview.',
+      parameters: {
+        type: 'object',
+        properties: {},
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_pending_quotes',
+      description:
+        'Returns a list of quotes awaiting acceptance, each with event title, organizer name, EUR total, and validity date. Use when the admin wants to review or action outstanding quotes.',
+      parameters: {
+        type: 'object',
+        properties: {
+          limit: {
+            type: 'number',
+            description: 'Maximum number of quotes to return. Defaults to 10.',
+          },
+        },
+      },
+    },
+  },
+]
