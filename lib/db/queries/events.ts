@@ -480,6 +480,7 @@ export async function checkSpaceConflict(
   if (!isSupabaseConfigured()) {
     const hit = MOCK_EVENTS.find(e => {
       if (!['confirmed', 'quoted', 'requested', 'in_progress'].includes(e.status)) return false
+      // Precise temporal overlap: existing must start before requested ends AND end after requested starts
       if (new Date(e.end_at) <= new Date(startAt)) return false
       if (new Date(e.start_at) >= new Date(endAt)) return false
       return e.spaces.some(s => s.code.toUpperCase() === spaceCode.toUpperCase())
@@ -489,6 +490,7 @@ export async function checkSpaceConflict(
 
   const db = createAdminClient()
 
+  // Step 1: Resolve space code → space ID
   const { data: spaceRows } = await db
     .from('spaces')
     .select('id')
@@ -498,24 +500,28 @@ export async function checkSpaceConflict(
   const spaceId = (spaceRows as { id: string }[] | null)?.[0]?.id
   if (!spaceId) return false
 
-  const { data: evtRows } = await db
-    .from('events')
-    .select('id')
-    .in('status', ['confirmed', 'quoted', 'requested', 'in_progress'])
-    .lt('start_at', endAt)
-    .gt('end_at', startAt)
-
-  const evtIds = ((evtRows ?? []) as { id: string }[]).map(r => r.id)
-  if (!evtIds.length) return false
-
+  // Step 2: Collect all event IDs that are linked to this specific space
   const { data: esRows } = await db
     .from('event_spaces')
     .select('event_id')
     .eq('space_id', spaceId)
-    .in('event_id', evtIds)
+
+  const spaceEventIds = ((esRows ?? []) as { event_id: string }[]).map(r => r.event_id)
+  if (!spaceEventIds.length) return false
+
+  // Step 3: Among those space-specific events, find any that actually overlap
+  // the requested window AND carry an active status.
+  // Overlap condition: existing.start_at < requested.end_at AND existing.end_at > requested.start_at
+  const { data: overlapRows } = await db
+    .from('events')
+    .select('id')
+    .in('id', spaceEventIds)
+    .in('status', ['confirmed', 'quoted', 'requested', 'in_progress'])
+    .lt('start_at', endAt)
+    .gt('end_at', startAt)
     .limit(1)
 
-  return (esRows?.length ?? 0) > 0
+  return (overlapRows?.length ?? 0) > 0
 }
 
 // ─── acceptQuote ─────────────────────────────────────────────────────────────
