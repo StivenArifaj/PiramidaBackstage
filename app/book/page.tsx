@@ -92,10 +92,10 @@ export default function BookPage() {
       <div style={{ paddingTop: '48px', backgroundColor: 'var(--color-concrete-char)', borderBottom: '2px solid var(--color-concrete-char)' }}>
         <div style={{ padding: '0 64px' }}>
           <Link
-            href="/dashboard"
+            href="/spaces"
             style={{ ...M, fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', textDecoration: 'none', color: 'rgba(245,245,240,0.35)' }}
           >
-            ← dashboard
+            ← all spaces
           </Link>
         </div>
         <div style={{ padding: '20px 64px 32px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>

@@ -103,26 +103,6 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Organizer shortcut — "explore spaces" removed (redundant: scroll down to reach it) */}
-          <div style={{ position: 'absolute', bottom: '64px', right: '40px', zIndex: 2 }}>
-            <Link
-              href="/dashboard"
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '11px',
-                letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-                color: 'var(--color-concrete-bone)',
-                padding: '13px 30px',
-                border: '2px solid rgba(245,245,240,0.28)',
-                textDecoration: 'none',
-                display: 'inline-block',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              organizer view
-            </Link>
-          </div>
         </ScrollVideo>
 
         {/* ── INTERLUDE · stat bridge ───────────────────────── */}

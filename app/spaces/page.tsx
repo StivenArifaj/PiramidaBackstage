@@ -30,8 +30,6 @@ const DEMO_SPACES: SpaceWithAvailability[] = [
 
 export default function SpacesPage() {
   const [activeFloor, setActiveFloor] = useState<SpaceFloor>('l0')
-  const [role, setRole] = useState<'customer' | 'organizer'>('customer')
-
   function handleFloorSelect(floor: SpaceFloor) {
     console.log('[FloorSelector] selected floor:', floor)
     setActiveFloor(floor)
@@ -41,7 +39,7 @@ export default function SpacesPage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-concrete-bone)' }}>
-      <BrandStrip role={role} onRoleSwitch={() => setRole(r => r === 'customer' ? 'organizer' : 'customer')} />
+      <BrandStrip />
 
       {/* Main layout: selector left, plan right */}
       <div style={{ paddingTop: '48px', display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: '100vh' }}>

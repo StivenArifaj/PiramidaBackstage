@@ -40,43 +40,28 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 
 ## Current State
 
-- **Phase:** Phase 4 partially complete as of 2026-06-20. Both frontend and backend have done their first slice. Supabase project not yet created — API routes fall back to mock data.
+- **Phase:** Phase 4 mostly complete as of 2026-06-20. UI Airgap enforced — client site and dashboard are experientially separate. Supabase not yet live — all routes fall back to mock data.
 - **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` passes with zero errors.
+- **UI Airgap (active):** Public BrandStrip now only links to `/spaces`. No dashboard links anywhere on the client-facing site. `/book` breadcrumb goes to `/spaces`. Dashboard lives behind `/dashboard` with its own sidebar — no shared navigation with the public site.
 - **What exists now (frontend):**
-  - **`app/(marketing)/page.tsx`** (served at `/`) — continuous scroll experience: dark cinematic div (`overflowX: 'clip'`) contains BrandStrip + Flythrough 1 (stats panel + "organizer view" button at bottom:64px) + Interlude + Flythrough 2 (no CTA); followed immediately by bone-colored floor selector section (FloorSelector + FloorPlan, same layout as `/spaces` page, `DEMO_SPACES` data, "view as page ↗" escape link). React fragment `<>` root.
-  - **`app/book/page.tsx`** — fully implemented standalone booking form. Dark header (breadcrumb ← dashboard, H1 "reserve a space."); 2-column grid: left has 3 sections (01 space + event type, 02 date/time/attendees, 03 organizer name/email/org/notes) + lime submit button; right has `<QuoteSummary>` sticky panel (space info header, date/time summary row, line items table: rental/cleaning/service charge/subtotal/VAT/total-all in JetBrains Mono, total in lime). Fetches `/api/spaces` on mount. POSTs to `/api/events` on submit. Redirects to `/book/confirmation?ref=...`.
-  - **`components/booking/quote-summary.tsx`** — reusable live quote panel component. Props: space, date, startTime, endTime, attendees. Calculates: durationHrs × rate (rental) + €50 cleaning + 8% service = subtotal + 18% VAT = total.
-  - **`components/ui/pill.tsx`** — `rounded-full` removed. Floor selector pills are now hard rectangular (2px border, no border-radius).
-  - **`app/spaces/page.tsx`** — standalone floor selector page (still exists and works independently at `/spaces`).
-  - **`app/spaces/[code]/page.tsx`** — space detail: dark page header (breadcrumb + h1 + status badge) + `<ImageGallery>` (shows photo_urls or SVG-hatch placeholder) + content grid (4 metrics, MonoTable, BookingPanel). ScrollVideo removed.
-  - **`components/ui/image-gallery.tsx`** — brutalist gallery: SVG 30°-hatch placeholder, crosshair overlay, view-label + counter, ← → nav, 6-up thumb strip with lime accent bar.
-  - **`components/pyramid/scroll-video.tsx`** — **Glass Hero Plate** (master-plan override: rounded-3xl + rounded-full for dots). Fill: `rgba(255,255,255,0.03)`, `blur(40px)`, `border rgba(255,255,255,0.10)`. Top-left: three macOS dots — red `#e63946`, yellow `#f9c74f`, green `#97C459` (MVRDV box palette), 12×12px. Typography: HUD label + dot → `#c8da2b` lime with glow; H1 → pure `#ffffff` + `drop-shadow(0 2px 12px rgba(0,0,0,0.55))`; subtitle → `#c8da2b` lime with glow; overlayLabel → `rgba(255,255,255,0.65)` + shadow. Corner mask (Ezgif): untouched.
-  - **`components/pyramid/floor-plans/ground-floor.tsx`** — **strict octagonal geometry**, zero SVG arcs. `octPt()` (ray-to-octagon intersection) + `octSector()` (straight-sided trapezoids). All rings are `<polygon>` elements; A1–A19 clickable.
-  - **`components/pyramid/mini-map.tsx`** — **stepped pyramid elevation**, 5 tiers (RF→L3→L0→B1→EX) widening toward base. Active tier lime-filled with left accent bar + right dot.
-  - **`app/spaces/page.tsx`** — floor selector elevation view: BrandStrip + FloorSelector (left) + FloorPlan SVG (right) + MiniMap
-  - **`app/dashboard/page.tsx`** — enterprise dashboard: KPI strip with donut rings, day-timeline SVG, occupancy segmented bars, conflict panel
-  - **`app/dashboard/events/page.tsx`** — event register: dark header, filter tabs, expand rows with Fragment key pattern, skeleton loading
-  - **`app/dashboard/inventory/page.tsx`** — inventory: grouped table with AvailBar, type SVG icons, KPI tiles
-  - **`app/dashboard/conflicts/page.tsx`** — conflict resolution: severity groups, interactive resolution checklist
-  - **`app/dashboard/layout.tsx`** + **`components/dashboard/sidebar.tsx`** — fixed 220px dark sidebar with lime active state
-  - `components/ui/` — all 7 primitives: Cube, Pill, Callout, MonoTable, StatusDot, SectionDivider, BrandStrip
-  - `components/pyramid/scroll-video.tsx` — full GSAP canvas component: cover-fit render, frame counter (DOM ref), progress bar (DOM ref), overlayTitle/overlaySubtitle/overlayLabel text block, children slot for overlays, loading skeleton, window resize handler
-  - `components/pyramid/` — all 5 floor plan SVGs, FloorSelector, FloorPlan wrapper, MiniMap
-  - `components/booking/`, `components/chatbot/` — stubs
-  - `public/frames/hero/` — 300 frames (`0001.jpg`–`0300.jpg`, 38.55 MB total, 132 KB avg), moved from `background2/` via `scripts/process-frames.mjs`
-  - `public/references/` — all 11 reference images served at `/references/...`
-  - `public/pyramid/` — MVRDV photography
-- **What exists now (backend):**
-  - `supabase/migrations/0002_seed.sql` — 53 spaces (4 hero + 15 A-ring + 16 BE exterior + 6 L3 boxes + 4 roof boxes + 8 basement), 11 asset types, 3 demo events with spaces/assets/tasks/quote wired
-  - `lib/db/client.ts` — `createClient()` (browser SSR) + `createAdminClient()` (service-role, for API routes)
-  - `lib/db/queries/spaces.ts` — `listSpaces`, `getSpaceByCode`, `searchAvailableSpaces` with real Supabase queries + mock-data fallback when env vars absent
-  - `app/api/spaces/route.ts` — GET with zod-validated floor/capacity/features/date filters
-  - `app/api/spaces/[code]/route.ts` — GET single space + upcoming bookings
-  - `app/api/spaces/availability/route.ts` — GET availability search (from/to required, capacity/features optional)
-  - `lib/db/mock-data.ts` — in-memory mock store (events, spaces, assets, conflicts) used by all other API routes
-  - All other API routes (events, conflicts, inventory, dashboard overview, quotes, tasks) wired to mock data
-- **Tailwind v4 note:** No `tailwind.config.ts` — tokens live in `app/globals.css` `@theme` block. This is correct for v4.
-- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) [Aron/frontend] — C1 resolved: `/book` now a full 2-col booking form with live quote. H1 resolved: Pill `rounded-full` removed.
+  - **`app/(marketing)/page.tsx`** — continuous scroll: dark cinematic div (`overflowX: 'clip'`) with BrandStrip + Flythrough 1 (stats panel, no dashboard CTA) + Interlude (3 stat cards, "80+" in JetBrains Mono) + Flythrough 2 (no CTA); bone-colored floor selector section follows. React fragment `<>` root.
+  - **`app/book/page.tsx`** — standalone booking form. Header breadcrumb "← all spaces" (→ /spaces). 2-col: form (space + event type, date/time/attendees, organizer details) + sticky QuoteSummary. POSTs to `/api/events`, redirects to confirmation.
+  - **`components/booking/quote-summary.tsx`** — live quote: rental + €50 cleaning + 8% service + 18% VAT. All in JetBrains Mono.
+  - **`components/ui/brand-strip.tsx`** — simplified: logo + "spaces" nav link only. No role/onRoleSwitch props. No dashboard link.
+  - **`components/ui/pill.tsx`** — hard rectangular, no border-radius.
+  - **`components/ui/image-gallery.tsx`** — SVG-hatch placeholder, ← → nav with aria-labels, 6-up thumb strip.
+  - **`components/chatbot/chatbot-cube.tsx`** + **`chatbot-panel.tsx`** — floating dark cube (bottom-right, z-50), expands to chat panel. Message history, typing indicator, POST /api/chatbot. Mounted in app/layout.tsx.
+  - **`app/spaces/page.tsx`** — floor selector (no role state). BrandStrip without props.
+  - **`app/spaces/[code]/page.tsx`** — space detail: ImageGallery + dark header + metrics + MonoTable + BookingPanel.
+  - **`app/dashboard/layout.tsx`** — sidebar-only (DashboardSidebar), no BrandStrip. Fully isolated.
+  - **`app/dashboard/page.tsx`** — KPI strip (JetBrains Mono numerals), donut rings, day-timeline, occupancy bars, conflict panel.
+  - **`app/dashboard/inventory/page.tsx`** — KPI strip (JetBrains Mono), grouped asset table, AvailBar.
+  - **`app/dashboard/events/page.tsx`** — event register, filter tabs, expand rows.
+  - **`app/dashboard/conflicts/page.tsx`** — conflict cards, resolution checklist.
+  - **`components/pyramid/`** — all 5 floor plan SVGs, FloorSelector, FloorPlan, MiniMap, ScrollVideo (GSAP canvas, Glass Hero Plate, corner mask).
+- **What exists now (backend):** Mock-data layer for all routes. Supabase schema + seed ready but not deployed. Spaces queries have real Supabase + mock fallback.
+- **Tailwind v4 note:** No `tailwind.config.ts` — tokens in `app/globals.css` `@theme`. Correct.
+- **Last updated:** 2026-06-20, Claude Code (claude-sonnet-4-6) [Aron/frontend] — UI Airgap complete.
 
 ## Completed Tasks Log
 
@@ -103,34 +88,20 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Final sweep: (1) silenced Ezgif corner mask in `scroll-video.tsx` — removed border, borderRight, and `[ MASK // WM ]` text label; now a pure `var(--color-concrete-black)` 224×40px block (invisible to users); (2) replaced INTERLUDE_LINES in `app/(marketing)/page.tsx` with factual challenge-brief data — 80+ spaces / Auto-generated quotes / Conflict detection. `npx tsc --noEmit` clean.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Executed system-wide Playwright audit across all 11 routes and generated exhaustive structural fix list at `docs/audit-report.md`. 2 Critical, 5 High, 6 Medium, 5 Low Polish issues identified. All APIs return 200. No JS runtime errors.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Resolved C1 and H1: Built standalone booking flow UI (`app/book/page.tsx` + `components/booking/quote-summary.tsx`) with space selector, 3-section form, live quote panel (JetBrains Mono throughout, grouped line items, VAT calculation), `POST /api/events` wired, redirect to confirmation. Fixed Pill `rounded-full` → no border-radius. `npx tsc --noEmit` clean.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — Resolved C2 and H2-H5: Implemented ChatbotCube (fixed 56px dark cube, bottom-right, z-50, 2×2 SVG grid icon) + ChatbotPanel (message history, lime user bubbles, typing dots, session_id, POST /api/chatbot); mounted in app/layout.tsx. Fixed H2 (dashboard KPI D→M), H3 (inventory KPI D→M), H4 (image-gallery aria-labels), H5 (interlude "80+" in var(--font-mono) span). `npx tsc --noEmit` clean.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Aron/frontend] — UI Airgap: Decoupled client site and dashboard, removing all cross-navigation. Removed dashboard link + role-switch button from BrandStrip (simplified to spaces-only nav, dropped role/onRoleSwitch props). Removed "organizer view" CTA from landing page Flythrough 1. Changed /book breadcrumb from "← dashboard" to "← all spaces" (→ /spaces). Verified dashboard/layout.tsx already clean (sidebar-only, no BrandStrip). Cleaned dead role state from spaces/page.tsx. `npx tsc --noEmit` clean.
 
 ## Next Steps
 
-> Full audit report at `docs/audit-report.md` — fix in priority order:
+> Audit items C1, C2, H1–H5 resolved. UI Airgap enforced. Remaining work:
 
-### CRITICAL (blocks demo):
-1. ✅ **[C1] DONE** — `app/book/page.tsx` fully implemented (space selector, date/time, attendees, organizer details, live quote panel, POST /api/events, confirmation redirect).
-2. **[C2] Implement chatbot** (`components/chatbot/chatbot-cube.tsx` + `chatbot-panel.tsx`) — floating dark cube bottom-right → expandable chat panel → wire to `POST /api/chatbot` (GEMINI_API_KEY required). Mount in root `app/layout.tsx`.
+### Frontend (Aron):
+1. **[M4] Add photo URLs to A-ring mock spaces** — `lib/db/mock-data.ts` A1–A16 have `photo_urls: []`. Add Unsplash architecture URLs (or point to `/references/`) so demo gallery doesn't show hatch placeholder for extension spaces.
+2. **[M5] Replace hardcoded UPCOMING array in dashboard** — `app/dashboard/page.tsx` has static `UPCOMING` array with stale attendee counts. Drive from `/api/dashboard/overview` response instead.
+3. **[M2] Add H1 headings to dashboard pages** — `/dashboard`, `/dashboard/inventory`, `/dashboard/conflicts` have no `<h1>`. Screen reader accessibility.
+4. **Wire chatbot to Gemini** — `app/api/chatbot/route.ts` is a stub returning `"Coming soon."`. Once `GEMINI_API_KEY` is set, implement Gemini API call with the chat history, tool-call schema (create_event, generate_quote, check_availability), and structured response. See `types/api.ts` for `ChatRequest`/`ChatResponse`.
 
-### HIGH (design-system violations):
-3. ✅ **[H1] DONE** — `rounded-full` removed from `components/ui/pill.tsx`. Pills are now hard rectangular 2px-border blocks.
-4. **[H2] Fix dashboard KPI font** — `app/dashboard/page.tsx:241` uses `fontFamily: D` (Space Grotesk) for large KPI numbers. Change to `fontFamily: M` (JetBrains Mono).
-5. **[H3] Fix inventory KPI font** — `app/dashboard/inventory/page.tsx` KPI strip (11, 1082, 139, 0) uses Space Grotesk. Change to JetBrains Mono.
-6. **[H4] Add `aria-label` to ImageGallery nav buttons** — `components/ui/image-gallery.tsx` ← → buttons have no accessible label.
-7. **[H5] Interlude "80+ spaces" stat label in Space Grotesk** — `app/(marketing)/page.tsx:148`. Numeric portions of interlude stats should use mono.
-
-### MEDIUM:
-8. **[M4] Add photo URLs to A-ring mock spaces** — `lib/db/mock-data.ts` A1–A16 have `photo_urls: []`. Add 3–4 real image URLs so gallery doesn't show hatch placeholder during demo.
-9. **[M5] Replace hardcoded `UPCOMING` array in dashboard** — `app/dashboard/page.tsx` has static attendee counts that don't match the API. Drive from `/api/dashboard/overview` response.
-10. **[M2] Add H1 headings to `/dashboard`, `/dashboard/inventory`, `/dashboard/conflicts`**.
-
-### Backend priorities (Stiven):
-- Create Supabase project, add env vars to `.env.local`
-- Run migrations: `supabase db push`
-- Implement `POST /api/events`, `POST /api/quotes`, `POST /api/chatbot`
-
-### Backend Dev (Stiven) — immediate priorities:
-
+### Backend (Stiven) — immediate priorities:
 1. **Create Supabase project** and add env vars to `.env.local`:
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
@@ -138,11 +109,11 @@ Both read `/types/` freely. Backend Dev owns writing to it.
    SUPABASE_SERVICE_ROLE_KEY=eyJ...
    GEMINI_API_KEY=...
    ```
-2. **Run migrations**: `supabase db push` (runs `0001_init.sql` then `0002_seed.sql`). Verify: `SELECT count(*) FROM spaces;` → should return 53.
-3. **Implement events API**: `POST /api/events` + `GET /api/events` + `GET /api/events/[id]` in `lib/db/queries/events.ts`. Use same pattern as spaces (Supabase + mock fallback, zod validation). See master-plan §7 for `CreateEventRequest`, `ListEventsResponse`, `GetEventResponse`.
-4. **Implement quotes**: `POST /api/quotes` + `POST /api/quotes/[id]/accept` (quote generation in `lib/pricing/quote.ts`, task generation in `lib/tasks/generate.ts`).
+2. **Run migrations**: `supabase db push` → verify `SELECT count(*) FROM spaces;` returns 53.
+3. **Implement `POST /api/events`** (full create with reference code generation) and **`POST /api/chatbot`** (Gemini with tool-calls). See master-plan §7.
+4. **Implement `POST /api/quotes`** + task generation in `lib/tasks/generate.ts`.
 
-**Sync point:** once Supabase is live, frontend swaps `DEMO_SPACES` for a fetch call — `/api/spaces?floor=l0` returns real data with live availability colors.
+**Sync point:** once Supabase is live, frontend swaps `DEMO_SPACES` for `/api/spaces?floor=l0` and gets real availability colors.
 
 ## Open Questions / Blockers
 
