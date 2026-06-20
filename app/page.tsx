@@ -6,6 +6,7 @@ import { motion, useScroll, useTransform, useInView, animate, type Variants } fr
 import { BrandStrip } from '@/components/ui/brand-strip'
 import { SectionDivider } from '@/components/ui/section-divider'
 import { Pill } from '@/components/ui/pill'
+import { ScrollVideo } from '@/components/pyramid/scroll-video'
 import type { SpaceFloor } from '@/types/api'
 
 // ─── Shared easing curve ──────────────────────────────────────────────────────
@@ -140,10 +141,6 @@ const FLOORS: Array<{ key: SpaceFloor; label: string; top: string }> = [
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function LandingPage() {
-  const heroRef = useRef<HTMLDivElement>(null)
-  const { scrollY } = useScroll()
-  const heroY = useTransform(scrollY, [0, 800], [0, 240])
-  const heroOpacity = useTransform(scrollY, [0, 600], [1, 0])
   const [activeFloor, setActiveFloor] = useState<SpaceFloor>('l0')
 
   return (
@@ -151,70 +148,33 @@ export default function LandingPage() {
       <BrandStrip />
 
       {/* ══════════════════════════════════════════════════════
-          01 · HERO — aerial night shot
+          01 · HERO — GSAP scroll-scrubbed canvas (300 frames)
       ══════════════════════════════════════════════════════ */}
-      <section style={{ position: 'relative', height: '100vh', minHeight: '720px', overflow: 'hidden', backgroundColor: '#050505' }}>
-        {/* Parallax background */}
-        <motion.div
-          style={{ position: 'absolute', inset: '-15% 0', y: heroY, backgroundImage: "url('/pyramid/mvrdv-27.jpg')", backgroundSize: 'cover', backgroundPosition: 'center top', opacity: 0.85 }}
-        />
-        {/* Bottom fade */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(5,5,5,0.95) 100%)' }} />
-        {/* Left vignette */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(5,5,5,0.5) 0%, transparent 60%)' }} />
-
-        {/* Hero content */}
-        <motion.div
-          style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '0 72px 88px', opacity: heroOpacity }}
-          variants={stagger}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.p variants={fadeUp} style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--color-lime)', margin: '0 0 20px' }}>
-            Pyramid of Tirana · MVRDV · Albania · 2023
-          </motion.p>
-
-          <motion.div variants={fadeUp}>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(64px, 9vw, 120px)', fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--color-concrete-bone)', lineHeight: 0.92 }}>
-              piramida
-            </div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(64px, 9vw, 120px)', fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--color-lime)', lineHeight: 0.92, marginBottom: '48px' }}>
-              backstage.
-            </div>
-          </motion.div>
-
-          <motion.p variants={fadeUp} style={{ fontFamily: 'var(--font-body)', fontSize: '17px', color: 'rgba(245,245,240,0.65)', maxWidth: '480px', margin: '0 0 52px', lineHeight: 1.7 }}>
-            Replace 30 emails with one sentence. Book event spaces, generate quotes, coordinate teams — all inside the most iconic building in Albania.
-          </motion.p>
-
-          <motion.div variants={fadeUp} style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <Link href="/spaces" style={{ fontFamily: 'var(--font-display)', fontSize: '12px', fontWeight: 500, letterSpacing: '0.16em', textTransform: 'uppercase', textDecoration: 'none', color: 'var(--color-lime-ink)', backgroundColor: 'var(--color-lime)', padding: '16px 40px', display: 'inline-block', flexShrink: 0 }}>
-              explore spaces
-            </Link>
-            <Link href="/dashboard" style={{ fontFamily: 'var(--font-display)', fontSize: '12px', fontWeight: 500, letterSpacing: '0.16em', textTransform: 'uppercase', textDecoration: 'none', color: 'rgba(245,245,240,0.8)', border: '2px solid rgba(245,245,240,0.25)', padding: '14px 40px', display: 'inline-block' }}>
-              dashboard
-            </Link>
-          </motion.div>
-        </motion.div>
-
-        {/* Scroll cue */}
-        <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8, duration: 1 }}
-          style={{ position: 'absolute', bottom: '40px', right: '72px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}
-        >
-          <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            style={{ width: '1px', height: '56px', background: 'linear-gradient(to bottom, transparent, rgba(200,218,43,0.7))' }}
-          />
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(200,218,43,0.5)', writingMode: 'vertical-rl', margin: 0 }}>scroll</p>
-        </motion.div>
-
-        {/* Corner label */}
-        <div style={{ position: 'absolute', top: '72px', right: '72px' }}>
+      <ScrollVideo
+        framesFolder="/frames/hero"
+        frameCount={300}
+        overlayLabel="Pyramid of Tirana · MVRDV · Albania · 2023"
+        overlayTitle="piramida backstage."
+        overlaySubtitle="EST. 1988 · REIMAGINED 2023 · BACKSTAGE 2026"
+        scrollHeight="300vh"
+      >
+        {/* Corner label — top right */}
+        <div style={{ position: 'absolute', top: '72px', right: '72px', zIndex: 2 }}>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(245,245,240,0.3)', margin: 0, textAlign: 'right' }}>
             JunctionX Tirana 2026<br />AADF Pyramid Backstage Challenge
           </p>
         </div>
-      </section>
+
+        {/* CTA buttons — bottom right */}
+        <div style={{ position: 'absolute', bottom: '18px', right: '40px', display: 'flex', gap: '16px', alignItems: 'center', zIndex: 2 }}>
+          <Link href="/spaces" style={{ fontFamily: 'var(--font-display)', fontSize: '12px', fontWeight: 500, letterSpacing: '0.16em', textTransform: 'uppercase', textDecoration: 'none', color: 'var(--color-lime-ink)', backgroundColor: 'var(--color-lime)', padding: '16px 40px', display: 'inline-block', flexShrink: 0 }}>
+            explore spaces
+          </Link>
+          <Link href="/dashboard" style={{ fontFamily: 'var(--font-display)', fontSize: '12px', fontWeight: 500, letterSpacing: '0.16em', textTransform: 'uppercase', textDecoration: 'none', color: 'rgba(245,245,240,0.8)', border: '2px solid rgba(245,245,240,0.25)', padding: '14px 40px', display: 'inline-block' }}>
+            dashboard
+          </Link>
+        </div>
+      </ScrollVideo>
 
       {/* ══════════════════════════════════════════════════════
           TICKER
