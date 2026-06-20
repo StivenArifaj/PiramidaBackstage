@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import OpenAI from 'openai'
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions'
-import { groqTools, adminTools } from '@/lib/ai/tools'
+import { clientTools, adminTools } from '@/lib/ai/tools'
 import { handleToolCall } from '@/lib/ai/tool-handlers'
 import { SYSTEM_PROMPT, ADMIN_SYSTEM_PROMPT } from '@/lib/ai/system-prompt'
 import type { ChatRequest, ChatResponse } from '@/types/api'
@@ -31,9 +31,9 @@ function getGroqClient(): OpenAI {
 const MODEL = 'llama-3.3-70b-versatile'
 const MAX_TOOL_ROUNDS = 3
 
-// Admin gets all 7 tools; client gets the original 5 (no admin data tools)
-const CLIENT_TOOLS = groqTools
-const ADMIN_TOOLS  = [...groqTools, ...adminTools]
+// Client gets read-only/advisory tools only; admin gets the full dual-brain toolset
+const CLIENT_TOOLS = clientTools
+const ADMIN_TOOLS  = [...clientTools, ...adminTools]
 
 export async function POST(req: Request) {
   try {
