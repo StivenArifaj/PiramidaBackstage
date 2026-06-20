@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getGeminiClient } from '@/lib/ai/gemini'
-import { geminiTools } from '@/lib/ai/tools'
+import OpenAI from 'openai'
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions'
+import { groqTools } from '@/lib/ai/tools'
 import { handleToolCall } from '@/lib/ai/tool-handlers'
 import { SYSTEM_PROMPT } from '@/lib/ai/system-prompt'
 import type { ChatRequest, ChatResponse } from '@/types/api'
@@ -19,6 +20,16 @@ const chatRequestSchema = z.object({
     .optional(),
 })
 
+function getGroqClient(): OpenAI {
+  return new OpenAI({
+    apiKey: process.env.GROQ_API_KEY!,
+    baseURL: 'https://api.groq.com/openai/v1',
+  })
+}
+
+const MODEL = 'llama-3.3-70b-versatile'
+const MAX_TOOL_ROUNDS = 3
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -33,8 +44,7 @@ export async function POST(req: Request) {
 
     const { message, history = [] }: ChatRequest = parsed.data
 
-    // Check Gemini key is configured
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.GROQ_API_KEY) {
       const response: ChatResponse = {
         reply:
           "I'm not available right now — the AI service is not configured. Please use the booking form to submit your request.",
@@ -42,76 +52,90 @@ export async function POST(req: Request) {
       return NextResponse.json(response)
     }
 
-    const genAI = getGeminiClient()
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      systemInstruction: SYSTEM_PROMPT,
-      tools: geminiTools,
-    })
+    const client = getGroqClient()
 
-    // Convert history from API format to Gemini format
-    const geminiHistory = history.map(h => ({
-      role: h.role === 'assistant' ? ('model' as const) : ('user' as const),
-      parts: [{ text: h.content }],
-    }))
+    // Build message array for Groq
+    const messages: ChatCompletionMessageParam[] = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...history.map(h => ({
+        role: h.role as 'user' | 'assistant',
+        content: h.content,
+      })),
+      { role: 'user', content: message },
+    ]
 
-    const chat = model.startChat({ history: geminiHistory })
-
-    // First turn: send the user message
-    const firstResult = await chat.sendMessage(message)
-    const firstResponse = firstResult.response
-
-    // Check for function calls
     const toolCalls: ChatResponse['tool_calls'] = []
-    const functionCalls = firstResponse.functionCalls()
 
-    if (functionCalls && functionCalls.length > 0) {
-      // Execute all tool calls
-      const toolResponseParts: Array<{
-        functionResponse: { name: string; response: { result: string } }
-      }> = []
+    // Agentic loop — up to MAX_TOOL_ROUNDS of tool calling
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      const completion = await client.chat.completions.create({
+        model: MODEL,
+        messages,
+        tools: groqTools,
+        tool_choice: 'auto',
+        temperature: 0.5,
+        max_tokens: 1024,
+      })
 
-      for (const fc of functionCalls) {
-        const result = await handleToolCall(fc.name, fc.args as Record<string, unknown>)
-        toolCalls.push({ name: fc.name, args: fc.args, result })
-        toolResponseParts.push({
-          functionResponse: {
-            name: fc.name,
-            response: { result },
-          },
+      const choice = completion.choices[0]
+      const assistantMsg = choice.message
+
+      // Always push the assistant message into history for multi-turn coherence
+      messages.push(assistantMsg as ChatCompletionMessageParam)
+
+      // If no tool calls, we're done
+      if (!assistantMsg.tool_calls?.length) {
+        const reply = assistantMsg.content ?? ''
+
+        // Detect if the last tool call was create_event_request
+        const createCall = toolCalls.find(tc => tc.name === 'create_event_request')
+
+        const response: ChatResponse = {
+          reply,
+          ...(toolCalls.length > 0 && { tool_calls: toolCalls }),
+          ...(createCall && {
+            proposed_action: {
+              type: 'create_event' as const,
+              payload: createCall.args,
+              requires_confirmation: false,
+            },
+          }),
+        }
+        return NextResponse.json(response)
+      }
+
+      // Execute each tool call and feed results back
+      const toolResultMessages: ChatCompletionMessageParam[] = []
+      for (const tc of assistantMsg.tool_calls) {
+        // Only handle standard function tool calls (not custom tool types)
+        if (tc.type !== 'function') continue
+
+        const args = JSON.parse(tc.function.arguments ?? '{}')
+        const result = await handleToolCall(tc.function.name, args)
+
+        toolCalls.push({ name: tc.function.name, args, result })
+
+        toolResultMessages.push({
+          role: 'tool',
+          tool_call_id: tc.id,
+          content: result,
         })
       }
 
-      // Send tool results back to Gemini for the final natural-language response
-      const secondResult = await chat.sendMessage(toolResponseParts)
-      const finalText = secondResult.response.text()
-
-      // Detect if a create_event_request was called (propose it back for confirmation display)
-      const createCall = functionCalls.find(fc => fc.name === 'create_event_request')
-      const proposed = createCall
-        ? {
-            type: 'create_event' as const,
-            payload: createCall.args,
-            requires_confirmation: false, // already executed
-          }
-        : undefined
-
-      const response: ChatResponse = {
-        reply: finalText,
-        tool_calls: toolCalls,
-        proposed_action: proposed,
-      }
-      return NextResponse.json(response)
+      messages.push(...toolResultMessages)
     }
 
-    // No function calls — plain text response
-    const response: ChatResponse = { reply: firstResponse.text() }
+    // Safety: if we exhausted rounds, return what we have
+    const response: ChatResponse = {
+      reply: "I've gathered the information — here's what I found. How can I help you proceed?",
+      tool_calls: toolCalls,
+    }
     return NextResponse.json(response)
   } catch (err) {
     console.error('[POST /api/chatbot]', err)
     const response: ChatResponse = {
       reply:
-        "I encountered an error processing your request. Please try again or use the booking form directly.",
+        'I encountered an error processing your request. Please try again or use the booking form directly.',
     }
     return NextResponse.json(response)
   }
