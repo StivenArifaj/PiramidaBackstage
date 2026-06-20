@@ -20,6 +20,7 @@ const STATUS: Record<string, { bg: string; color: string; dot: string; label: st
   in_progress: { bg: 'rgba(55,138,221,0.15)',color: '#042C53', dot: '#378ADD', label: 'in progress' },
   completed:   { bg: '#f5f5f0',             color: '#9a9890', dot: '#d8d5cc', label: 'completed' },
   cancelled:   { bg: 'rgba(230,57,70,0.12)', color: '#e63946', dot: '#e63946', label: 'cancelled' },
+  red_alert:   { bg: 'rgba(230,57,70,0.18)', color: '#b00020', dot: '#e63946', label: 'red alert' },
 }
 
 // ── Event type colors ─────────────────────────────────────────────────────────
@@ -40,7 +41,7 @@ const TEAM_COLOR: Record<string, string> = {
   cleaning: '#97C459', security: '#e63946', catering: '#2a9d8f',
 }
 
-const ALL_STATUSES: EventStatus[] = ['requested', 'quoted', 'confirmed', 'in_progress', 'completed', 'cancelled']
+const ALL_STATUSES: EventStatus[] = ['requested', 'quoted', 'confirmed', 'in_progress', 'completed', 'cancelled', 'red_alert']
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -79,6 +80,7 @@ export default function EventsPage() {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [tasksByEvent, setTasksByEvent] = useState<Record<string, Task[]>>({})
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/events')
@@ -119,6 +121,23 @@ export default function EventsPage() {
         ),
       }))
     })
+  }
+
+  async function updateEventStatus(eventId: string, newStatus: string) {
+    setUpdatingStatus(eventId)
+    try {
+      const res = await fetch(`/api/events/${eventId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (res.ok) {
+        const { event: updated } = await res.json()
+        setEvents(prev => prev.map(e => e.id === eventId ? { ...e, status: updated.status } : e))
+      }
+    } finally {
+      setUpdatingStatus(null)
+    }
   }
 
   const counts = ALL_STATUSES.reduce(
@@ -504,11 +523,40 @@ export default function EventsPage() {
                                 <span style={{ fontFamily: M, fontSize: '9px', color: '#1a1a1a', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
                               </div>
                             ))}
+                            {/* Admin approval actions */}
                             <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {!['confirmed', 'cancelled', 'completed'].includes(evt.status) && (
+                                <button
+                                  onClick={e => { e.stopPropagation(); updateEventStatus(evt.id, 'confirmed') }}
+                                  disabled={updatingStatus === evt.id}
+                                  style={{
+                                    fontFamily: M, fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase',
+                                    background: '#c8da2b', color: '#3a4400', border: 'none', padding: '8px 12px',
+                                    cursor: 'pointer', fontWeight: 700, textAlign: 'center', width: '100%',
+                                    opacity: updatingStatus === evt.id ? 0.6 : 1,
+                                  }}
+                                >
+                                  {updatingStatus === evt.id ? '…' : '✓ approve request'}
+                                </button>
+                              )}
+                              {!['cancelled', 'completed'].includes(evt.status) && (
+                                <button
+                                  onClick={e => { e.stopPropagation(); updateEventStatus(evt.id, 'cancelled') }}
+                                  disabled={updatingStatus === evt.id}
+                                  style={{
+                                    fontFamily: M, fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase',
+                                    background: 'transparent', color: '#e63946', border: '1px solid rgba(230,57,70,0.4)',
+                                    padding: '7px 12px', cursor: 'pointer', textAlign: 'center', width: '100%',
+                                    opacity: updatingStatus === evt.id ? 0.6 : 1,
+                                  }}
+                                >
+                                  ✕ decline
+                                </button>
+                              )}
                               {evt.spaces[0] && (
                                 <Link
                                   href={`/spaces/${evt.spaces[0].code.toLowerCase()}`}
-                                  style={{ fontFamily: M, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', color: '#5a6612', background: '#c8da2b', padding: '6px 12px', textAlign: 'center' }}
+                                  style={{ fontFamily: M, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', color: '#9a9890', border: '1px solid #e8e6dd', padding: '5px 12px', textAlign: 'center' }}
                                 >
                                   view space →
                                 </Link>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import type { Event } from '@/types/api'
 
 const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number]
 const M = 'var(--font-mono)'
@@ -80,22 +81,46 @@ function fmt(iso: string) {
 
 export default function ConflictsPage() {
   const [conflicts, setConflicts] = useState<ConflictFull[]>([])
+  const [redAlerts, setRedAlerts] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [resolved, setResolved] = useState<Set<string>>(new Set())
   const [checked, setChecked] = useState<Record<string, boolean[]>>({})
+  const [handlingAlert, setHandlingAlert] = useState<string | null>(null)
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    fetch('/api/conflicts').then(r => r.json()).then(d => {
-      setConflicts(d.conflicts ?? [])
-      // Initialize checklist state
+    Promise.all([
+      fetch('/api/conflicts').then(r => r.json()),
+      fetch('/api/events').then(r => r.json()),
+    ]).then(([conflictsData, eventsData]) => {
+      const allConflicts = conflictsData.conflicts ?? []
+      setConflicts(allConflicts)
       const init: Record<string, boolean[]> = {}
-      ;(d.conflicts ?? []).forEach((c: ConflictFull) => {
+      allConflicts.forEach((c: ConflictFull) => {
         init[c.id] = (TYPE_INFO[c.type]?.guide ?? []).map(() => false)
       })
       setChecked(init)
+      const alerts = (eventsData.events ?? []).filter((e: Event) => e.status === 'red_alert')
+      setRedAlerts(alerts)
       setLoading(false)
     })
   }, [])
+
+  async function handleAlertAction(eventId: string, newStatus: 'confirmed' | 'cancelled') {
+    setHandlingAlert(eventId)
+    try {
+      const res = await fetch(`/api/events/${eventId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (res.ok) {
+        setDismissedAlerts(prev => new Set([...prev, eventId]))
+      }
+    } finally {
+      setHandlingAlert(null)
+    }
+  }
 
   function toggleStep(conflictId: string, stepIdx: number) {
     setChecked(prev => ({
@@ -108,6 +133,7 @@ export default function ConflictsPage() {
     setResolved(prev => new Set([...prev, id]))
   }
 
+  const activeAlerts = redAlerts.filter(e => !dismissedAlerts.has(e.id))
   const active = conflicts.filter(c => !resolved.has(c.id))
   const done = conflicts.filter(c => resolved.has(c.id))
 
@@ -151,8 +177,104 @@ export default function ConflictsPage() {
         </div>
       )}
 
+      {/* ── Red Alert Priority Requests ────────────────────────────────── */}
+      {!loading && activeAlerts.length > 0 && (
+        <div>
+          {/* Section header */}
+          <div style={{ padding: '10px 32px', background: 'rgba(230,57,70,0.1)', borderBottom: '2px solid #e63946', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <polygon points="6.5,1 12.5,12.5 0.5,12.5" stroke="#e63946" strokeWidth="1.4" fill="none"/>
+              <line x1="6.5" y1="5" x2="6.5" y2="8.5" stroke="#e63946" strokeWidth="1.4"/>
+              <circle cx="6.5" cy="10.5" r="0.7" fill="#e63946"/>
+            </svg>
+            <span style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#e63946', fontWeight: 700 }}>RED ALERT — PRIORITY REQUESTS</span>
+            <span style={{ fontFamily: M, fontSize: '8px', background: '#e63946', color: '#fff', padding: '1px 7px' }}>{activeAlerts.length}</span>
+          </div>
+
+          {activeAlerts.map((alert, ai) => (
+            <motion.div
+              key={alert.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: EASE, delay: ai * 0.05 }}
+              style={{ borderBottom: '1px solid rgba(230,57,70,0.25)', background: 'rgba(230,57,70,0.04)', padding: '20px 32px' }}
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 24, alignItems: 'flex-start' }}>
+                <div>
+                  {/* Meta row */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                    <span style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#e63946', background: 'rgba(230,57,70,0.12)', padding: '3px 8px', border: '1px solid rgba(230,57,70,0.3)' }}>
+                      RED ALERT
+                    </span>
+                    <span style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', letterSpacing: '0.06em' }}>{alert.reference_code}</span>
+                    <span style={{ fontFamily: M, fontSize: '8px', color: '#9a9890' }}>·</span>
+                    <span style={{ fontFamily: M, fontSize: '8px', color: '#9a9890' }}>
+                      {new Date(alert.start_at).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                      {' '}
+                      {new Date(alert.start_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                      {' – '}
+                      {new Date(alert.end_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+
+                  {/* Event title */}
+                  <p style={{ fontFamily: D, fontSize: '15px', fontWeight: 500, color: '#1a1a1a', margin: '0 0 4px', letterSpacing: '-0.01em' }}>
+                    {alert.title}
+                  </p>
+                  <p style={{ fontFamily: M, fontSize: '8.5px', color: '#6b7280', margin: '0 0 12px' }}>
+                    {alert.organizer_name} · {alert.organizer_email}
+                    {alert.spaces[0] ? ` · ${alert.spaces[0].name}` : ''}
+                    {' · '}{alert.attendees_count} pax
+                  </p>
+
+                  {/* User's priority message */}
+                  {alert.notes && (
+                    <div style={{ background: 'rgba(230,57,70,0.07)', border: '1px solid rgba(230,57,70,0.25)', padding: '12px 16px' }}>
+                      <p style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#e63946', margin: '0 0 6px' }}>
+                        organizer message
+                      </p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#1a1a1a', margin: 0, lineHeight: 1.6 }}>
+                        {alert.notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action buttons */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 160 }}>
+                  <button
+                    onClick={() => handleAlertAction(alert.id, 'confirmed')}
+                    disabled={handlingAlert === alert.id}
+                    style={{
+                      fontFamily: M, fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase',
+                      padding: '10px 18px', border: 'none', cursor: 'pointer',
+                      background: '#c8da2b', color: '#3a4400', fontWeight: 700,
+                      opacity: handlingAlert === alert.id ? 0.6 : 1,
+                    }}
+                  >
+                    {handlingAlert === alert.id ? '…' : '✓ override & confirm'}
+                  </button>
+                  <button
+                    onClick={() => handleAlertAction(alert.id, 'cancelled')}
+                    disabled={handlingAlert === alert.id}
+                    style={{
+                      fontFamily: M, fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase',
+                      padding: '9px 18px', border: '1px solid rgba(230,57,70,0.4)', cursor: 'pointer',
+                      background: 'transparent', color: '#e63946',
+                      opacity: handlingAlert === alert.id ? 0.6 : 1,
+                    }}
+                  >
+                    ✕ reject request
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
       {/* All clear state */}
-      {!loading && active.length === 0 && (
+      {!loading && active.length === 0 && activeAlerts.length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

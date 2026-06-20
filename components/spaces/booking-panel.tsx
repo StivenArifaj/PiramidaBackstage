@@ -15,6 +15,8 @@ const labelStyle: React.CSSProperties = {
   textTransform: 'uppercase', color: 'var(--color-concrete-gray)', display: 'block', marginBottom: '6px',
 }
 
+type UiState = 'form' | 'conflict' | 'sent'
+
 export function BookingPanel({ space }: { space: SpaceWithAvailability }) {
   const router = useRouter()
   const [date, setDate] = useState('')
@@ -24,6 +26,8 @@ export function BookingPanel({ space }: { space: SpaceWithAvailability }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [uiState, setUiState] = useState<UiState>('form')
+  const [priorityMessage, setPriorityMessage] = useState('')
 
   const durationHrs = Math.max(1, (new Date(`2000-01-01T${endTime}`).getTime() - new Date(`2000-01-01T${startTime}`).getTime()) / 3600000)
   const estimatedTotal = Math.round(durationHrs * space.hourly_rate_eur * 1.18)
@@ -45,9 +49,119 @@ export function BookingPanel({ space }: { space: SpaceWithAvailability }) {
         preferred_space_codes: [space.code],
       }),
     })
-    const data = await res.json()
     setSubmitting(false)
-    if (res.ok) router.push(`/book/confirmation?ref=${data.event.reference_code}`)
+    if (res.status === 409) {
+      setUiState('conflict')
+      return
+    }
+    if (res.ok) {
+      const data = await res.json()
+      router.push(`/book/confirmation?ref=${data.event.reference_code}`)
+    }
+  }
+
+  async function handlePrioritySubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setSubmitting(true)
+    const res = await fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: `[PRIORITY] Event at ${space.name}`,
+        organizer_name: name,
+        organizer_email: email,
+        attendees_count: attendees,
+        start_at: new Date(`${date}T${startTime}`).toISOString(),
+        end_at: new Date(`${date}T${endTime}`).toISOString(),
+        preferred_space_codes: [space.code],
+        is_priority_request: true,
+        notes: priorityMessage,
+      }),
+    })
+    setSubmitting(false)
+    if (res.ok) {
+      const data = await res.json()
+      router.push(`/book/confirmation?ref=${data.event.reference_code}`)
+    }
+  }
+
+  // ── Conflict / Red Code view ─────────────────────────────────────────────────
+  if (uiState === 'conflict') {
+    return (
+      <form
+        onSubmit={handlePrioritySubmit}
+        style={{ border: '2px solid #e63946', padding: '32px', backgroundColor: 'var(--color-concrete-bone)' }}
+      >
+        {/* Alert header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <polygon points="8,1 15.5,14.5 0.5,14.5" stroke="#e63946" strokeWidth="1.6" fill="none"/>
+            <line x1="8" y1="6" x2="8" y2="10" stroke="#e63946" strokeWidth="1.6"/>
+            <circle cx="8" cy="12.5" r="0.8" fill="#e63946"/>
+          </svg>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#e63946', margin: 0 }}>
+            conflict detected
+          </p>
+        </div>
+
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--color-concrete-char)', margin: '0 0 8px', lineHeight: 1.6 }}>
+          This space is booked for this time.
+        </p>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--color-concrete-gray)', margin: '0 0 24px', lineHeight: 1.6 }}>
+          Would you like to send a priority request to the Ops Team?
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={labelStyle}>your message to the ops team</label>
+            <textarea
+              required
+              rows={4}
+              value={priorityMessage}
+              onChange={e => setPriorityMessage(e.target.value)}
+              placeholder="Explain why this slot is critical for your event…"
+              style={{ ...inputStyle, resize: 'vertical', height: 'auto' }}
+            />
+          </div>
+
+          <div style={{ backgroundColor: 'rgba(230,57,70,0.08)', border: '1px solid rgba(230,57,70,0.3)', padding: '12px 16px' }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '8.5px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#e63946', margin: '0 0 4px' }}>
+              priority request — red alert
+            </p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-concrete-gray)', margin: 0 }}>
+              The Ops Team will review your request and contact you within 2 hours.
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting || !priorityMessage.trim()}
+            style={{
+              fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 500,
+              letterSpacing: '0.16em', textTransform: 'uppercase',
+              backgroundColor: priorityMessage.trim() ? '#e63946' : 'var(--color-concrete-mid)',
+              color: '#fff',
+              border: 'none', padding: '16px', cursor: priorityMessage.trim() ? 'pointer' : 'not-allowed',
+              width: '100%',
+            }}
+          >
+            {submitting ? 'sending request...' : 'send priority request'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setUiState('form')}
+            style={{
+              fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.14em',
+              textTransform: 'uppercase', background: 'transparent', border: '1px solid var(--color-concrete-mid)',
+              color: 'var(--color-concrete-gray)', padding: '10px', cursor: 'pointer', width: '100%',
+            }}
+          >
+            ← choose a different time
+          </button>
+        </div>
+      </form>
+    )
   }
 
   return (

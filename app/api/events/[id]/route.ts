@@ -6,7 +6,7 @@ import type { GetEventResponse } from '@/types/api'
 
 const patchSchema = z.object({
   status: z
-    .enum(['requested', 'quoted', 'confirmed', 'in_progress', 'completed', 'cancelled'])
+    .enum(['requested', 'quoted', 'confirmed', 'in_progress', 'completed', 'cancelled', 'red_alert'])
     .optional(),
   notes: z.string().optional(),
   spaces: z.array(z.string()).optional(),

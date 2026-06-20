@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { createEvent, listEvents, insertQuote, updateEvent, insertTasks } from '@/lib/db/queries/events'
+import { createEvent, listEvents, insertQuote, updateEvent, insertTasks, checkSpaceConflict } from '@/lib/db/queries/events'
 import { searchAvailableSpaces } from '@/lib/db/queries/spaces'
 import { generateQuote } from '@/lib/pricing/quote'
 import { generateTasks } from '@/lib/tasks/generate'
@@ -20,6 +20,8 @@ const createEventSchema = z.object({
   preferred_space_codes: z.array(z.string()).optional(),
   setup_type: z.string().optional(),
   features_required: z.array(z.string()).optional(),
+  notes: z.string().optional(),
+  is_priority_request: z.boolean().optional(),
 })
 
 export async function GET() {
@@ -55,12 +57,32 @@ export async function POST(req: Request) {
       )
     }
 
+    // Conflict check — skip for priority requests (they intentionally override)
+    if (!data.is_priority_request && data.preferred_space_codes?.length) {
+      const hasConflict = await checkSpaceConflict(
+        data.preferred_space_codes[0],
+        data.start_at,
+        data.end_at
+      )
+      if (hasConflict) {
+        return NextResponse.json(
+          { error: 'conflict', message: 'Space already booked.' },
+          { status: 409 }
+        )
+      }
+    }
+
     const { event, matchedSpaceId } = await createEvent(data)
 
     // Auto-generate quote immediately so the dashboard shows pricing right away
     const quoteData = generateQuote(event)
     await insertQuote(event.id, quoteData)
-    await updateEvent(event.id, { status: 'quoted' })
+
+    const finalStatus = data.is_priority_request ? 'red_alert' : 'quoted'
+    await updateEvent(event.id, {
+      status: finalStatus,
+      ...(data.notes ? { notes: data.notes } : {}),
+    })
 
     // Auto-generate setup/teardown tasks so operations dashboard populates instantly
     const rawTasks = generateTasks(event)
@@ -77,7 +99,7 @@ export async function POST(req: Request) {
       .slice(0, 3)
 
     const response: CreateEventResponse = {
-      event: { ...event, status: 'quoted' },
+      event: { ...event, status: finalStatus as typeof event.status },
       matched_space: event.spaces[0] ?? undefined,
       alternatives,
     }

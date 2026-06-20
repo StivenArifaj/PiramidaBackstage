@@ -93,11 +93,13 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-21] Claude Code (claude-sonnet-4-6) [Stiven+Aron/Full-Stack] — Public client tracking portal: added getEventByRef() to events query layer; created GET /api/track/[ref] (strips admin fields — no notes/tasks/phone); built app/track/[ref]/page.tsx with status pipeline (requested→quoted→confirmed), quote acceptance via PATCH /api/quotes/[id], shareable invite link (navigator.clipboard), floor-aware directions card. Confirmation page: removed /dashboard link, replaced with "Track My Booking" → /track/[ref]. Client-facing booking loop is now fully enclosed — no admin surface exposed. npx tsc --noEmit clean.
 - [2026-06-21] Claude Code (claude-sonnet-4-6) [Stiven/AI Arch] — Fix: AI "Silent Tool" bug resolved. Root cause: MAX_TOOL_ROUNDS=3 exhausted when llama chained tools without emitting text; hardcoded fallback "I've gathered the information…" fired instead of real data. Fix: replaced fallback with a forced synthesis call using tool_choice:'none' so the LLM narrates all accumulated tool results; bumped MAX_TOOL_ROUNDS to 5; added CRITICAL INSTRUCTION to both system prompts enforcing explicit data narration. Frontend (chatbot-panel.tsx) confirmed clean — no hardcoded transformations. find_ideal_space output verified as clean multi-line string. npx tsc --noEmit clean.
 - [2026-06-21] Claude Code (claude-sonnet-4-6) [Stiven/AI Arch] — Dual-Brain AI + Anti-Hallucination: Rewrote system prompts (SYSTEM_PROMPT & ADMIN_SYSTEM_PROMPT) with strict anti-hallucination rules. Restructured tools into clientTools (read-only: search_spaces, check_space_availability, list_assets_needed, find_ideal_space, submit_special_request, get_space_booking_url) and adminTools (BI + write: get_dashboard_metrics, get_pending_quotes, query_reservations, get_client_history, get_financial_metrics, get_space_utilization, create_event_request, generate_quote). Updated route.ts to split CLIENT_TOOLS/ADMIN_TOOLS accordingly. All handlers wired in tool-handlers.ts with Supabase + mock fallback. Dashboard layout confirmed passing isAdmin={true} to ChatbotCube. `npx tsc --noEmit` clean.
+- [2026-06-21] Claude Code (claude-sonnet-4-6) [Stiven+Aron/Full-Stack] — Red Code conflict system: Added 'red_alert' to EventStatus. POST /api/events now checks for overlapping active bookings (confirmed/quoted/requested/in_progress) on the requested space before creation — returns 409 {error:'conflict'} on overlap. BookingPanel catches 409 and switches to "Conflict Detected" Red Code UI with textarea + Send Priority Request button; priority submissions bypass the conflict check and create the event with status 'red_alert' + custom notes saved to DB. /dashboard/conflicts now fetches red_alert events from /api/events and renders a RED ALERT section at the top with Override & Confirm or Reject buttons (PATCH /api/events/[id]). /dashboard/events expanded rows now show ✓ Approve Request (green) and ✕ Decline (red) admin action buttons wired to PATCH /api/events/[id] with optimistic UI update. checkSpaceConflict() added to lib/db/queries/events.ts (Supabase + mock fallback). `npx tsc --noEmit` clean (zero errors).
 
 ## Current State
 
-- **Phase:** Phase 9 complete — Dual-Brain AI with anti-hallucination measures active.
+- **Phase:** Phase 10 complete — Red Code conflict prevention system live.
 - **Dual-Brain AI:** `lib/ai/system-prompt.ts` has strict anti-hallucination rules in both personas. `clientTools` (6 tools, no DB writes) and `adminTools` (8 tools, BI + write access) defined in `lib/ai/tools.ts`. Route.ts splits correctly: CLIENT_TOOLS = clientTools, ADMIN_TOOLS = clientTools + adminTools. Dashboard layout passes `isAdmin={true}` to ChatbotCube.
+- **Red Code system:** `EventStatus` extended with `'red_alert'`. `checkSpaceConflict()` in `lib/db/queries/events.ts` (Supabase + mock). POST /api/events returns 409 on space overlap. `BookingPanel` shows "Conflict Detected" UI on 409 with custom message textarea → re-submits with `is_priority_request:true`. /dashboard/conflicts renders RED ALERT cards at top with Override/Reject. /dashboard/events expanded rows have ✓ Approve and ✕ Decline admin buttons.
 - **Client tools:** search_spaces, check_space_availability, list_assets_needed, find_ideal_space (queries Supabase by capacity_pax >= guest_count, ranks by feature match), submit_special_request (logs + returns confirmation), get_space_booking_url (returns [REDIRECT_TO_SPACE:CODE] tag).
 - **Admin tools:** get_dashboard_metrics, get_pending_quotes, query_reservations (filter by date_range + status), get_client_history (lookup by name or email, lifetime spend), get_financial_metrics (revenue vs pipeline by time_period), get_space_utilization (ranks rooms by booking count + hours). Plus create_event_request + generate_quote for write access.
 - **Quotes workflow:** `GET /api/quotes` lists all quotes with event join. `PATCH /api/quotes/[id]` accepts a quote → confirmed. `/dashboard/quotes` page with Accept button and revenue totals.
@@ -105,6 +107,14 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - `npx tsc --noEmit` clean (zero errors). `/spaces/BLUE` returns HTTP 200.
 
 ## Next Steps
+
+### Red Code demo script (new):
+1. Go to any space detail page → fill booking form for a date/time that has an existing confirmed event.
+2. Submit → should receive "Conflict Detected" UI with the red border form.
+3. Write a priority message and click "Send Priority Request" → should redirect to confirmation with reference code.
+4. Go to `/dashboard/conflicts` → RED ALERT section at top shows the request with organizer message.
+5. Click "Override & Confirm" → alert disappears, event confirmed.
+6. Go to `/dashboard/events` → expand any event row → Approve (green) / Decline (red) buttons visible and functional.
 
 ### READY FOR END-TO-END DEMO — run this checklist:
 1. Start dev server: `npm run dev`

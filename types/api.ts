@@ -4,7 +4,7 @@
 export type SpaceFloor = 'roof' | 'l3' | 'l0' | 'l_minus_1' | 'exterior'
 export type SpaceCategory = 'hero' | 'extension' | 'exterior_box' | 'public_area'
 export type SpaceColor = 'blue' | 'orange' | 'green' | 'yellow' | 'red' | 'pink' | 'purple' | 'teal' | 'coral'
-export type EventStatus = 'requested' | 'quoted' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
+export type EventStatus = 'requested' | 'quoted' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'red_alert'
 export type AssetType = 'chair' | 'table_round' | 'table_rect' | 'microphone' | 'projector' | 'screen' | 'speaker' | 'lighting' | 'stage' | 'barrier' | 'cable' | 'other'
 export type AvailabilityState = 'available' | 'reserved' | 'blocked' | 'pending'
 

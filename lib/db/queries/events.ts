@@ -470,6 +470,54 @@ export async function insertTasks(tasks: Task[]): Promise<Task[]> {
   return ((data ?? []) as DbTask[]).map(dbTaskToTask)
 }
 
+// ─── checkSpaceConflict ───────────────────────────────────────────────────────
+
+export async function checkSpaceConflict(
+  spaceCode: string,
+  startAt: string,
+  endAt: string
+): Promise<boolean> {
+  if (!isSupabaseConfigured()) {
+    const hit = MOCK_EVENTS.find(e => {
+      if (!['confirmed', 'quoted', 'requested', 'in_progress'].includes(e.status)) return false
+      if (new Date(e.end_at) <= new Date(startAt)) return false
+      if (new Date(e.start_at) >= new Date(endAt)) return false
+      return e.spaces.some(s => s.code.toUpperCase() === spaceCode.toUpperCase())
+    })
+    return !!hit
+  }
+
+  const db = createAdminClient()
+
+  const { data: spaceRows } = await db
+    .from('spaces')
+    .select('id')
+    .eq('code', spaceCode.toUpperCase())
+    .limit(1)
+
+  const spaceId = (spaceRows as { id: string }[] | null)?.[0]?.id
+  if (!spaceId) return false
+
+  const { data: evtRows } = await db
+    .from('events')
+    .select('id')
+    .in('status', ['confirmed', 'quoted', 'requested', 'in_progress'])
+    .lt('start_at', endAt)
+    .gt('end_at', startAt)
+
+  const evtIds = ((evtRows ?? []) as { id: string }[]).map(r => r.id)
+  if (!evtIds.length) return false
+
+  const { data: esRows } = await db
+    .from('event_spaces')
+    .select('event_id')
+    .eq('space_id', spaceId)
+    .in('event_id', evtIds)
+    .limit(1)
+
+  return (esRows?.length ?? 0) > 0
+}
+
 // ─── acceptQuote ─────────────────────────────────────────────────────────────
 
 export async function acceptQuote(
