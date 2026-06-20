@@ -425,6 +425,32 @@ export async function insertQuote(
   return dbQuoteToQuote((data![0]) as DbQuote)
 }
 
+// ─── insertTasks ─────────────────────────────────────────────────────────────
+
+export async function insertTasks(tasks: Task[]): Promise<Task[]> {
+  if (!isSupabaseConfigured()) {
+    MOCK_TASKS.push(...tasks)
+    return tasks
+  }
+
+  const db = createAdminClient()
+  const taskInserts = tasks.map(t => ({
+    event_id: t.event_id,
+    title: t.title,
+    description: t.description ?? null,
+    team: t.team,
+    due_at: t.due_at,
+    status: t.status,
+    assigned_to: t.assigned_to ?? null,
+    // depends_on_task_id skipped: generated IDs are mock strings, not DB UUIDs
+    depends_on_task_id: null,
+  }))
+
+  const { data, error } = await db.from('tasks').insert(taskInserts).select('*')
+  if (error) throw new Error(error.message)
+  return ((data ?? []) as DbTask[]).map(dbTaskToTask)
+}
+
 // ─── acceptQuote ─────────────────────────────────────────────────────────────
 
 export async function acceptQuote(
@@ -438,9 +464,7 @@ export async function acceptQuote(
     event.status = 'confirmed'
     event.updated_at = new Date().toISOString()
     quote.accepted_at = new Date().toISOString()
-    const { generateTasks } = await import('@/lib/tasks/generate')
-    const tasks = generateTasks(event)
-    MOCK_TASKS.push(...tasks)
+    const tasks = MOCK_TASKS.filter(t => t.event_id === event.id)
     return { event, tasks }
   }
 
@@ -468,28 +492,7 @@ export async function acceptQuote(
   const event = await getEventById(eventId)
   if (!event) return null
 
-  // Generate and insert tasks
-  const { generateTasks } = await import('@/lib/tasks/generate')
-  const tasks = generateTasks(event)
-
-  const taskInserts = tasks.map(t => ({
-    event_id: t.event_id,
-    title: t.title,
-    description: t.description ?? null,
-    team: t.team,
-    due_at: t.due_at,
-    status: t.status,
-    assigned_to: t.assigned_to ?? null,
-    depends_on_task_id: t.depends_on_task_id ?? null,
-  }))
-
-  const { data: insertedTasks, error: taskErr } = await db
-    .from('tasks')
-    .insert(taskInserts)
-    .select('*')
-
-  if (taskErr) throw new Error(taskErr.message)
-
-  const finalTasks = ((insertedTasks ?? []) as DbTask[]).map(dbTaskToTask)
-  return { event, tasks: finalTasks }
+  // Tasks were already inserted at event creation — just return them
+  const tasks = await getTasksForEvent(eventId)
+  return { event, tasks }
 }

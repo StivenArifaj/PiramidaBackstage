@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { createEvent, listEvents } from '@/lib/db/queries/events'
+import { createEvent, listEvents, insertQuote, updateEvent, insertTasks } from '@/lib/db/queries/events'
 import { searchAvailableSpaces } from '@/lib/db/queries/spaces'
+import { generateQuote } from '@/lib/pricing/quote'
+import { generateTasks } from '@/lib/tasks/generate'
 import type { CreateEventResponse, ListEventsResponse } from '@/types/api'
 
 const createEventSchema = z.object({
@@ -55,6 +57,15 @@ export async function POST(req: Request) {
 
     const { event, matchedSpaceId } = await createEvent(data)
 
+    // Auto-generate quote immediately so the dashboard shows pricing right away
+    const quoteData = generateQuote(event)
+    await insertQuote(event.id, quoteData)
+    await updateEvent(event.id, { status: 'quoted' })
+
+    // Auto-generate setup/teardown tasks so operations dashboard populates instantly
+    const rawTasks = generateTasks(event)
+    await insertTasks(rawTasks)
+
     // Find alternatives (spaces that could work but weren't chosen)
     const availResult = await searchAvailableSpaces({
       from: data.start_at,
@@ -66,7 +77,7 @@ export async function POST(req: Request) {
       .slice(0, 3)
 
     const response: CreateEventResponse = {
-      event,
+      event: { ...event, status: 'quoted' },
       matched_space: event.spaces[0] ?? undefined,
       alternatives,
     }

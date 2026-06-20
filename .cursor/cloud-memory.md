@@ -40,8 +40,8 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 
 ## Current State
 
-- **Phase:** Phase 6 — Topographical Calibration complete. Official MVRDV architectural sketches from `public/sketches/` are now the authoritative backgrounds. Floor Selector uses `section-bb.jpeg` (cross-section) with calibrated pill positions. Floor plan SVGs overlay official plan blueprints. Pre-existing `npx tsc --noEmit` errors are limited to chatbot `openai` module (unrelated).
-- **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` shows 3 pre-existing errors in `app/api/chatbot/route.ts` and `lib/ai/tools.ts` (missing `openai` module).
+- **Phase:** Phase 7 complete — Full end-to-end booking pipeline live. POST /api/events now auto-generates a quote + 8 setup/teardown/AV/security tasks immediately on creation. Quote acceptance (POST /api/quotes/[id]) confirms event + returns existing tasks (no duplication). Chatbot Groq tool loop fully wired. `npx tsc --noEmit` clean (0 errors).
+- **Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS v4 + pnpm. `npx tsc --noEmit` passes with zero errors.
 - **FloorSelector background:** Now `section-bb.jpeg` (1600×910, aspect 1.758), `background-size: contain`. Pill positions calibrated to architectural slabs: roof 35%, l3 42%, l0 50%, b1 66%, exterior 50%/12% left.
 - **Plan backgrounds:** `FloorPlan` component now renders the correct plan sketch behind each floor's SVG (plan-groundfloor.jpeg for l0, plan-level-01-basement.jpeg for l_minus_1, plan-level-03.jpeg for l3, plan-level-04.jpeg for roof, plan-topview.jpeg for exterior). SVG overlays use `preserveAspectRatio="xMidYMid meet"` for alignment.
 - **SVG Alignment:** All 5 floor plan SVGs wrapped in absolute-position containers over the plan background. SVG viewBox 0 0 800 800 preserved, using `preserveAspectRatio` for centered alignment with background.
@@ -80,32 +80,29 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - [2026-06-20 14:15] Claude Code [Aron/frontend] — Calibration: Replaced low-res elevation background with mvrdv-28.jpg (1333×1000), fixed topographic pill alignment (roof 7%, l3 30%, l0 58%, b1 76%, exterior 64%/12%), locked aspect-ratio to eliminate stretch distortion.
 - [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/backend] — Groq migration: installed openai SDK, rewrote lib/ai/tools.ts in OpenAI function-calling format, rewrote /api/chatbot to use Groq baseURL with llama-3.3-70b-versatile, agentic tool loop (up to 3 rounds), updated .env.example with GROQ_API_KEY. `npx tsc --noEmit` clean.
 - [2026-06-20 20:00] OpenCode [Aron/Frontend] — Topographical Calibration: Locked Floor Selector to architectural section (section-bb.jpeg), calibrated pill positions (roof 35%, l3 42%, l0 50%, b1 66%, exterior 50%/12%), set plan backgrounds behind SVG floor plans (plan-groundfloor.jpeg etc.), wrapped SVGs in absolute overlay containers with preserveAspectRatio alignment. `npx tsc --noEmit` — pre-existing errors only.
+- [2026-06-20] Claude Code (claude-sonnet-4-6) [Stiven/backend] — Booking Pipeline: POST /api/events now auto-generates quote + 8 tasks (setup, AV, reception, security, teardown, cleaning) immediately on creation. acceptQuote fixed FK bug (depends_on_task_id null on insert), no longer duplicates tasks. `npx tsc --noEmit` clean.
 
 ## Next Steps
 
-### IMMEDIATE — Developer must fill 2 keys in `.env.local`:
-1. `SUPABASE_SERVICE_ROLE_KEY` — Supabase Dashboard → Project Settings → API → service_role
-2. `GROQ_API_KEY` — https://console.groq.com → API Keys → Create API key (free, no billing required)
-Then restart dev server. All routes auto-switch from mock to live Supabase, chatbot activates.
+### READY FOR END-TO-END DEMO — run this checklist:
+1. Start dev server: `npm run dev`
+2. Submit booking via `/book` → verify `/dashboard/events` shows the new event with status `quoted` and 8 tasks already populated.
+3. Open chatbot → type: "Book the Yellow Roof Box for 50 people on Friday 8pm–11pm, name Ardi Hoxha, email ardi@test.al" → verify tool calls fire (search_spaces → create_event_request → generate_quote) and chatbot returns confirmation text.
+4. Hit `POST /api/quotes/{id}` (or Supabase Dashboard) → confirm event status advances to `confirmed`, tasks remain (no duplicates).
+5. Rehearse demo script (master-plan §10) × 3.
 
-### End-to-end test checklist:
-3. Submit event via `/book` → check `/dashboard/events` shows it (live DB row).
-4. Open chatbot → "Book Yellow Roof Box for 50 people Friday 8pm–11pm, name Ardi, email ardi@test.al" → tools fire, event appears in dashboard.
-5. Accept quote via `POST /api/quotes/{id}` → tasks auto-generated and inserted.
+### Deploy to Vercel:
+6. `git push` then connect repo on vercel.com → add 4 env vars: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, GROQ_API_KEY.
 
-### Demo prep:
-6. Rehearse demo script (master-plan §10) at least 3 times.
-7. Deploy to Vercel — add all env vars in Vercel dashboard → Environment Variables.
-
-### Frontend (Aron):
-1. Wire `/spaces/page.tsx` floor selector to live `GET /api/spaces?floor=…` — currently uses `DEMO_SPACES` constant (l0-only). Should use full mock data or live API.
-2. Add photo URLs to A-ring spaces in mock-data (or seed real URLs to Supabase) so ImageGallery doesn't show hatch placeholder.
-3. Fine-tune SVG polygon coordinates over plan-blueprint backgrounds by visually inspecting plan-groundfloor.jpeg and adjusting polygon vertices to precisely cover colored boxes in the sketch.
+### Frontend (Aron — optional polish):
+- Wire `/spaces/page.tsx` floor selector to live `GET /api/spaces?floor=…` — currently uses `DEMO_SPACES` constant.
+- Add photo URLs to A-ring spaces in mock-data or Supabase so ImageGallery doesn't show placeholder.
+- Fine-tune SVG polygon vertices over plan-blueprint backgrounds.
 
 ## Open Questions / Blockers
 
-- **`.env.local` missing 2 keys**: `SUPABASE_SERVICE_ROLE_KEY` (from Supabase Dashboard) + `GROQ_API_KEY` (from console.groq.com — free). URL + anon key already present. Once filled in, all routes switch to live Supabase and chatbot activates.
-- `pnpm tsc --noEmit` fails due to unrelated pnpm native build script error (sharp, unrs-resolver). Use `npx tsc --noEmit` instead.
+- `pnpm tsc --noEmit` fails due to pnpm native build script error (sharp, unrs-resolver). Use `npx tsc --noEmit` instead — passes clean.
+- All 4 env vars now filled in `.env.local`. No remaining blockers for local demo.
 
 ## Key Decisions Made
 
