@@ -10,6 +10,7 @@ interface ScrollVideoProps {
   overlayLabel?: string
   children?: ReactNode
   scrollHeight?: string
+  reversed?: boolean
 }
 
 export function ScrollVideo({
@@ -20,6 +21,7 @@ export function ScrollVideo({
   overlayLabel,
   children,
   scrollHeight = '300vh',
+  reversed = false,
 }: ScrollVideoProps) {
   const canvasRef      = useRef<HTMLCanvasElement>(null)
   const containerRef   = useRef<HTMLDivElement>(null)
@@ -57,20 +59,24 @@ export function ScrollVideo({
 
     resizeCanvas()
 
-    const frames: HTMLImageElement[] = []
-    let firstLoaded = false
+    const firstIdx = reversed ? frameCount - 1 : 0
+    const frames: HTMLImageElement[] = new Array(frameCount)
 
-    for (let i = 1; i <= frameCount; i++) {
+    // Load the starting frame first so the skeleton clears immediately
+    const startImg = new Image()
+    startImg.src = `${framesFolder}/${String(firstIdx + 1).padStart(4, '0')}.jpg`
+    startImg.onload = () => {
+      drawFrame(firstIdx)
+      setLoaded(true)
+    }
+    frames[firstIdx] = startImg
+
+    // Load all other frames (order doesn't affect array index)
+    for (let i = 0; i < frameCount; i++) {
+      if (i === firstIdx) continue
       const img = new Image()
-      img.src = `${framesFolder}/${String(i).padStart(4, '0')}.jpg`
-      img.onload = () => {
-        if (!firstLoaded) {
-          firstLoaded = true
-          drawFrame(0)
-          setLoaded(true)
-        }
-      }
-      frames.push(img)
+      img.src = `${framesFolder}/${String(i + 1).padStart(4, '0')}.jpg`
+      frames[i] = img
     }
     framesRef.current = frames
 
@@ -87,9 +93,11 @@ export function ScrollVideo({
       const { ScrollTrigger } = await import('gsap/ScrollTrigger')
       gsap.registerPlugin(ScrollTrigger)
 
-      const obj = { frame: 0 }
+      const startFrame = reversed ? frameCount - 1 : 0
+      const endFrame   = reversed ? 0 : frameCount - 1
+      const obj = { frame: startFrame }
       const tween = gsap.to(obj, {
-        frame: frameCount - 1,
+        frame: endFrame,
         ease: 'none',
         scrollTrigger: {
           trigger: containerRef.current,
@@ -98,7 +106,9 @@ export function ScrollVideo({
           scrub: 0.5,
           onUpdate(self) {
             const p   = self.progress
-            const num = Math.round(p * (frameCount - 1)) + 1
+            const num = reversed
+              ? frameCount - Math.round(p * (frameCount - 1))
+              : Math.round(p * (frameCount - 1)) + 1
             if (counterRef.current) {
               counterRef.current.textContent =
                 `FRAME ${String(num).padStart(4, '0')} / ${String(frameCount).padStart(4, '0')} · SCROLL ↓`
@@ -127,7 +137,7 @@ export function ScrollVideo({
       window.removeEventListener('resize', onResize)
       killTween?.()
     }
-  }, [framesFolder, frameCount])
+  }, [framesFolder, frameCount, reversed])
 
   return (
     <div ref={containerRef} style={{ height: scrollHeight }}>
@@ -203,7 +213,7 @@ export function ScrollVideo({
             zIndex: 2,
           }}
         >
-          {`FRAME 0001 / ${String(frameCount).padStart(4, '0')} · SCROLL ↓`}
+          {`FRAME ${String(reversed ? frameCount : 1).padStart(4, '0')} / ${String(frameCount).padStart(4, '0')} · SCROLL ↓`}
         </p>
 
         {/* Text block — bottom left */}

@@ -157,6 +157,7 @@ export default function LandingPage() {
         overlayTitle="piramida backstage."
         overlaySubtitle="EST. 1988 · REIMAGINED 2023 · BACKSTAGE 2026"
         scrollHeight="300vh"
+        reversed
       >
         {/* Corner label — top right */}
         <div style={{ position: 'absolute', top: '72px', right: '72px', zIndex: 2 }}>

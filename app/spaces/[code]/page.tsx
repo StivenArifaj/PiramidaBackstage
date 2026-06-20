@@ -164,8 +164,8 @@ export default function SpaceDetailPage() {
 
       {/* Scroll-scrubbed hero — first 100 frames of hero sequence */}
       <ScrollVideo
-        framesFolder="/frames/hero"
-        frameCount={100}
+        framesFolder="/frames/detail-sample"
+        frameCount={265}
         overlayLabel={`${formatFloor(space.floor)} · ${space.category.replace(/_/g, ' ')}`}
         overlayTitle={space.name}
         overlaySubtitle={space.name_sq ?? space.code}
