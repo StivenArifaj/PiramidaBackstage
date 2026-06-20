@@ -152,6 +152,7 @@ export function ImageGallery({
             return (
               <button
                 key={glyph}
+                aria-label={dir === 0 ? 'Previous image' : 'Next image'}
                 onClick={() => setActiveIdx((i) => dir === 0 ? Math.max(0, i - 1) : Math.min(items.length - 1, i + 1))}
                 disabled={disabled}
                 style={{

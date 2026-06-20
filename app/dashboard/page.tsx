@@ -238,7 +238,7 @@ export default function DashboardPage() {
             {/* Value + ring */}
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 16 }}>
               <div>
-                <p style={{ fontFamily: D, fontSize: '46px', fontWeight: 500, color: alert ? '#e63946' : '#1a1a1a', margin: 0, lineHeight: 1, letterSpacing: '-0.025em' }}>
+                <p style={{ fontFamily: M, fontSize: '46px', fontWeight: 500, color: alert ? '#e63946' : '#1a1a1a', margin: 0, lineHeight: 1, letterSpacing: '-0.025em' }}>
                   {data ? value : <span style={{ color: '#d8d5cc' }}>—</span>}
                 </p>
                 <p style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', margin: '4px 0 0', letterSpacing: '0.08em' }}>{sub}</p>

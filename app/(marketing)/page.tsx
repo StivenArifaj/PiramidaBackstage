@@ -18,8 +18,8 @@ const HERO_STATS = [
 ]
 
 // ─── Interlude: structural bridge between the two flythroughs ─────────────
-const INTERLUDE_LINES = [
-  { n: '01', label: '80+ spaces', detail: 'Four hero spaces, 16 exterior boxes, and radial A-ring extensions across 5 floors.' },
+const INTERLUDE_LINES: { n: string; label: React.ReactNode; detail: string }[] = [
+  { n: '01', label: <><span style={{ fontFamily: 'var(--font-mono)' }}>80+</span> spaces</>, detail: 'Four hero spaces, 16 exterior boxes, and radial A-ring extensions across 5 floors.' },
   { n: '02', label: 'Auto-generated quotes', detail: 'Event requests become operational plans with live pricing and asset reservation.' },
   { n: '03', label: 'Conflict detection', detail: 'Real-time tracking of scheduling conflicts across 200+ shared operational assets.' },
 ]

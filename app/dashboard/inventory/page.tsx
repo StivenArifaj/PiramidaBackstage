@@ -125,7 +125,7 @@ export default function InventoryPage() {
             <div style={{ paddingTop: 2, color: '#1a1a1a', flexShrink: 0 }}>{icon}</div>
             <div>
               <p style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9a9890', margin: '0 0 8px' }}>{label}</p>
-              <p style={{ fontFamily: D, fontSize: '40px', fontWeight: 500, color: '#1a1a1a', margin: 0, lineHeight: 1, letterSpacing: '-0.02em' }}>{value}</p>
+              <p style={{ fontFamily: M, fontSize: '40px', fontWeight: 500, color: '#1a1a1a', margin: 0, lineHeight: 1, letterSpacing: '-0.02em' }}>{value}</p>
               <p style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', margin: '4px 0 0', letterSpacing: '0.06em' }}>{sub}</p>
             </div>
           </motion.div>
