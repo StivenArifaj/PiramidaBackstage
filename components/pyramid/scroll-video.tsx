@@ -196,52 +196,95 @@ export function ScrollVideo({
           </div>
         )}
 
-        {/* ── LIQUID GLASS WATERMARK MASK — z:10, sits BEHIND all text overlays ──
-            Covers "BSM 4K BLEDI STRAKOSHA MEDIA" baked into video frames.
-            Positioned here in the DOM (before text blocks) so it is naturally
-            lower in the stacking context; explicit zIndex:10 < text zIndex:20.
-            Rounded corners are an authorised design-system exception for this
-            specific element only (master-plan override).                        */}
+        {/* ── GLASS HERO PLATE ─────────────────────────────────────────────────
+            Master-plan override: rounded-3xl (borderRadius 24px) authorized.
+            This is the single source of truth for hero typography AND the
+            watermark obliterator. The H1, subtitle, and HUD label all live
+            INSIDE this plate so text and glass are always perfectly aligned.
+
+            Dimensions chosen to completely eclipse the BSM watermark:
+              bottom 10%  ·  85vw  ·  max-w 1024px  ·  min-h 280px  ·  p 48px
+            Glass: backdrop-blur-2xl (40px)  ·  bg-white/10  ·  border-white/20  */}
         <div
-          aria-hidden="true"
           style={{
             position: 'absolute',
             left: '50%',
             transform: 'translateX(-50%)',
-            bottom: '8%',
-            width: '90%',
-            maxWidth: '800px',
-            height: '180px',
+            bottom: '10%',
+            width: '85%',
+            maxWidth: '1024px',
+            minHeight: '280px',
+            padding: '48px',
             borderRadius: '24px',
             backdropFilter: 'blur(40px)',
             WebkitBackdropFilter: 'blur(40px)',
-            backgroundColor: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+            backgroundColor: 'rgba(255,255,255,0.10)',
+            border: '1px solid rgba(255,255,255,0.20)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '8px',
-            zIndex: 10,
+            textAlign: 'center',
+            gap: 0,
+            zIndex: 20,
             pointerEvents: 'none',
           }}
         >
-          <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'var(--color-lime)', opacity: 0.7, flexShrink: 0 }} />
+          {/* HUD status row — subtle, doesn't compete with H1 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '22px' }}>
+            <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'var(--color-lime)', flexShrink: 0 }} />
+            <p style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '8px',
+              letterSpacing: '0.20em',
+              textTransform: 'uppercase',
+              color: 'rgba(245,245,240,0.38)',
+              margin: 0,
+            }}>
+              [ PIRAMIDA BACKSTAGE // FEED ACTIVE ]
+            </p>
+          </div>
+
+          {/* Overlay label (location / date metadata) */}
+          {overlayLabel && (
+            <p style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '9px',
+              letterSpacing: '0.22em',
+              textTransform: 'uppercase',
+              color: 'rgba(245,245,240,0.50)',
+              margin: '0 0 18px',
+            }}>
+              {overlayLabel}
+            </p>
+          )}
+
+          {/* Main hero title — centered, full-width inside the plate */}
+          <h1 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(48px, 6vw, 88px)',
+            fontWeight: 500,
+            letterSpacing: '-0.02em',
+            color: 'var(--color-concrete-bone)',
+            margin: 0,
+            lineHeight: 0.95,
+          }}>
+            {overlayTitle}
+          </h1>
+
+          {/* Subtitle */}
           <p style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: '8px',
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
-            color: 'rgba(245,245,240,0.38)',
-            margin: 0,
-            textAlign: 'center',
+            fontSize: '11px',
+            letterSpacing: '0.10em',
+            color: 'rgba(245,245,240,0.42)',
+            margin: '18px 0 0',
           }}>
-            [ PIRAMIDA BACKSTAGE // FEED ACTIVE ]
+            {overlaySubtitle}
           </p>
         </div>
 
-        {/* Frame counter — zIndex:20, above glass mask */}
+        {/* Frame counter — top right, above everything */}
         <p
           ref={counterRef}
           style={{
@@ -255,65 +298,16 @@ export function ScrollVideo({
             color: 'rgba(245,245,240,0.36)',
             margin: 0,
             pointerEvents: 'none',
-            zIndex: 20,
+            zIndex: 30,
           }}
         >
           {`FRAME ${String(reversed ? frameCount : 1).padStart(4, '0')} / ${String(frameCount).padStart(4, '0')} · SCROLL ↓`}
         </p>
 
-        {/* Text block — zIndex:20, always above glass mask */}
-        <div
-          style={{
-            position: 'absolute',
-            left: '48px',
-            bottom: '56px',
-            pointerEvents: 'none',
-            zIndex: 20,
-          }}
-        >
-          {overlayLabel && (
-            <p
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '9px',
-                letterSpacing: '0.22em',
-                textTransform: 'uppercase',
-                color: 'rgba(245,245,240,0.48)',
-                margin: '0 0 16px',
-              }}
-            >
-              {overlayLabel}
-            </p>
-          )}
-          <h1
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(56px, 7vw, 96px)',
-              fontWeight: 500,
-              letterSpacing: '-0.02em',
-              color: 'var(--color-concrete-bone)',
-              margin: 0,
-              lineHeight: 0.95,
-            }}
-          >
-            {overlayTitle}
-          </h1>
-          <p
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '11px',
-              letterSpacing: '0.1em',
-              color: 'rgba(245,245,240,0.4)',
-              margin: '14px 0 0',
-            }}
-          >
-            {overlaySubtitle}
-          </p>
-        </div>
-
-        {/* Slot for absolutely-positioned overlays — zIndex:20, above glass mask.
-            No pointerEvents override — children manage their own (e.g. Link buttons). */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 20 }}>
+        {/* Children slot — stats panels, CTAs, badges — zIndex:30, above glass plate.
+            Wrapper is position:absolute inset:0 so children's own absolute
+            positions resolve against the full viewport, not the glass plate. */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 30 }}>
           {children}
         </div>
 
