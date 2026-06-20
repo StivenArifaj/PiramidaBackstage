@@ -116,13 +116,13 @@ Both read `/types/` freely. Backend Dev owns writing to it.
 - **Zod v4 compatibility**: The project has `zod ^4.4.3`. Schemas use only v3-compatible APIs (`z.object`, `z.string`, `z.coerce.number`, `z.enum`, `.transform`, `.optional`, `.safeParse`). Avoided `.flatten()` on ZodError since that API changed in v4.
 - **Tailwind v4, not v3**: `create-next-app` installed Tailwind v4. There is NO `tailwind.config.ts` — all tokens live in `app/globals.css` inside `@theme {}`. This is correct. Do not create a `tailwind.config.ts`.
 - **`overflowX: 'clip'` on landing page root div**: Using `clip` not `hidden` — `overflow: hidden` creates a new scroll context which silently kills `position: sticky` children. `clip` clips overflow without creating a scroll context.
-- **Ground Floor SVG**: Strict octagonal geometry using `octPt()` / `octSector()`, pure `<polygon>` elements. A1–A19 all clickable, navigate via `router.push('/spaces/[code]')`.
+- **Ground Floor SVG**: Strict octagonal geometry using `octPt()` / `octSector()`, pure `<polygon>` elements. A1–A19 all clickable, navigate via `router.push('/spaces/[code]')`. viewBox `0 0 1000 1000` (scaled ×1.25 from original `800 800`), center at 500,500. All radii proportionally scaled.
 - **Chatbot on Groq**: `openai` SDK with `baseURL: 'https://api.groq.com/openai/v1'`, model `llama-3.3-70b-versatile`. Tools in `lib/ai/tools.ts` are OpenAI `ChatCompletionTool` format. Old `geminiTools` export is aliased to `groqTools` for backward compat. `lib/ai/gemini.ts` is dead code (no longer imported).
 - **Reference image extensions are `.png`, not `.jpg`**: The 11 source images were macOS screenshots, all PNG.
 - **Landing page uses GSAP ScrollVideo**: 265 frames at `/public/frames/detail-sample/`, `reversed=true`. Space detail: 300 frames at `/public/frames/hero/`, `reversed=true`.
 - **FloorSelector background (V1)**: `mvrdv-28.jpg` (1333×1000px), aspect-ratio locked. Pill positions (% from top): roof 7%, l3 30%, l0 58%, b1 76%, exterior 64% left / 12% top.
 - **FloorSelector background (V2 — current)**: `section-bb.jpeg` (1600×910px, `public/sketches/`). Architectural cross-section from official MVRDV drawings. Pill positions (% from top): roof 35%, l3 42%, l0 50%, b1 66%, exterior 50% top / 12% left. `background-size: contain` (not cover) to prevent cropping.
-- **Plan sketch backgrounds**: Each floor's SVG now sits inside an absolute container with the official plan sketch as CSS background. SVG viewBox stays 0 0 800 800 with `preserveAspectRatio="xMidYMid meet"` for centered alignment. Fine-tuning of polygon coordinates to match colored boxes in the sketches is a follow-up task.
+- **Plan sketch backgrounds**: Each floor's SVG sits inside an absolute container with the official plan sketch as CSS background. Ground floor SVG viewBox is `0 0 1000 1000`; other floors use `0 0 800 800`. All use `preserveAspectRatio="xMidYMid meet"` for centered alignment.
 - **Image extension note**: Official sketches in `public/sketches/` are `.jpeg` (not `.jpg` or `.png`).
 
 ## Reference files index
