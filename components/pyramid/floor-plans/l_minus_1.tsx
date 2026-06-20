@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { SpaceWithAvailability, AvailabilityState } from '@/types/api'
 
 // Mapper % → SVG viewBox (1600×1131)
@@ -59,6 +60,7 @@ interface LMinusOneFloorPlanProps {
 }
 
 export function LMinusOneFloorPlan({ spaces = [], onSpaceClick }: LMinusOneFloorPlanProps) {
+  const router = useRouter()
   const [hovered, setHovered] = useState<string | null>(null)
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
 
@@ -69,7 +71,7 @@ export function LMinusOneFloorPlan({ spaces = [], onSpaceClick }: LMinusOneFloor
   }
 
   function handleClick(code: string) {
-    onSpaceClick?.(code)
+    router.push(`/spaces/${code.toLowerCase()}`)
   }
 
   function handleMouseEnter(e: React.MouseEvent<SVGGElement>, def: SpaceDef) {
@@ -87,11 +89,11 @@ export function LMinusOneFloorPlan({ spaces = [], onSpaceClick }: LMinusOneFloor
   }
 
   return (
-    <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
+    <div className="relative w-full h-full">
       <svg
         viewBox="0 0 1415 836"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full"
+        className="absolute inset-0 w-full h-full z-50"
         preserveAspectRatio="xMidYMid meet"
         style={{ background: 'transparent', pointerEvents: 'none' }}
         aria-label="Level B-1 (Basement) — Pyramid of Tirana"
@@ -111,7 +113,6 @@ export function LMinusOneFloorPlan({ spaces = [], onSpaceClick }: LMinusOneFloor
               tabIndex={0}
               aria-label={`${def.code} — ${availability} — ${def.capacity} pax`}
               style={{ cursor: 'pointer' }}
-              onClick={() => handleClick(def.code)}
               onMouseEnter={(e) => handleMouseEnter(e, def)}
               onMouseLeave={() => { setHovered(null); setTooltip(null) }}
               onKeyDown={(e) => e.key === 'Enter' && handleClick(def.code)}
@@ -123,7 +124,8 @@ export function LMinusOneFloorPlan({ spaces = [], onSpaceClick }: LMinusOneFloor
                 stroke="#1a1a1a"
                 strokeWidth={isHov ? 3 : 1.5}
                 strokeLinejoin="round"
-                style={{ pointerEvents: 'auto', cursor: 'pointer' }}
+                style={{ pointerEvents: 'all', cursor: 'pointer' }}
+                onClick={() => handleClick(def.code)}
               />
               {isHov && (
                 <polygon

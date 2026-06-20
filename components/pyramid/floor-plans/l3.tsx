@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { SpaceWithAvailability, AvailabilityState } from '@/types/api'
 
 // Mapper % → SVG viewBox (1600×1131)
@@ -62,6 +63,7 @@ interface L3FloorPlanProps {
 }
 
 export function L3FloorPlan({ spaces = [], onSpaceClick }: L3FloorPlanProps) {
+  const router = useRouter()
   const [hovered, setHovered] = useState<string | null>(null)
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
 
@@ -86,11 +88,11 @@ export function L3FloorPlan({ spaces = [], onSpaceClick }: L3FloorPlanProps) {
   }
 
   return (
-    <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
+    <div className="relative w-full h-full">
       <svg
         viewBox="0 0 1415 1081"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full"
+        className="absolute inset-0 w-full h-full z-50"
         preserveAspectRatio="xMidYMid meet"
         style={{ background: 'transparent', pointerEvents: 'none' }}
         aria-label="3rd Floor — Pyramid of Tirana"
@@ -110,10 +112,9 @@ export function L3FloorPlan({ spaces = [], onSpaceClick }: L3FloorPlanProps) {
               tabIndex={0}
               aria-label={`${def.code} — ${availability} — ${def.capacity} pax`}
               style={{ cursor: 'pointer' }}
-              onClick={() => onSpaceClick?.(def.code)}
               onMouseEnter={(e) => handleMouseEnter(e, def)}
               onMouseLeave={() => { setHovered(null); setTooltip(null) }}
-              onKeyDown={(e) => e.key === 'Enter' && onSpaceClick?.(def.code)}
+              onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/spaces/${def.code.toLowerCase()}`) }}
             >
               <polygon
                 points={svgPoints}
@@ -122,7 +123,8 @@ export function L3FloorPlan({ spaces = [], onSpaceClick }: L3FloorPlanProps) {
                 stroke="#1a1a1a"
                 strokeWidth={isHov ? 3 : 1.5}
                 strokeLinejoin="round"
-                style={{ pointerEvents: 'auto', cursor: 'pointer' }}
+                style={{ pointerEvents: 'all', cursor: 'pointer' }}
+                onClick={() => router.push(`/spaces/${def.code.toLowerCase()}`)}
               />
               {isHov && (
                 <polygon
