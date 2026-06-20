@@ -153,6 +153,25 @@ export async function getEventById(id: string): Promise<Event | null> {
   return dbRowToEvent(data[0])
 }
 
+// ─── getEventByRef ────────────────────────────────────────────────────────────
+
+export async function getEventByRef(ref: string): Promise<Event | null> {
+  if (!isSupabaseConfigured()) {
+    return MOCK_EVENTS.find(e => e.reference_code === ref.toUpperCase()) ?? null
+  }
+
+  const db = createAdminClient()
+  const { data, error } = await db
+    .from('events')
+    .select(EVENT_SELECT)
+    .eq('reference_code', ref.toUpperCase())
+    .limit(1)
+
+  if (error) throw new Error(error.message)
+  if (!data?.length) return null
+  return dbRowToEvent(data[0])
+}
+
 // ─── getTasksForEvent ─────────────────────────────────────────────────────────
 
 export async function getTasksForEvent(event_id: string): Promise<Task[]> {
