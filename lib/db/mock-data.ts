@@ -59,6 +59,7 @@ export const MOCK_SPACES: SpaceWithAvailability[] = [
   ...Array.from({ length: 15 }, (_, i) => {
     const code = `A${i + 1}`
     const states: AvailabilityState[] = ['available', 'available', 'available', 'reserved', 'pending', 'available', 'available', 'blocked', 'available', 'available', 'reserved', 'available', 'available', 'pending', 'available']
+    const refs = ['/references/current-site-plan-ground.png', '/references/interior-boxes-detail.png', '/references/aerial-three-quarter-a.png', '/references/front-elevation.png', '/references/entrance-view.png']
     return {
       id: `ext-${code.toLowerCase()}`, code, name: `Space ${code}`, name_sq: `Hapësira ${code}`,
       floor: 'l0' as const, category: 'extension' as const,
@@ -68,7 +69,7 @@ export const MOCK_SPACES: SpaceWithAvailability[] = [
       setup_types: ['roundtable', 'standing', 'flex'],
       features: i % 3 === 0 ? ['projector', 'natural_light'] : ['natural_light'],
       description: `Extension room on the ground-floor radial ring. Flexible layout with 2px concrete borders visible on three sides.`,
-      photo_urls: [],
+      photo_urls: [refs[i % refs.length]],
       availability: states[i],
     }
   }),

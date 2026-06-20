@@ -313,7 +313,7 @@ export default function DashboardPage() {
                     <path d="M3.5 6l2 2 3-3" stroke="#5a6612" strokeWidth="1.4" />
                   </svg>
                   <span style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', letterSpacing: '0.08em' }}>
-                    no events today — next event in {Math.ceil((UPCOMING[0].date.getTime() - Date.now()) / 86400000)} day(s) · {UPCOMING[0].ref}
+                    {UPCOMING.length > 0 ? `no events today — next event in ${Math.ceil((UPCOMING[0].date.getTime() - Date.now()) / 86400000)} day(s) · ${UPCOMING[0].ref}` : 'no upcoming events scheduled'}
                   </span>
                 </div>
               </>
