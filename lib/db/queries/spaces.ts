@@ -12,6 +12,9 @@ import type { DbSpace } from '@/types/db'
 import { createAdminClient } from '../client'
 import { MOCK_SPACES, MOCK_EVENTS, getAvailability } from '../mock-data'
 
+// Tracks which space codes are toggled off in mock (dev) mode
+const INACTIVE_MOCK_CODES = new Set<string>()
+
 // ─── Supabase availability check ─────────────────────────────────────────────
 
 function isSupabaseConfigured(): boolean {
@@ -39,6 +42,7 @@ function dbSpaceToApi(row: DbSpace, availability: AvailabilityState = 'available
     ...(row.plan_y !== null && { plan_y: Number(row.plan_y) }),
     ...(row.description !== null && { description: row.description }),
     photo_urls: row.photo_urls ?? [],
+    is_active: row.is_active,
     availability,
   }
 }
@@ -124,23 +128,29 @@ export async function getSpaceByCode(code: string): Promise<GetSpaceResponse | n
   if (!isSupabaseConfigured()) {
     const space = MOCK_SPACES.find(s => s.code === upper)
     if (!space) return null
-    const upcoming_bookings = MOCK_EVENTS
-      .filter(e =>
-        e.spaces.some(s => s.code === upper) &&
-        ['confirmed', 'quoted', 'in_progress'].includes(e.status)
-      )
-      .map(e => ({ start_at: e.start_at, end_at: e.end_at, status: e.status }))
-    return { space, upcoming_bookings }
+    const isActive = !INACTIVE_MOCK_CODES.has(upper)
+    const availability: AvailabilityState = isActive
+      ? getAvailability(space.id, undefined, undefined)
+      : 'blocked'
+    const upcoming_bookings = isActive
+      ? MOCK_EVENTS
+          .filter(e =>
+            e.spaces.some(s => s.code === upper) &&
+            ['confirmed', 'quoted', 'in_progress'].includes(e.status)
+          )
+          .map(e => ({ start_at: e.start_at, end_at: e.end_at, status: e.status }))
+      : []
+    return { space: { ...space, is_active: isActive, availability }, upcoming_bookings }
   }
 
   try {
     const db = createAdminClient()
 
+    // Fetch without is_active filter so inactive spaces still render (with blocked availability)
     const { data: rows, error } = await db
       .from('spaces')
       .select('*')
       .eq('code', upper)
-      .eq('is_active', true)
       .limit(1)
 
     if (error) throw new Error(error.message)
@@ -173,7 +183,9 @@ export async function getSpaceByCode(code: string): Promise<GetSpaceResponse | n
     }
 
     let availability: AvailabilityState = 'available'
-    if (upcoming_bookings.length) {
+    if (!row.is_active) {
+      availability = 'blocked'
+    } else if (upcoming_bookings.length) {
       const first = upcoming_bookings[0]
       availability = first.status === 'quoted' ? 'pending' : 'reserved'
     }
@@ -259,5 +271,77 @@ export async function searchAvailableSpaces(params: AvailabilityQuery): Promise<
       .map(m => m.space)
 
     return { matches, suggested }
+  }
+}
+
+// ─── listAllSpacesAdmin — no is_active filter, for admin dashboard ─────────────
+
+export async function listAllSpacesAdmin(): Promise<SpaceWithAvailability[]> {
+  if (!isSupabaseConfigured()) {
+    return MOCK_SPACES.map(s => ({
+      ...s,
+      is_active: !INACTIVE_MOCK_CODES.has(s.code),
+      availability: INACTIVE_MOCK_CODES.has(s.code) ? 'blocked' as AvailabilityState : getAvailability(s.id, undefined, undefined),
+    }))
+  }
+
+  try {
+    const db = createAdminClient()
+    const { data, error } = await db.from('spaces').select('*').order('floor').order('code')
+    if (error) throw new Error(error.message)
+    return ((data ?? []) as DbSpace[]).map(row =>
+      dbSpaceToApi(row, row.is_active ? 'available' : 'blocked')
+    )
+  } catch (err) {
+    console.warn('[listAllSpacesAdmin] Supabase unavailable, falling back to mock data:', (err as Error).message)
+    return MOCK_SPACES.map(s => ({
+      ...s,
+      is_active: !INACTIVE_MOCK_CODES.has(s.code),
+      availability: INACTIVE_MOCK_CODES.has(s.code) ? 'blocked' as AvailabilityState : getAvailability(s.id, undefined, undefined),
+    }))
+  }
+}
+
+// ─── updateSpaceStatus — admin kill switch ────────────────────────────────────
+
+export async function updateSpaceStatus(code: string, is_active: boolean): Promise<boolean> {
+  const upper = code.toUpperCase()
+
+  if (!isSupabaseConfigured()) {
+    if (is_active) {
+      INACTIVE_MOCK_CODES.delete(upper)
+    } else {
+      INACTIVE_MOCK_CODES.add(upper)
+    }
+    return true
+  }
+
+  try {
+    const db = createAdminClient()
+    const { error } = await db.from('spaces').update({ is_active }).eq('code', upper)
+    if (error) throw new Error(error.message)
+    return true
+  } catch (err) {
+    console.warn('[updateSpaceStatus] failed:', (err as Error).message)
+    return false
+  }
+}
+
+// ─── getSpaceIsActive — fast check before booking creation ───────────────────
+
+export async function getSpaceIsActive(code: string): Promise<boolean> {
+  const upper = code.toUpperCase()
+
+  if (!isSupabaseConfigured()) {
+    return !INACTIVE_MOCK_CODES.has(upper)
+  }
+
+  try {
+    const db = createAdminClient()
+    const { data } = await db.from('spaces').select('is_active').eq('code', upper).limit(1)
+    const row = ((data ?? []) as Array<{ is_active: boolean }>)[0]
+    return row?.is_active ?? true
+  } catch {
+    return true
   }
 }

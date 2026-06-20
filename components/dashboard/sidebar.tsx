@@ -31,7 +31,7 @@ const NAV = [
     ),
   },
   {
-    href: '/spaces', label: 'Spaces',
+    href: '/dashboard/spaces', label: 'Spaces',
     icon: (
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
         <polygon points="7,1 13,13 1,13" stroke="currentColor" strokeWidth="1.4" fill="none" />

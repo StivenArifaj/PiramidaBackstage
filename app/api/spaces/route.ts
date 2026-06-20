@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 import type { ListSpacesResponse } from '@/types/api'
-import { listSpaces } from '@/lib/db/queries/spaces'
+import { listSpaces, listAllSpacesAdmin } from '@/lib/db/queries/spaces'
 
 const querySchema = z.object({
   floor: z.enum(['roof', 'l3', 'l0', 'l_minus_1', 'exterior']).optional(),
@@ -10,6 +10,7 @@ const querySchema = z.object({
   available_to: z.string().min(1).optional(),
   min_capacity: z.coerce.number().int().positive().optional(),
   features: z.string().transform(v => v.split(',').filter(Boolean)).optional(),
+  include_inactive: z.string().optional(),
 })
 
 export async function GET(req: NextRequest) {
@@ -19,6 +20,12 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    // Admin flag: return all spaces regardless of is_active
+    if (parsed.data.include_inactive === 'true') {
+      const spaces = await listAllSpacesAdmin()
+      return NextResponse.json({ spaces })
+    }
+
     const spaces = await listSpaces(parsed.data)
     const response: ListSpacesResponse = { spaces }
     return NextResponse.json(response)

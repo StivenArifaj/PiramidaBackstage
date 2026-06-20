@@ -26,6 +26,7 @@ export interface Space {
   plan_y?: number
   description?: string
   photo_urls: string[]
+  is_active?: boolean
 }
 
 export interface SpaceWithAvailability extends Space {

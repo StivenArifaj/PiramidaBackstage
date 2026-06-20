@@ -85,6 +85,53 @@ export function BookingPanel({ space }: { space: SpaceWithAvailability }) {
     }
   }
 
+  // ── Maintenance / Kill Switch lockout — no requests can pass through ─────────
+  if (space.availability === 'blocked' || space.is_active === false) {
+    return (
+      <div style={{ border: '2px solid #f4a261', padding: '32px', backgroundColor: 'var(--color-concrete-bone)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="1" y="1" width="16" height="16" stroke="#f4a261" strokeWidth="1.6"/>
+            <line x1="5" y1="9" x2="13" y2="9" stroke="#f4a261" strokeWidth="2"/>
+          </svg>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#f4a261', margin: 0 }}>
+            space under maintenance
+          </p>
+        </div>
+
+        <p style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 500, color: 'var(--color-concrete-char)', margin: '0 0 12px', lineHeight: 1.3 }}>
+          This space is currently unavailable for bookings.
+        </p>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--color-concrete-gray)', margin: '0 0 24px', lineHeight: 1.7 }}>
+          The Ops Team has taken this space offline for scheduled maintenance or preparation. Please check back soon or explore other available spaces.
+        </p>
+
+        <div style={{ backgroundColor: 'rgba(244,162,97,0.08)', border: '1px solid rgba(244,162,97,0.3)', padding: '14px 16px', marginBottom: '20px' }}>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '8.5px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#f4a261', margin: '0 0 4px' }}>
+            admin notice
+          </p>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--color-concrete-gray)', margin: 0 }}>
+            Bookings and priority requests are disabled while this space is in maintenance mode.
+          </p>
+        </div>
+
+        <a
+          href="/spaces"
+          style={{
+            display: 'block', textAlign: 'center',
+            fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 500,
+            letterSpacing: '0.16em', textTransform: 'uppercase',
+            backgroundColor: 'var(--color-concrete-char)',
+            color: 'var(--color-lime)',
+            padding: '14px', textDecoration: 'none',
+          }}
+        >
+          explore other spaces →
+        </a>
+      </div>
+    )
+  }
+
   // ── Conflict / Red Code view ─────────────────────────────────────────────────
   if (uiState === 'conflict') {
     return (

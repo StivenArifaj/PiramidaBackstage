@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createEvent, listEvents, insertQuote, updateEvent, insertTasks, checkSpaceConflict } from '@/lib/db/queries/events'
-import { searchAvailableSpaces } from '@/lib/db/queries/spaces'
+import { searchAvailableSpaces, getSpaceIsActive } from '@/lib/db/queries/spaces'
 import { generateQuote } from '@/lib/pricing/quote'
 import { generateTasks } from '@/lib/tasks/generate'
 import type { CreateEventResponse, ListEventsResponse } from '@/types/api'
@@ -55,6 +55,17 @@ export async function POST(req: Request) {
         { error: 'end_at must be after start_at' },
         { status: 400 }
       )
+    }
+
+    // Maintenance gate — no bookings allowed for inactive spaces, even priority requests
+    if (data.preferred_space_codes?.length) {
+      const active = await getSpaceIsActive(data.preferred_space_codes[0])
+      if (!active) {
+        return NextResponse.json(
+          { error: 'maintenance', message: 'Space is currently closed for maintenance.' },
+          { status: 403 }
+        )
+      }
     }
 
     // Conflict check — skip for priority requests (they intentionally override)
