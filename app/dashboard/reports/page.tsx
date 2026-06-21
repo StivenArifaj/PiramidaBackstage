@@ -106,9 +106,16 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function monthAgoStr() {
+// Default to a 2-year window (1 year back + 1 year forward) so future bookings appear
+function defaultStartStr() {
   const d = new Date()
-  d.setMonth(d.getMonth() - 1)
+  d.setFullYear(d.getFullYear() - 1)
+  return d.toISOString().slice(0, 10)
+}
+
+function defaultEndStr() {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() + 1)
   return d.toISOString().slice(0, 10)
 }
 
@@ -118,9 +125,9 @@ export default function ReportsPage() {
   const [activeFloor, setActiveFloor]         = useState<FloorId | null>(null)
   const [selectedSpaces, setSelectedSpaces]   = useState<string[]>([])
 
-  // Date range
-  const [startDate, setStartDate] = useState<string>(monthAgoStr())
-  const [endDate,   setEndDate]   = useState<string>(todayStr())
+  // Date range — wide default so future venue bookings are always visible
+  const [startDate, setStartDate] = useState<string>(defaultStartStr())
+  const [endDate,   setEndDate]   = useState<string>(defaultEndStr())
 
   // Report state
   const [report,    setReport]    = useState<ReportData | null>(null)
@@ -163,11 +170,12 @@ export default function ReportsPage() {
     const now = new Date()
     const end = now.toISOString().slice(0, 10)
     const from = new Date(now)
-    if (preset === 'week')    from.setDate(now.getDate() - 7)
-    if (preset === 'month')   from.setMonth(now.getMonth() - 1)
-    if (preset === 'quarter') from.setMonth(now.getMonth() - 3)
+    const to   = new Date(now)
+    if (preset === 'week')    { from.setDate(now.getDate() - 7);    to.setDate(now.getDate() + 7) }
+    if (preset === 'month')   { from.setMonth(now.getMonth() - 1);  to.setMonth(now.getMonth() + 1) }
+    if (preset === 'quarter') { from.setMonth(now.getMonth() - 3);  to.setMonth(now.getMonth() + 3) }
     setStartDate(from.toISOString().slice(0, 10))
-    setEndDate(end)
+    setEndDate(to.toISOString().slice(0, 10))
   }
 
   return (

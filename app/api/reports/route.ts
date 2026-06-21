@@ -140,44 +140,61 @@ export async function GET(req: Request) {
     // ── Live Supabase path ───────────────────────────────────────────────────
     const db = createAdminClient()
 
+    // Fetch all quotes with their events — no PostgREST filters on joined columns
+    // (chained .neq/.gte/.lte on embedded tables are unreliable in Supabase JS v2).
+    // All filtering (date range, status, space codes) happens in JS below.
     const { data: quotesRaw, error: qErr } = await db
       .from('quotes')
       .select(`
-        id, total, accepted_at, event_id,
+        id, total, accepted_at, event_id, created_at,
         events!inner (
           id, reference_code, title, organizer_name,
           status, start_at, end_at, attendees_count
         )
       `)
-      .neq('events.status', 'cancelled')
-      .gte('events.start_at', from)
-      .lte('events.start_at', to)
+      .order('created_at', { ascending: false })
 
     if (qErr) throw new Error(qErr.message)
 
-    type QuoteRow = {
-      id: string; total: number; accepted_at: string | null; event_id: string
-      events: {
-        id: string; reference_code: string; title: string; organizer_name: string
-        status: string; start_at: string; end_at: string; attendees_count: number
-      }
+    type EventRow = {
+      id: string; reference_code: string; title: string; organizer_name: string
+      status: string; start_at: string; end_at: string; attendees_count: number
     }
-    const quotes = (quotesRaw ?? []) as unknown as QuoteRow[]
+    type QuoteRow = {
+      id: string; total: number; accepted_at: string | null
+      event_id: string; created_at: string
+      events: EventRow
+    }
 
-    let filteredQuotes = quotes
+    // Supabase may return the embedded resource as an object or single-element array
+    // depending on FK cardinality. Normalise to always be an object.
+    const allQuotes: QuoteRow[] = ((quotesRaw ?? []) as unknown as Array<QuoteRow & { events: EventRow | EventRow[] }>)
+      .map(q => ({ ...q, events: Array.isArray(q.events) ? q.events[0] : q.events }))
+      .filter(q => q.events != null)
+
+    // JS-side filters: cancelled status + date range
+    const fromMs = new Date(from).getTime()
+    const toMs   = new Date(to).getTime()
+    let filteredQuotes = allQuotes.filter(q => {
+      if (q.events.status === 'cancelled') return false
+      const t = new Date(q.events.start_at).getTime()
+      return t >= fromMs && t <= toMs
+    })
+
     if (spaceCodes.length > 0) {
       const { data: esRows } = await db
         .from('event_spaces')
         .select('event_id, spaces!inner(code)')
         .in('spaces.code', spaceCodes)
       const matchedEventIds = new Set(((esRows ?? []) as Array<{ event_id: string }>).map(r => r.event_id))
-      filteredQuotes = quotes.filter(q => matchedEventIds.has(q.event_id))
+      filteredQuotes = filteredQuotes.filter(q => matchedEventIds.has(q.event_id))
     }
 
+    // Deduplicate: one row per event, keeping the most recently created quote
     const eventMap = new Map<string, QuoteRow>()
     for (const q of filteredQuotes) {
       const existing = eventMap.get(q.event_id)
-      if (!existing || new Date(q.id) > new Date(existing.id)) eventMap.set(q.event_id, q)
+      if (!existing || q.created_at > existing.created_at) eventMap.set(q.event_id, q)
     }
     const dedupedQuotes = Array.from(eventMap.values())
       .sort((a, b) => new Date(b.events.start_at).getTime() - new Date(a.events.start_at).getTime())

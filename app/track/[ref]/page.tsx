@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { BrandStrip } from '@/components/ui/brand-strip'
+import { QRCodeCanvas } from 'qrcode.react'
 
 const M = 'var(--font-mono)'
 const D = 'var(--font-display)'
@@ -53,6 +54,8 @@ export default function TrackPage() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [showQR, setShowQR] = useState(false)
+  const qrRef = useRef<HTMLCanvasElement | null>(null)
 
   useEffect(() => {
     fetch(`/api/track/${ref}`)
@@ -71,6 +74,16 @@ export default function TrackPage() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
+  }, [ref])
+
+  const handleDownloadQR = useCallback(() => {
+    const canvas = document.querySelector<HTMLCanvasElement>('#qr-ticket-canvas')
+    if (!canvas) return
+    const url = canvas.toDataURL('image/png')
+    const a   = document.createElement('a')
+    a.href     = url
+    a.download = `ticket-${ref}.png`
+    a.click()
   }, [ref])
 
   if (loading) {
@@ -236,6 +249,61 @@ export default function TrackPage() {
                 <p style={{ fontFamily: M, fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--color-lime)', margin: '0 0 3px' }}>confirmed</p>
                 <p style={{ fontFamily: M, fontSize: '11px', color: 'rgba(245,245,240,0.5)', margin: 0 }}>Your event is locked in. See you at the Pyramid.</p>
               </div>
+            </div>
+
+            {/* QR Ticket */}
+            <div style={{ border: '1px solid rgba(200,218,43,0.2)', padding: '24px' }}>
+              <p style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(245,245,240,0.28)', margin: '0 0 16px' }}>entry ticket</p>
+              <p style={{ fontFamily: M, fontSize: '11px', color: 'rgba(245,245,240,0.45)', margin: '0 0 16px', lineHeight: 1.6 }}>
+                Show this QR code at the venue entrance to be checked in by the ops team.
+              </p>
+              <button
+                onClick={() => setShowQR(v => !v)}
+                style={{
+                  fontFamily: M, fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase',
+                  background: showQR ? 'var(--color-lime)' : 'transparent',
+                  color: showQR ? 'var(--color-lime-ink)' : 'var(--color-lime)',
+                  border: '1px solid var(--color-lime)',
+                  padding: '11px 24px', cursor: 'pointer', transition: 'background 0.2s, color 0.2s',
+                }}
+              >
+                {showQR ? '▲ hide qr code' : '▼ show qr code'}
+              </button>
+              <AnimatePresence>
+                {showQR && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25 }}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 16 }}>
+                      <div style={{ background: '#fff', padding: 16, display: 'inline-block' }}>
+                        <QRCodeCanvas
+                          id="qr-ticket-canvas"
+                          value={typeof window !== 'undefined' ? window.location.origin + '/dashboard/events/' + ref : '/dashboard/events/' + ref}
+                          size={200}
+                          level="H"
+                          ref={qrRef as React.Ref<HTMLCanvasElement>}
+                        />
+                      </div>
+                      <p style={{ fontFamily: M, fontSize: '9px', color: 'rgba(245,245,240,0.3)', margin: 0, letterSpacing: '0.06em', lineHeight: 1.6 }}>
+                        Scan at venue entrance · Ref: {ref}
+                      </p>
+                      <button
+                        onClick={handleDownloadQR}
+                        style={{
+                          fontFamily: M, fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase',
+                          background: '#1a1a1a', color: '#c8da2b',
+                          border: '1px solid rgba(245,245,240,0.15)',
+                          padding: '10px 20px', cursor: 'pointer',
+                        }}
+                      >
+                        ↓ download ticket
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Share event */}

@@ -93,6 +93,18 @@ const NAV = [
       </svg>
     ),
   },
+  {
+    href: '/dashboard/scanner', label: 'Scanner',
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="1" width="4" height="4" stroke="currentColor" strokeWidth="1.3"/>
+        <rect x="9" y="1" width="4" height="4" stroke="currentColor" strokeWidth="1.3"/>
+        <rect x="1" y="9" width="4" height="4" stroke="currentColor" strokeWidth="1.3"/>
+        <line x1="9" y1="9" x2="13" y2="9" stroke="currentColor" strokeWidth="1.3"/>
+        <line x1="11" y1="9" x2="11" y2="13" stroke="currentColor" strokeWidth="1.3"/>
+      </svg>
+    ),
+  },
 ]
 
 export function DashboardSidebar() {
