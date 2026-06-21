@@ -42,12 +42,16 @@ export default function ScannerPage() {
   }, [paused, router])
 
   const handleError = useCallback((err: unknown) => {
+    // The library fires onError with {} during camera init/switching — not a real error.
+    if (err == null || (typeof err === 'object' && Object.keys(err).length === 0)) return
     const msg = err instanceof Error ? err.message : String(err)
-    if (msg.toLowerCase().includes('permission')) {
+    if (!msg || msg === '[object Object]') return
+    if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('denied')) {
       setError('Camera permission denied. Please allow camera access and reload.')
-    } else {
-      console.error('[QR scanner]', err)
+    } else if (msg.toLowerCase().includes('notfound') || msg.toLowerCase().includes('no camera')) {
+      setError('No camera found. Connect a webcam and reload.')
     }
+    // Swallow other internal scanner events silently
   }, [])
 
   return (
