@@ -222,7 +222,9 @@ export default function ReportsPage() {
                     padding: '9px 18px',
                     background: isActive ? '#c8da2b' : 'transparent',
                     color: isActive ? '#1a1a1a' : floorSelectedCount > 0 ? '#c8da2b' : '#6b6966',
-                    border: `1.5px solid ${isActive ? '#c8da2b' : floorSelectedCount > 0 ? '#c8da2b' : '#3a3835'}`,
+                    borderTop: `1.5px solid ${isActive ? '#c8da2b' : floorSelectedCount > 0 ? '#c8da2b' : '#3a3835'}`,
+                    borderRight: `1.5px solid ${isActive ? '#c8da2b' : floorSelectedCount > 0 ? '#c8da2b' : '#3a3835'}`,
+                    borderBottom: `1.5px solid ${isActive ? '#c8da2b' : floorSelectedCount > 0 ? '#c8da2b' : '#3a3835'}`,
                     borderLeft: 'none',
                     cursor: 'pointer',
                     fontWeight: isActive || floorSelectedCount > 0 ? 600 : 400,
@@ -250,7 +252,7 @@ export default function ReportsPage() {
               style={{
                 fontFamily: M, fontSize: '8px', letterSpacing: '0.1em', textTransform: 'uppercase',
                 padding: '9px 14px', background: 'transparent', color: '#3a3835',
-                border: '1px solid #252422', borderLeft: 'none', cursor: 'pointer',
+                borderTop: '1px solid #252422', borderRight: '1px solid #252422', borderBottom: '1px solid #252422', borderLeft: 'none', cursor: 'pointer',
               }}
             >
               clear
@@ -342,7 +344,7 @@ export default function ReportsPage() {
                 style={{
                   fontFamily: M, fontSize: '7.5px', letterSpacing: '0.1em', textTransform: 'uppercase',
                   padding: '8px 12px', background: '#1a1a18', color: '#6b6966',
-                  border: '1.5px solid #3a3835', borderLeft: i > 0 ? 'none' : '1.5px solid #3a3835',
+                  borderTop: '1.5px solid #3a3835', borderRight: '1.5px solid #3a3835', borderBottom: '1.5px solid #3a3835', borderLeft: i > 0 ? 'none' : '1.5px solid #3a3835',
                   cursor: 'pointer',
                 }}
               >

@@ -100,7 +100,7 @@ export default function DashboardSpacesPage() {
         <div style={{ display: 'flex', gap: 0 }}>
           {([['all', 'All Spaces'], ['active', 'Active'], ['inactive', 'Maintenance']] as const).map(([val, lbl]) => (
             <button key={val} onClick={() => setFilter(val)}
-              style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 14px', background: filter === val ? '#1a1a1a' : 'transparent', color: filter === val ? '#c8da2b' : '#9a9890', border: '1px solid #d8d5cc', borderLeft: val === 'all' ? '1px solid #d8d5cc' : 'none', cursor: 'pointer', fontWeight: filter === val ? 700 : 400 }}>
+              style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 14px', background: filter === val ? '#1a1a1a' : 'transparent', color: filter === val ? '#c8da2b' : '#9a9890', borderTop: '1px solid #d8d5cc', borderRight: '1px solid #d8d5cc', borderBottom: '1px solid #d8d5cc', borderLeft: val === 'all' ? '1px solid #d8d5cc' : 'none', cursor: 'pointer', fontWeight: filter === val ? 700 : 400 }}>
               {lbl}
             </button>
           ))}

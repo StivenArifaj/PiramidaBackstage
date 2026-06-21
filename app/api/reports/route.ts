@@ -146,13 +146,13 @@ export async function GET(req: Request) {
     const { data: quotesRaw, error: qErr } = await db
       .from('quotes')
       .select(`
-        id, total, accepted_at, event_id, created_at,
+        id, total, accepted_at, event_id, generated_at,
         events!inner (
           id, reference_code, title, organizer_name,
           status, start_at, end_at, attendees_count
         )
       `)
-      .order('created_at', { ascending: false })
+      .order('generated_at', { ascending: false })
 
     if (qErr) throw new Error(qErr.message)
 
@@ -162,7 +162,7 @@ export async function GET(req: Request) {
     }
     type QuoteRow = {
       id: string; total: number; accepted_at: string | null
-      event_id: string; created_at: string
+      event_id: string; generated_at: string
       events: EventRow
     }
 
@@ -194,7 +194,7 @@ export async function GET(req: Request) {
     const eventMap = new Map<string, QuoteRow>()
     for (const q of filteredQuotes) {
       const existing = eventMap.get(q.event_id)
-      if (!existing || q.created_at > existing.created_at) eventMap.set(q.event_id, q)
+      if (!existing || q.generated_at > existing.generated_at) eventMap.set(q.event_id, q)
     }
     const dedupedQuotes = Array.from(eventMap.values())
       .sort((a, b) => new Date(b.events.start_at).getTime() - new Date(a.events.start_at).getTime())
