@@ -15,9 +15,16 @@ const labelStyle: React.CSSProperties = {
   textTransform: 'uppercase', color: 'var(--color-concrete-gray)', display: 'block', marginBottom: '6px',
 }
 
-type UiState = 'form' | 'conflict' | 'sent'
+type UiState = 'form' | 'conflict'
 
-export function BookingPanel({ space }: { space: SpaceWithAvailability }) {
+interface BookingPanelProps {
+  space: SpaceWithAvailability
+  // YYYY-MM-DD strings for dates that already have active bookings.
+  // Used only to warn the user on that specific day — never to lock the whole form.
+  bookedDates?: string[]
+}
+
+export function BookingPanel({ space, bookedDates = [] }: BookingPanelProps) {
   const router = useRouter()
   const [date, setDate] = useState('')
   const [startTime, setStartTime] = useState('10:00')
@@ -31,6 +38,13 @@ export function BookingPanel({ space }: { space: SpaceWithAvailability }) {
 
   const durationHrs = Math.max(1, (new Date(`2000-01-01T${endTime}`).getTime() - new Date(`2000-01-01T${startTime}`).getTime()) / 3600000)
   const estimatedTotal = Math.round(durationHrs * space.hourly_rate_eur * 1.18)
+
+  // True only when this specific selected date has an existing active booking —
+  // used for a per-date inline warning, NOT a global form lockout.
+  const isDateBooked = date !== '' && bookedDates.includes(date)
+
+  // Maintenance mode is the ONLY reason the entire panel locks.
+  const isMaintenanceLocked = space.is_active === false || space.availability === 'blocked'
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -85,8 +99,8 @@ export function BookingPanel({ space }: { space: SpaceWithAvailability }) {
     }
   }
 
-  // ── Maintenance / Kill Switch lockout — no requests can pass through ─────────
-  if (space.availability === 'blocked' || space.is_active === false) {
+  // ── Maintenance / Kill Switch lockout ────────────────────────────────────────
+  if (isMaintenanceLocked) {
     return (
       <div style={{ border: '2px solid #f4a261', padding: '32px', backgroundColor: 'var(--color-concrete-bone)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
@@ -132,14 +146,13 @@ export function BookingPanel({ space }: { space: SpaceWithAvailability }) {
     )
   }
 
-  // ── Conflict / Red Code view ─────────────────────────────────────────────────
+  // ── Conflict / Red Code view (triggered by a 409 from the API) ───────────────
   if (uiState === 'conflict') {
     return (
       <form
         onSubmit={handlePrioritySubmit}
         style={{ border: '2px solid #e63946', padding: '32px', backgroundColor: 'var(--color-concrete-bone)' }}
       >
-        {/* Alert header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <polygon points="8,1 15.5,14.5 0.5,14.5" stroke="#e63946" strokeWidth="1.6" fill="none"/>
@@ -211,6 +224,7 @@ export function BookingPanel({ space }: { space: SpaceWithAvailability }) {
     )
   }
 
+  // ── Standard booking form — always active unless maintenance ─────────────────
   return (
     <form onSubmit={handleSubmit} style={{ border: '2px solid var(--color-concrete-char)', padding: '32px', backgroundColor: 'var(--color-concrete-bone)' }}>
       <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)', margin: '0 0 20px' }}>
@@ -219,20 +233,42 @@ export function BookingPanel({ space }: { space: SpaceWithAvailability }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div>
           <label style={labelStyle}>date</label>
-          <input type="date" required value={date} onChange={e => setDate(e.target.value)} min={new Date().toISOString().split('T')[0]} style={inputStyle} />
+          <input
+            type="date"
+            required
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            min={new Date().toISOString().split('T')[0]}
+            style={{
+              ...inputStyle,
+              // Subtle highlight when the chosen date has an existing booking
+              borderColor: isDateBooked ? '#f4a261' : 'var(--color-concrete-char)',
+            }}
+          />
+          {/* Per-date warning — does NOT lock the form, the user can still submit.
+              If the exact time slot is taken the backend returns 409 → Red Code UI. */}
+          {isDateBooked && (
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: '#f4a261', margin: '6px 0 0', letterSpacing: '0.06em' }}>
+              this date has existing bookings — your request may trigger a priority review
+            </p>
+          )}
         </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div><label style={labelStyle}>from</label><input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} style={inputStyle} /></div>
           <div><label style={labelStyle}>until</label><input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} style={inputStyle} /></div>
         </div>
+
         <div>
           <label style={labelStyle}>attendees (max {space.capacity_pax})</label>
           <input type="number" min={1} max={space.capacity_pax} value={attendees} onChange={e => setAttendees(parseInt(e.target.value))} style={inputStyle} />
         </div>
+
         <div style={{ borderTop: '1px solid var(--color-concrete-mid)', paddingTop: '16px' }}>
           <label style={labelStyle}>your name</label>
           <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="Full name" style={inputStyle} />
         </div>
+
         <div>
           <label style={labelStyle}>email</label>
           <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" style={inputStyle} />
@@ -251,17 +287,18 @@ export function BookingPanel({ space }: { space: SpaceWithAvailability }) {
         <button
           type="submit"
           data-brutal
-          disabled={submitting || space.availability !== 'available'}
+          disabled={submitting}
           style={{
             fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 500,
             letterSpacing: '0.16em', textTransform: 'uppercase',
-            backgroundColor: space.availability === 'available' ? 'var(--color-lime)' : 'var(--color-concrete-mid)',
-            color: space.availability === 'available' ? 'var(--color-lime-ink)' : 'var(--color-concrete-gray)',
-            border: 'none', padding: '16px', cursor: space.availability === 'available' ? 'pointer' : 'not-allowed',
+            backgroundColor: 'var(--color-lime)',
+            color: 'var(--color-lime-ink)',
+            border: 'none', padding: '16px', cursor: 'pointer',
             width: '100%',
+            opacity: submitting ? 0.7 : 1,
           }}
         >
-          {submitting ? 'sending request...' : space.availability === 'available' ? 'request booking' : 'not available'}
+          {submitting ? 'sending request...' : 'request booking'}
         </button>
       </div>
     </form>

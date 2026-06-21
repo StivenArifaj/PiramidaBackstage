@@ -37,6 +37,20 @@ export default async function SpaceDetailPage({
   const floorLabel   = formatFloor(space.floor)
   const primaryImage = space.photo_urls[0] ?? null
 
+  // Build the list of booked calendar dates (YYYY-MM-DD) from confirmed/quoted/requested
+  // bookings — passed to BookingPanel so specific days can be flagged in the date picker.
+  // Cancelled and completed bookings are not blocking.
+  const bookedDates = upcoming_bookings
+    .filter(b => !['cancelled', 'completed'].includes(b.status))
+    .map(b => b.start_at.slice(0, 10))
+
+  // Public-facing availability label: only surface 'maintenance' or 'available'.
+  // Internal states like 'pending'/'reserved' must not appear on the public page —
+  // they are booking-system internals, not a signal the visitor should act on.
+  const publicAvailability = (space.is_active === false || space.availability === 'blocked')
+    ? 'maintenance'
+    : 'available'
+
   return (
     <div style={{ backgroundColor: 'var(--color-concrete-bone)', minHeight: '100vh' }}>
       <BrandStrip />
@@ -63,9 +77,9 @@ export default async function SpaceDetailPage({
         </div>
         <div className="px-4 pb-6 pt-3 md:px-16" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <StatusDot status={space.availability} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: accentColor }}>
-              {space.availability}
+            <StatusDot status={publicAvailability === 'maintenance' ? 'blocked' : 'available'} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: publicAvailability === 'maintenance' ? '#f4a261' : accentColor }}>
+              {publicAvailability}
             </span>
             <span style={{ color: 'rgba(245,245,240,0.18)', fontFamily: 'var(--font-mono)', fontSize: '9px' }}>·</span>
             <span className="hidden sm:inline" style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,245,240,0.3)' }}>
@@ -301,38 +315,8 @@ export default async function SpaceDetailPage({
             />
           </div>
 
-          {/* Upcoming bookings */}
-          {upcoming_bookings.length > 0 && (
-            <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)', margin: '0 0 12px' }}>
-                upcoming bookings
-              </p>
-              {upcoming_bookings.map((b, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    gap: '16px',
-                    padding: '12px 0',
-                    borderBottom: '1px solid var(--color-concrete-mid)',
-                    alignItems: 'center',
-                  }}
-                >
-                  <StatusDot status={b.status === 'confirmed' ? 'reserved' : b.status === 'in_progress' ? 'available' : 'pending'} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--color-concrete-char)' }}>
-                    {new Date(b.start_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    {' · '}
-                    {new Date(b.start_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                    {' – '}
-                    {new Date(b.end_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-concrete-gray)', marginLeft: 'auto' }}>
-                    {b.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Upcoming booking dates are passed to BookingPanel as disabledDates only —
+              we do NOT render private booking status/times on the public page. */}
         </div>
 
         {/* ── Right column: sticky on desktop, flows naturally on mobile ───── */}
@@ -340,7 +324,7 @@ export default async function SpaceDetailPage({
           className="p-6 md:p-8 md:sticky md:top-12 self-start"
           style={{ backgroundColor: 'var(--color-concrete-light)' }}
         >
-          <BookingPanel space={space} />
+          <BookingPanel space={space} bookedDates={bookedDates} />
         </div>
       </div>
     </div>
