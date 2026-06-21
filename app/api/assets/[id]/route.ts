@@ -33,9 +33,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     const db = createAdminClient()
+    // Note: assets table has no updated_at column — only include schema columns
     const { data, error } = await db
       .from('assets')
-      .update({ ...parsed.data, updated_at: new Date().toISOString() })
+      .update(parsed.data)
       .eq('id', id)
       .select()
       .single()

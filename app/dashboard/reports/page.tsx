@@ -21,11 +21,13 @@ interface BookingLog {
   attendees_count: number
   space_names: string
   revenue: number
+  revenue_locked: boolean
 }
 
 interface ReportData {
   total_bookings: number
   total_revenue: number
+  pipeline_revenue: number
   avg_duration_hrs: number
   bookings: BookingLog[]
 }
@@ -159,17 +161,18 @@ export default function ReportsPage() {
 
         {generated && report && (
           <motion.div key="report" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: EASE }}>
-            {/* KPI summary */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderBottom: '2px solid #1a1a1a' }}>
+            {/* KPI summary — 4 metrics: bookings, confirmed revenue, pipeline, avg duration */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderBottom: '2px solid #1a1a1a' }}>
               {[
-                { label: 'Total Bookings',         value: report.total_bookings,                       sub: 'matched bookings',    accent: '#c8da2b' },
-                { label: 'Total Revenue',          value: `€${report.total_revenue.toLocaleString()}`, sub: 'from quotes accepted', accent: '#378ADD' },
-                { label: 'Avg Event Duration',     value: `${report.avg_duration_hrs}h`,               sub: 'per booking',         accent: '#c8da2b' },
+                { label: 'Total Bookings',       value: report.total_bookings,                              sub: 'matched events',          accent: '#c8da2b' },
+                { label: 'Confirmed Revenue',    value: `€${report.total_revenue.toLocaleString()}`,        sub: 'accepted quotes',         accent: '#378ADD' },
+                { label: 'Pipeline Revenue',     value: `€${(report.pipeline_revenue ?? 0).toLocaleString()}`, sub: 'pending / not yet accepted', accent: '#f4a261' },
+                { label: 'Avg Event Duration',   value: `${report.avg_duration_hrs}h`,                     sub: 'per booking',             accent: '#c8da2b' },
               ].map(({ label, value, sub, accent }, i) => (
                 <motion.div key={label} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: EASE, delay: i * 0.07 }}
-                  style={{ padding: '24px 32px', borderRight: i < 2 ? '1px solid #e8e6dd' : 'none', background: '#fafaf5', borderBottom: `3px solid ${accent}` }}>
+                  style={{ padding: '24px 32px', borderRight: i < 3 ? '1px solid #e8e6dd' : 'none', background: '#fafaf5', borderBottom: `3px solid ${accent}` }}>
                   <p style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9a9890', margin: '0 0 10px' }}>{label}</p>
-                  <p style={{ fontFamily: M, fontSize: '44px', fontWeight: 500, color: '#1a1a1a', margin: 0, lineHeight: 1 }}>{value}</p>
+                  <p style={{ fontFamily: M, fontSize: '38px', fontWeight: 500, color: '#1a1a1a', margin: 0, lineHeight: 1 }}>{value}</p>
                   <p style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', margin: '6px 0 0' }}>{sub}</p>
                 </motion.div>
               ))}

@@ -20,20 +20,25 @@ function rangeFilter(dateRange: string): { from: string; to: string } {
     const from = new Date(now.getFullYear(), now.getMonth(), 1)
     return { from: from.toISOString(), to: now.toISOString() }
   }
-  // all_time — use a wide window
   return { from: '2000-01-01T00:00:00Z', to: '2100-01-01T00:00:00Z' }
 }
+
+// Statuses that mean the revenue is locked / earned
+const CONFIRMED_STATUSES = new Set(['confirmed', 'in_progress', 'completed'])
+// Statuses that mean the booking is still pending (pipeline)
+const PIPELINE_STATUSES = new Set(['requested', 'quoted', 'red_alert'])
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
     const dateRange = searchParams.get('date_range') ?? 'all_time'
     const spaceCodes = searchParams.get('space_codes')?.split(',').filter(Boolean) ?? []
-
     const { from, to } = rangeFilter(dateRange)
 
+    // ── Mock fallback (dev without Supabase) ─────────────────────────────────
     if (!isSupabaseConfigured()) {
       let events = MOCK_EVENTS.filter(e => {
+        if (e.status === 'cancelled') return false
         const inRange = e.start_at >= from && e.start_at <= to
         if (!inRange) return false
         if (spaceCodes.length > 0) {
@@ -44,15 +49,29 @@ export async function GET(req: Request) {
       })
 
       const quotes = MOCK_QUOTES.filter(q => events.some(e => e.id === q.event_id))
-      const totalRevenue = quotes.reduce((s, q) => s + q.total, 0)
+      // Revenue = confirmed events' quotes
+      const totalRevenue = quotes
+        .filter(q => {
+          const evt = events.find(e => e.id === q.event_id)
+          return q.accepted_at != null || CONFIRMED_STATUSES.has(evt?.status ?? '')
+        })
+        .reduce((s, q) => s + q.total, 0)
+      // Pipeline = pending events' quotes
+      const pipelineRevenue = quotes
+        .filter(q => {
+          const evt = events.find(e => e.id === q.event_id)
+          return q.accepted_at == null && PIPELINE_STATUSES.has(evt?.status ?? '')
+        })
+        .reduce((s, q) => s + q.total, 0)
+
       const totalDurationHrs = events.reduce((s, e) => {
-        const hrs = (new Date(e.end_at).getTime() - new Date(e.start_at).getTime()) / 3600000
-        return s + hrs
+        return s + (new Date(e.end_at).getTime() - new Date(e.start_at).getTime()) / 3600000
       }, 0)
 
       return NextResponse.json({
         total_bookings: events.length,
         total_revenue: totalRevenue,
+        pipeline_revenue: pipelineRevenue,
         avg_duration_hrs: events.length ? +(totalDurationHrs / events.length).toFixed(1) : 0,
         bookings: events.map(e => {
           const q = quotes.find(qq => qq.event_id === e.id)
@@ -67,65 +86,111 @@ export async function GET(req: Request) {
             attendees_count: e.attendees_count,
             space_names: e.spaces.map(s => s.name).join(', '),
             revenue: q?.total ?? 0,
+            revenue_locked: q != null && (q.accepted_at != null || CONFIRMED_STATUSES.has(e.status)),
           }
         }),
       })
     }
 
+    // ── Live Supabase path ───────────────────────────────────────────────────
     const db = createAdminClient()
 
-    let query = db
-      .from('events')
-      .select('id, reference_code, title, organizer_name, status, start_at, end_at, attendees_count, event_spaces(spaces(code,name)), quotes(total)')
-      .gte('start_at', from)
-      .lte('start_at', to)
-      .not('status', 'in', '("cancelled")')
-      .order('start_at', { ascending: false })
+    // Query from the quotes side so we always have accepted_at
+    const { data: quotesRaw, error: qErr } = await db
+      .from('quotes')
+      .select(`
+        id, total, accepted_at, event_id,
+        events!inner (
+          id, reference_code, title, organizer_name,
+          status, start_at, end_at, attendees_count
+        )
+      `)
+      .neq('events.status', 'cancelled')
+      .gte('events.start_at', from)
+      .lte('events.start_at', to)
+      .order('events.start_at', { ascending: false })
 
-    const { data: eventsData, error } = await query
-    if (error) throw new Error(error.message)
+    if (qErr) throw new Error(qErr.message)
 
-    const events = eventsData ?? []
+    type QuoteRow = {
+      id: string; total: number; accepted_at: string | null; event_id: string
+      events: {
+        id: string; reference_code: string; title: string; organizer_name: string
+        status: string; start_at: string; end_at: string; attendees_count: number
+      }
+    }
+    const quotes = (quotesRaw ?? []) as unknown as QuoteRow[]
 
-    // Filter by space code if provided
-    const filtered = spaceCodes.length > 0
-      ? events.filter((e: Record<string, unknown>) => {
-          const esp = (e.event_spaces as Array<{ spaces: { code: string } | null }> | null) ?? []
-          const codes = esp.map(es => es.spaces?.code).filter(Boolean)
-          return spaceCodes.some(c => codes.includes(c))
-        })
-      : events
+    // Optionally filter by space codes using event_spaces join
+    let filteredQuotes = quotes
+    if (spaceCodes.length > 0) {
+      const { data: esRows } = await db
+        .from('event_spaces')
+        .select('event_id, spaces!inner(code)')
+        .in('spaces.code', spaceCodes)
 
-    const totalRevenue = filtered.reduce((s: number, e: Record<string, unknown>) => {
-      const qs = (e.quotes as Array<{ total: number }> | null) ?? []
-      return s + qs.reduce((ss: number, q: { total: number }) => ss + Number(q.total), 0)
+      const matchedEventIds = new Set(
+        ((esRows ?? []) as Array<{ event_id: string }>).map(r => r.event_id)
+      )
+      filteredQuotes = quotes.filter(q => matchedEventIds.has(q.event_id))
+    }
+
+    // Deduplicate events (one event can have multiple quotes; use the latest)
+    const eventMap = new Map<string, QuoteRow>()
+    for (const q of filteredQuotes) {
+      const existing = eventMap.get(q.event_id)
+      if (!existing || new Date(q.id) > new Date(existing.id)) {
+        eventMap.set(q.event_id, q)
+      }
+    }
+    const dedupedQuotes = Array.from(eventMap.values())
+
+    const totalRevenue = dedupedQuotes
+      .filter(q => q.accepted_at != null || CONFIRMED_STATUSES.has(q.events.status))
+      .reduce((s, q) => s + Number(q.total), 0)
+
+    const pipelineRevenue = dedupedQuotes
+      .filter(q => q.accepted_at == null && PIPELINE_STATUSES.has(q.events.status))
+      .reduce((s, q) => s + Number(q.total), 0)
+
+    const totalDurationHrs = dedupedQuotes.reduce((s, q) => {
+      return s + (new Date(q.events.end_at).getTime() - new Date(q.events.start_at).getTime()) / 3600000
     }, 0)
 
-    const totalDurationHrs = filtered.reduce((s: number, e: Record<string, unknown>) => {
-      const hrs = (new Date(e.end_at as string).getTime() - new Date(e.start_at as string).getTime()) / 3600000
-      return s + hrs
-    }, 0)
+    // Build booking log — fetch space names in one query
+    const eventIds = dedupedQuotes.map(q => q.event_id)
+    const { data: esData } = eventIds.length
+      ? await db.from('event_spaces').select('event_id, spaces(name)').in('event_id', eventIds)
+      : { data: [] }
+
+    const spaceNamesByEvent = new Map<string, string[]>()
+    for (const row of (esData ?? []) as unknown as Array<{ event_id: string; spaces: { name: string } | null }>) {
+      if (!row.spaces) continue
+      const arr = spaceNamesByEvent.get(row.event_id) ?? []
+      arr.push(row.spaces.name)
+      spaceNamesByEvent.set(row.event_id, arr)
+    }
 
     return NextResponse.json({
-      total_bookings: filtered.length,
+      total_bookings: dedupedQuotes.length,
       total_revenue: totalRevenue,
-      avg_duration_hrs: filtered.length ? +(totalDurationHrs / filtered.length).toFixed(1) : 0,
-      bookings: filtered.map((e: Record<string, unknown>) => {
-        const esp = (e.event_spaces as Array<{ spaces: { name: string } | null }> | null) ?? []
-        const qs = (e.quotes as Array<{ total: number }> | null) ?? []
-        return {
-          id: e.id,
-          reference_code: e.reference_code,
-          title: e.title,
-          organizer_name: e.organizer_name,
-          status: e.status,
-          start_at: e.start_at,
-          end_at: e.end_at,
-          attendees_count: e.attendees_count,
-          space_names: esp.map(es => es.spaces?.name).filter(Boolean).join(', '),
-          revenue: qs.reduce((s, q) => s + Number(q.total), 0),
-        }
-      }),
+      pipeline_revenue: pipelineRevenue,
+      avg_duration_hrs: dedupedQuotes.length
+        ? +(totalDurationHrs / dedupedQuotes.length).toFixed(1)
+        : 0,
+      bookings: dedupedQuotes.map(q => ({
+        id: q.events.id,
+        reference_code: q.events.reference_code,
+        title: q.events.title,
+        organizer_name: q.events.organizer_name,
+        status: q.events.status,
+        start_at: q.events.start_at,
+        end_at: q.events.end_at,
+        attendees_count: q.events.attendees_count,
+        space_names: (spaceNamesByEvent.get(q.event_id) ?? []).join(', '),
+        revenue: Number(q.total),
+        revenue_locked: q.accepted_at != null || CONFIRMED_STATUSES.has(q.events.status),
+      })),
     })
   } catch (err) {
     console.error('[GET /api/reports]', err)

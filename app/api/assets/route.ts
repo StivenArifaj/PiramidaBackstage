@@ -9,7 +9,7 @@ function isSupabaseConfigured(): boolean {
   return Boolean(url && key && url.startsWith('http'))
 }
 
-function computedAssets(assets: typeof MOCK_ASSETS) {
+function computedMock(assets: typeof MOCK_ASSETS) {
   return assets.map(a => ({
     ...a,
     in_use: a.total_qty - a.available_qty,
@@ -19,8 +19,9 @@ function computedAssets(assets: typeof MOCK_ASSETS) {
 
 export async function GET() {
   try {
+    // ── Mock fallback ─────────────────────────────────────────────────────────
     if (!isSupabaseConfigured()) {
-      const assets = computedAssets(MOCK_ASSETS)
+      const assets = computedMock(MOCK_ASSETS)
       return NextResponse.json({
         assets,
         total_skus: assets.length,
@@ -30,28 +31,56 @@ export async function GET() {
       })
     }
 
+    // ── Live Supabase path ────────────────────────────────────────────────────
     const db = createAdminClient()
-    const { data, error } = await db.from('assets').select('*').order('type')
-    if (error) throw new Error(error.message)
 
-    const assets = (data ?? []).map((a: Record<string, unknown>) => ({
-      id: a.id as string,
-      type: a.type as string,
-      name: a.name as string,
-      total_qty: a.total_qty as number,
-      available_qty: a.total_qty as number,
-      in_use: 0,
-      pct_available: 100,
-      storage_location: a.storage_location as string,
-      unit_rate_eur: Number(a.unit_rate_eur),
-    }))
+    // Fetch all assets
+    const { data: assetRows, error: aErr } = await db
+      .from('assets')
+      .select('*')
+      .order('type')
+    if (aErr) throw new Error(aErr.message)
+
+    // Calculate real in_use counts by joining event_assets with active events.
+    // Active = events currently confirmed, in_progress, or quoted (reserved).
+    const { data: inUseRows, error: euErr } = await db
+      .from('event_assets')
+      .select('asset_id, quantity, events!inner(status)')
+      .in('events.status', ['confirmed', 'in_progress', 'quoted'])
+
+    if (euErr) {
+      console.warn('[GET /api/assets] event_assets join failed, defaulting in_use=0:', euErr.message)
+    }
+
+    // Build asset_id → total_in_use map
+    const inUseMap = new Map<string, number>()
+    for (const row of (inUseRows ?? []) as Array<{ asset_id: string; quantity: number }>) {
+      inUseMap.set(row.asset_id, (inUseMap.get(row.asset_id) ?? 0) + row.quantity)
+    }
+
+    const assets = ((assetRows ?? []) as Array<Record<string, unknown>>).map(a => {
+      const totalQty = a.total_qty as number
+      const inUse = Math.min(inUseMap.get(a.id as string) ?? 0, totalQty)
+      const availableQty = Math.max(0, totalQty - inUse)
+      return {
+        id: a.id as string,
+        type: a.type as string,
+        name: a.name as string,
+        total_qty: totalQty,
+        available_qty: availableQty,
+        in_use: inUse,
+        pct_available: totalQty > 0 ? Math.round((availableQty / totalQty) * 100) : 0,
+        storage_location: a.storage_location as string,
+        unit_rate_eur: Number(a.unit_rate_eur),
+      }
+    })
 
     return NextResponse.json({
       assets,
       total_skus: assets.length,
-      total_units: assets.reduce((s: number, a: { total_qty: number }) => s + a.total_qty, 0),
-      total_in_use: 0,
-      low_stock: 0,
+      total_units: assets.reduce((s, a) => s + a.total_qty, 0),
+      total_in_use: assets.reduce((s, a) => s + a.in_use, 0),
+      low_stock: assets.filter(a => a.pct_available < 50).length,
     })
   } catch (err) {
     console.error('[GET /api/assets]', err)

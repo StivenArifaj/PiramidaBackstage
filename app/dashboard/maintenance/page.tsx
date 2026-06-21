@@ -19,8 +19,16 @@ interface MaintenanceLog {
   assigned_worker: string | null
   next_action_at: string | null
   notes: string | null
+  is_offline?: boolean
   created_at: string
   updated_at: string
+}
+
+interface OfflineSpace {
+  code: string
+  name: string
+  floor: string
+  has_log: boolean
 }
 
 const FLOOR_LABELS: Record<string, string> = {
@@ -164,13 +172,18 @@ function ScheduleModal({ preselected, onClose, onSaved }: ScheduleModalProps) {
 
 export default function MaintenancePage() {
   const [logs, setLogs] = useState<MaintenanceLog[]>([])
+  const [offlineSpaces, setOfflineSpaces] = useState<OfflineSpace[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [selectedLog, setSelectedLog] = useState<MaintenanceLog | null>(null)
 
   const fetchLogs = useCallback(() => {
     setLoading(true)
-    fetch('/api/maintenance').then(r => r.json()).then(d => { setLogs(d.logs ?? []); setLoading(false) })
+    fetch('/api/maintenance').then(r => r.json()).then(d => {
+      setLogs(d.logs ?? [])
+      setOfflineSpaces(d.offline_spaces ?? [])
+      setLoading(false)
+    })
   }, [])
 
   useEffect(() => { fetchLogs() }, [fetchLogs])
@@ -207,23 +220,48 @@ export default function MaintenancePage() {
       </div>
 
       {/* KPI strip */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderBottom: '2px solid #1a1a1a', flexShrink: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderBottom: '2px solid #1a1a1a', flexShrink: 0 }}>
         {[
-          { label: 'clean spaces',     value: counts.clean,          accent: '#c8da2b', dot: '#c8da2b' },
-          { label: 'needs cleaning',   value: counts.needs_cleaning, accent: '#f4a261', dot: '#f4a261' },
-          { label: 'in maintenance',   value: counts.maintenance,    accent: counts.maintenance ? '#e63946' : '#c8da2b', dot: '#e63946' },
-        ].map(({ label, value, accent, dot }, i) => (
+          { label: 'clean spaces',     value: counts.clean,             accent: '#c8da2b', dot: '#c8da2b',  sub: 'spaces tracked' },
+          { label: 'needs cleaning',   value: counts.needs_cleaning,    accent: '#f4a261', dot: '#f4a261',  sub: 'spaces tracked' },
+          { label: 'in maintenance',   value: counts.maintenance,       accent: counts.maintenance ? '#e63946' : '#c8da2b', dot: '#e63946', sub: 'spaces tracked' },
+          { label: 'kill switch off',  value: offlineSpaces.length,     accent: offlineSpaces.length ? '#e63946' : '#e8e6dd', dot: '#e63946', sub: 'booking blocked' },
+        ].map(({ label, value, accent, dot, sub }, i) => (
           <motion.div key={label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: EASE, delay: i * 0.06 }}
-            style={{ padding: '20px 28px', borderRight: i < 2 ? '1px solid #e8e6dd' : 'none', background: '#fafaf5', borderBottom: `3px solid ${accent}`, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            style={{ padding: '20px 28px', borderRight: i < 3 ? '1px solid #e8e6dd' : 'none', background: '#fafaf5', borderBottom: `3px solid ${accent}`, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: dot, marginTop: 4, flexShrink: 0 }} />
             <div>
               <p style={{ fontFamily: M, fontSize: '7.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#9a9890', margin: '0 0 8px' }}>{label}</p>
               <p style={{ fontFamily: M, fontSize: '40px', fontWeight: 500, color: '#1a1a1a', margin: 0, lineHeight: 1 }}>{value}</p>
-              <p style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', margin: '4px 0 0' }}>spaces tracked</p>
+              <p style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', margin: '4px 0 0' }}>{sub}</p>
             </div>
           </motion.div>
         ))}
       </div>
+
+      {/* Kill Switch Offline section */}
+      {!loading && offlineSpaces.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: EASE }}
+          style={{ borderBottom: '2px solid #e63946', background: '#fff5f5', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#e63946', flexShrink: 0 }} />
+            <div>
+              <span style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#8b0000', fontWeight: 700 }}>Kill Switch Active — {offlineSpaces.length} Space{offlineSpaces.length > 1 ? 's' : ''} Offline</span>
+              <div style={{ display: 'flex', gap: 8, marginTop: 5, flexWrap: 'wrap' }}>
+                {offlineSpaces.map(s => (
+                  <span key={s.code} style={{ fontFamily: M, fontSize: '8px', background: '#ffdede', border: '1px solid #e63946', padding: '2px 8px', color: '#8b0000', letterSpacing: '0.1em' }}>
+                    {s.code} — {s.name}
+                    {s.has_log && <span style={{ marginLeft: 5, color: '#e63946' }}>✕ log exists</span>}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <Link href="/dashboard/spaces" style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#e63946', textDecoration: 'none', border: '1px solid #e63946', padding: '6px 12px', flexShrink: 0, whiteSpace: 'nowrap' }}>
+            Re-enable →
+          </Link>
+        </motion.div>
+      )}
 
       {/* Matrix by floor */}
       <div style={{ flex: 1 }}>
@@ -259,12 +297,17 @@ export default function MaintenancePage() {
               <tbody>
                 {floorLogs.map((log, idx) => (
                   <motion.tr key={log.id} initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25, delay: floorIdx * 0.05 + idx * 0.03 }}
-                    style={{ borderBottom: '1px solid #e8e6dd' }}>
+                    style={{ borderBottom: '1px solid #e8e6dd', borderLeft: log.is_offline ? '3px solid #e63946' : '3px solid transparent', background: log.is_offline ? '#fff9f0' : undefined }}>
                     <td style={{ padding: '12px 16px' }}>
                       <span style={{ fontFamily: M, fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', color: '#1a1a1a', background: '#e8e6dd', padding: '3px 7px' }}>{log.space_code}</span>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
-                      <p style={{ fontFamily: D, fontSize: '13px', fontWeight: 500, color: '#1a1a1a', margin: 0 }}>{log.space_name}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <p style={{ fontFamily: D, fontSize: '13px', fontWeight: 500, color: '#1a1a1a', margin: 0 }}>{log.space_name}</p>
+                        {log.is_offline && (
+                          <span style={{ fontFamily: M, fontSize: '7px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8b0000', background: '#ffdede', border: '1px solid #e63946', padding: '2px 6px', flexShrink: 0 }}>offline</span>
+                        )}
+                      </div>
                       {log.notes && <p style={{ fontFamily: M, fontSize: '7.5px', color: '#9a9890', margin: '2px 0 0' }}>{log.notes}</p>}
                     </td>
                     <td style={{ padding: '12px 16px' }}>
