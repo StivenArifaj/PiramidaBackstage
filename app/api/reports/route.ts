@@ -108,7 +108,6 @@ export async function GET(req: Request) {
       .neq('events.status', 'cancelled')
       .gte('events.start_at', from)
       .lte('events.start_at', to)
-      .order('events.start_at', { ascending: false })
 
     if (qErr) throw new Error(qErr.message)
 
@@ -144,6 +143,7 @@ export async function GET(req: Request) {
       }
     }
     const dedupedQuotes = Array.from(eventMap.values())
+      .sort((a, b) => new Date(b.events.start_at).getTime() - new Date(a.events.start_at).getTime())
 
     const totalRevenue = dedupedQuotes
       .filter(q => q.accepted_at != null || CONFIRMED_STATUSES.has(q.events.status))

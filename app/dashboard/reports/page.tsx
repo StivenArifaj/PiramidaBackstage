@@ -67,6 +67,7 @@ export default function ReportsPage() {
   const [report, setReport] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(false)
   const [generated, setGenerated] = useState(false)
+  const [apiError, setApiError] = useState<string | null>(null)
 
   const toggleSpace = (code: string) => {
     setSelectedSpaces(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code])
@@ -75,15 +76,20 @@ export default function ReportsPage() {
   const handleGenerate = async () => {
     setLoading(true)
     setGenerated(false)
+    setApiError(null)
     try {
       const params = new URLSearchParams({ date_range: dateRange })
       if (selectedSpaces.length > 0) params.set('space_codes', selectedSpaces.join(','))
       const res = await fetch(`/api/reports?${params}`)
       const data = await res.json()
+      if (!res.ok || data.error) {
+        setApiError(data.error ?? `Server error ${res.status}`)
+        return
+      }
       setReport(data)
       setGenerated(true)
     } catch (err) {
-      console.error(err)
+      setApiError(err instanceof Error ? err.message : 'Network error')
     } finally {
       setLoading(false)
     }
@@ -151,7 +157,14 @@ export default function ReportsPage() {
 
       {/* Results */}
       <AnimatePresence mode="wait">
-        {!generated && !loading && (
+        {!generated && !loading && apiError && (
+          <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 10 }}>
+            <span style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#e63946', background: '#ffeaea', border: '1px solid #e63946', padding: '8px 16px' }}>Report Error: {apiError}</span>
+            <p style={{ fontFamily: M, fontSize: '8px', color: '#9a9890', margin: 0 }}>Check server logs for the full Supabase error.</p>
+          </motion.div>
+        )}
+        {!generated && !loading && !apiError && (
           <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
             <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><rect x="4" y="20" width="8" height="16" stroke="#d8d5cc" strokeWidth="2"/><rect x="16" y="12" width="8" height="24" stroke="#d8d5cc" strokeWidth="2"/><rect x="28" y="4" width="8" height="32" stroke="#d8d5cc" strokeWidth="2"/></svg>
@@ -165,7 +178,7 @@ export default function ReportsPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderBottom: '2px solid #1a1a1a' }}>
               {[
                 { label: 'Total Bookings',       value: report.total_bookings,                              sub: 'matched events',          accent: '#c8da2b' },
-                { label: 'Confirmed Revenue',    value: `€${report.total_revenue.toLocaleString()}`,        sub: 'accepted quotes',         accent: '#378ADD' },
+                { label: 'Confirmed Revenue',    value: `€${(report.total_revenue ?? 0).toLocaleString()}`,    sub: 'accepted quotes',            accent: '#378ADD' },
                 { label: 'Pipeline Revenue',     value: `€${(report.pipeline_revenue ?? 0).toLocaleString()}`, sub: 'pending / not yet accepted', accent: '#f4a261' },
                 { label: 'Avg Event Duration',   value: `${report.avg_duration_hrs}h`,                     sub: 'per booking',             accent: '#c8da2b' },
               ].map(({ label, value, sub, accent }, i) => (
