@@ -1,17 +1,36 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Scanner } from '@yudiel/react-qr-scanner'
+import dynamic from 'next/dynamic'
 
 const M = 'var(--font-mono)'
 
+// Camera APIs are browser-only — never render this on the server.
+const Scanner = dynamic(
+  () => import('@yudiel/react-qr-scanner').then(m => m.Scanner),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ height: 360, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a09' }}>
+        <span style={{ fontFamily: M, fontSize: '9px', color: '#6b6966', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          Initialising camera…
+        </span>
+      </div>
+    ),
+  }
+)
+
 export default function ScannerPage() {
   const router = useRouter()
-  const [paused, setPaused]   = useState(false)
-  const [scanned, setScanned] = useState<string | null>(null)
-  const [error, setError]     = useState<string | null>(null)
+  const [mounted, setMounted]   = useState(false)
+  const [paused, setPaused]     = useState(false)
+  const [scanned, setScanned]   = useState<string | null>(null)
+  const [error, setError]       = useState<string | null>(null)
+
+  // Belt-and-suspenders: only render the Scanner after client hydration.
+  useEffect(() => { setMounted(true) }, [])
 
   const handleScan = useCallback((results: Array<{ rawValue: string }>) => {
     if (paused || !results.length) return
@@ -19,7 +38,6 @@ export default function ScannerPage() {
     setScanned(raw)
     setPaused(true)
 
-    // Extract the path — accept any URL pointing to this origin or just a path
     try {
       let path: string
       if (raw.startsWith('http')) {
@@ -28,7 +46,6 @@ export default function ScannerPage() {
       } else {
         path = raw
       }
-      // Only navigate to dashboard event pages for safety
       if (path.startsWith('/dashboard/')) {
         router.push(path)
       } else {
@@ -42,16 +59,16 @@ export default function ScannerPage() {
   }, [paused, router])
 
   const handleError = useCallback((err: unknown) => {
-    // The library fires onError with {} during camera init/switching — not a real error.
+    // Library fires onError with {} during camera init/switching — not a real error.
     if (err == null || (typeof err === 'object' && Object.keys(err).length === 0)) return
     const msg = err instanceof Error ? err.message : String(err)
     if (!msg || msg === '[object Object]') return
     if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('denied')) {
-      setError('Camera permission denied. Please allow camera access and reload.')
+      setError('Camera access denied. Please check browser permissions and reload the page.')
     } else if (msg.toLowerCase().includes('notfound') || msg.toLowerCase().includes('no camera')) {
       setError('No camera found. Connect a webcam and reload.')
     }
-    // Swallow other internal scanner events silently
+    // Swallow other internal library events silently.
   }, [])
 
   return (
@@ -65,7 +82,6 @@ export default function ScannerPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link href="/dashboard" style={{ fontFamily: M, fontSize: '8px', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', color: '#6b6966' }}>← dashboard</Link>
           <span style={{ display: 'block', width: 1, height: 18, background: '#252422' }} />
-          {/* scan icon */}
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
             <rect x="1" y="1" width="4" height="4" stroke="#c8da2b" strokeWidth="1.3"/>
             <rect x="8" y="1" width="4" height="4" stroke="#c8da2b" strokeWidth="1.3"/>
@@ -107,20 +123,48 @@ export default function ScannerPage() {
               )
             })}
 
-            <Scanner
-              onScan={handleScan}
-              onError={handleError}
-              paused={paused}
-              styles={{
-                container: { height: 360, width: '100%' },
-                video: { objectFit: 'cover' },
-              }}
-              components={{ torch: false, finder: true }}
-            />
+            {mounted ? (
+              <Scanner
+                onScan={handleScan}
+                onError={handleError}
+                paused={paused}
+                constraints={{ facingMode: { ideal: 'environment' } }}
+                styles={{
+                  container: { height: 360, width: '100%' },
+                  video: { objectFit: 'cover' },
+                }}
+                components={{ torch: false, finder: true }}
+              />
+            ) : (
+              <div style={{ height: 360, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a09' }}>
+                <span style={{ fontFamily: M, fontSize: '9px', color: '#6b6966', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  Loading…
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* Status / error feedback */}
-          {error && (
+          {/* Camera access denied — prominent alert */}
+          {error && error.includes('Camera access denied') && (
+            <div style={{ border: '2px solid #e63946', background: 'rgba(230,57,70,0.10)', padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+                <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#e63946" strokeWidth="1.6" fill="none"/>
+                <line x1="9" y1="7" x2="9" y2="11" stroke="#e63946" strokeWidth="1.6"/>
+                <circle cx="9" cy="13" r="0.8" fill="#e63946"/>
+              </svg>
+              <div>
+                <p style={{ fontFamily: M, fontSize: '10px', fontWeight: 700, color: '#e63946', margin: '0 0 4px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Camera access denied
+                </p>
+                <p style={{ fontFamily: M, fontSize: '9px', color: '#e63946', margin: 0, opacity: 0.85 }}>
+                  Please check browser permissions and reload the page. In Chrome: click the camera icon in the address bar → Allow.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Other errors */}
+          {error && !error.includes('Camera access denied') && (
             <div style={{ border: '1px solid #e63946', background: 'rgba(230,57,70,0.08)', padding: '14px 16px' }}>
               <p style={{ fontFamily: M, fontSize: '9px', color: '#e63946', margin: 0, letterSpacing: '0.08em' }}>{error}</p>
             </div>
